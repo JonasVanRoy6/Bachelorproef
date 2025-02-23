@@ -1,39 +1,50 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+import { Tabs } from "expo-router";
+import { FontAwesome } from "@expo/vector-icons";
+import { PuffProvider } from './screens/PuffContext';
 
-import { useColorScheme } from '@/hooks/useColorScheme';
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
-
+export default function Layout() {
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <PuffProvider>
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: "#29A86E",
+          tabBarInactiveTintColor: "#999",
+          tabBarStyle: { backgroundColor: "#fff", height: 60 },
+        }}
+      >
+        {/* Home Tab */}
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: "Home",
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesome name="home" size={size} color={color} />
+            ),
+          }}
+        />
+
+        {/* Profiel Tab */}
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: "Profiel",
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesome name="user" size={size} color={color} />
+            ),
+          }}
+        />
+
+        {/* Tracker Tab */}
+        <Tabs.Screen
+          name="TrackerScreen" // Controleer of dit overeenkomt met je bestandsnaam of componentnaam
+          options={{
+            title: "Tracker",
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesome name="cog" size={size} color={color} />
+            ),
+          }}
+        />
+      </Tabs>
+    </PuffProvider>
   );
 }
