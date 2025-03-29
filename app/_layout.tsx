@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
 import { PuffProvider } from './screens/PuffContext';
+import StatsScreen from './screens/StatsScreen';  // Voeg deze import toe
 
 export default function Layout() {
   return (
@@ -36,11 +37,22 @@ export default function Layout() {
 
         {/* Tracker Tab */}
         <Tabs.Screen
-          name="TrackerScreen" // Controleer of dit overeenkomt met je bestandsnaam of componentnaam
+          name="TrackerScreen"
           options={{
             title: "Tracker",
             tabBarIcon: ({ color, size }) => (
               <FontAwesome name="cog" size={size} color={color} />
+            ),
+          }}
+        />
+
+        {/* Stats Tab */}
+        <Tabs.Screen
+          name="StatsScreen"  // Voeg deze regel toe
+          options={{
+            title: "Stats",
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesome name="bar-chart" size={size} color={color} />
             ),
           }}
         />
