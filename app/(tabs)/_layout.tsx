@@ -56,6 +56,17 @@ export default function Layout() {
             ),
           }}
         />
+    {/* Instellingen Tab */}
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Instellingen",
+          tabBarIcon: ({ color, size }) => (
+            <FontAwesome name="cogs" size={size} color={color} />
+          ),
+        }}
+      />
+
       </Tabs>
     </PuffProvider>
   );
