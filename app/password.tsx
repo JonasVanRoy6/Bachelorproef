@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { router } from 'expo-router';
+import { Link } from 'expo-router'; // Importeer Link van expo-router
 
 export default function PasswordScreen() {
   const [password, setPassword] = useState('');
@@ -23,7 +23,10 @@ export default function PasswordScreen() {
 
       if (response.ok) {
         Alert.alert('Succes', 'Wachtwoord succesvol opgeslagen!', [
-          { text: 'OK', onPress: () => router.push('/startscherm') }, // Navigeer naar het startscherm
+          {
+            text: 'OK',
+            onPress: () => {}, // Laat de Alert sluiten
+          },
         ]);
       } else {
         Alert.alert('Fout', 'Er is een probleem opgetreden bij het opslaan van het wachtwoord.');
@@ -52,14 +55,15 @@ export default function PasswordScreen() {
         value={confirmPassword}
         onChangeText={setConfirmPassword}
       />
-
+<Link href="/goalsScreen" asChild>
       <TouchableOpacity style={styles.saveButton} onPress={handleSavePassword}>
         <Text style={styles.saveButtonText}>Volgende</Text>
       </TouchableOpacity>
-
-      <Text style={styles.loginText}>
-        Al een account? <Text style={styles.loginLink}>Log in</Text>
-      </Text>
+</Link>
+      {/* Gebruik Link om naar een ander scherm te navigeren */}
+      <Link href="/tabs/index" style={styles.loginText}>
+        <Text style={styles.loginLink}>Ga naar Startscherm</Text>
+      </Link>
     </View>
   );
 }
@@ -83,6 +87,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   saveButtonText: { color: '#FFFFFF', fontSize: 16, fontWeight: 'bold' },
-  loginText: { textAlign: 'center', color: '#555555' },
+  loginText: { textAlign: 'center', color: '#555555', marginTop: 20 },
   loginLink: { color: '#00A86B', fontWeight: 'bold' },
 });

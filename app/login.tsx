@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router'; // Gebruik de router voor navigatie
+import { Link } from 'expo-router'; // Gebruik de router voor navigatie
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const router = useRouter(); // Initialiseer de router
+ // Initialiseer de router
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -71,8 +71,9 @@ export default function LoginScreen() {
       </View>
 
       <Text style={styles.registerText}>
-        Nieuw bij Breezd? <Text style={styles.registerLink}>Registreer</Text>
-      </Text>
+        Nieuw bij Breezd?  
+        <Link href="/(tabs)/register" asChild><Text style={styles.registerLink}>Registreer</Text>
+      </Link></Text>
     </View>
   );
 }
