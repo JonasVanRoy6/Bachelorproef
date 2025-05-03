@@ -1,8 +1,6 @@
 import { Tabs } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
-import { PuffProvider } from './screens/PuffContext';
-import StatsScreen from './StatsScreen';
-import RegisterScreen from './screens/RegisterScreen';
+import { PuffProvider } from "../puffcontext"; // aangepaste pad naar context
 
 export default function Layout() {
   return (
@@ -17,7 +15,7 @@ export default function Layout() {
       >
         {/* Home Tab */}
         <Tabs.Screen
-          name="startscherm"
+          name="index"
           options={{
             title: "Home",
             tabBarIcon: ({ color, size }) => (
@@ -39,7 +37,7 @@ export default function Layout() {
 
         {/* Tracker Tab */}
         <Tabs.Screen
-          name="TrackerScreen"
+          name="tracker"
           options={{
             title: "Tracker",
             tabBarIcon: ({ color, size }) => (
@@ -50,22 +48,11 @@ export default function Layout() {
 
         {/* Stats Tab */}
         <Tabs.Screen
-          name="StatsScreen"
+          name="stats"
           options={{
             title: "Stats",
             tabBarIcon: ({ color, size }) => (
               <FontAwesome name="bar-chart" size={size} color={color} />
-            ),
-          }}
-        />
-
-        {/* Register Tab */}
-        <Tabs.Screen
-          name="RegisterScreen"
-          options={{
-            title: "Register",
-            tabBarIcon: ({ color, size }) => (
-              <FontAwesome name="user-plus" size={size} color={color} />
             ),
           }}
         />

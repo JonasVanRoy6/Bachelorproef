@@ -116,6 +116,6 @@ app.get("/test", (req, res) => {
 });
 
 // Server starten
-app.listen(PORT, () => {
-  console.log(`🚀 Server draait op http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server draait op http://192.168.0.130:${PORT}`);
 });

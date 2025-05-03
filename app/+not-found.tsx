@@ -8,7 +8,7 @@ const NotFoundScreen = () => {
     <ThemedView style={styles.container}>
       <ThemedText type="title">Oops! Page not found.</ThemedText>
       <ThemedText type="body">Sorry, the page you're looking for doesn't exist.</ThemedText>
-      <Link href="/screens/HomeScreen" style={styles.link}>
+      <Link href="/" style={styles.link}>
         <ThemedText type="link">Go to Home</ThemedText>
       </Link>
     </ThemedView>

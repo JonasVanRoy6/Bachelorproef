@@ -1,10 +1,10 @@
 import React from "react";
 import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
-import { FontAwesome5 } from "@expo/vector-icons";
-import { usePuffs } from '../screens/PuffContext'; // Importeer usePuffs om toegang te krijgen tot de context
+import { usePuffs } from "../puffcontext";
 
 const HomeScreen = () => {
-  const { puffs } = usePuffs(); // Gebruik usePuffs om de puffs waarde op te halen
+  const { puffs } = usePuffs(); // Haal de puffs op uit de context
+  const maxPuffsPerDay = 80; // Maximale puffs per dag
 
   return (
     <View style={styles.wrapper}>
@@ -22,8 +22,8 @@ const HomeScreen = () => {
           <Text style={styles.progressTitle}>4 dagen</Text>
           <Text style={styles.progressSubtitle}>onder je doel</Text>
           <View style={styles.progressDetails}>
-            <Text style={styles.firstText}>Puffs vandaag: <Text style={styles.boldText}>{puffs}/80</Text></Text> {/* Toon de waarde van puffs */}
-            <Text style={styles.firstText}>Puffs over: <Text style={styles.boldText}>{80 - puffs}</Text></Text>
+            <Text style={styles.firstText}>Puffs vandaag: <Text style={styles.boldText}>{puffs}/{maxPuffsPerDay}</Text></Text>
+            <Text style={styles.firstText}>Puffs over: <Text style={styles.boldText}>{Math.max(0, maxPuffsPerDay - puffs)}</Text></Text>
             <Text style={styles.firstText}>Plan: <Text style={styles.boldText}>10 puffs per week</Text></Text>
           </View>
         </View>

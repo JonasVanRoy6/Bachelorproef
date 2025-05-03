@@ -14,7 +14,7 @@ const AddPuffsScreen = () => {
   }, [duration, intensity]);
 
   const calculatePuffs = () => {
-    let basePuffs = duration / 2; // Example calculation
+    let basePuffs = duration / 2;
     if (intensity === 'Weinig') basePuffs *= 0.5;
     if (intensity === 'Veel') basePuffs *= 1.5;
     setEstimatedPuffs(Math.round(basePuffs));
@@ -25,7 +25,7 @@ const AddPuffsScreen = () => {
     if (estimatedPuffs > 0) {
       try {
         console.log("Saving puffs:", estimatedPuffs);
-        const response = await fetch("http://192.168.0.105:5000/puffs", {
+        const response = await fetch("http://192.168.0.130:5000/puffs", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -37,11 +37,8 @@ const AddPuffsScreen = () => {
           throw new Error('Network response was not ok');
         }
 
-        // Toon succesbericht
         Alert.alert("Succes", "Puffs opgeslagen!");
-
-        // Gebruik router.push in plaats van navigation.navigate
-        router.push('/startscherm');  // Pas de route aan naar een geldige route in je configuratie
+        router.push('/'); // terug naar home/index
       } catch (error) {
         console.error("Fout bij opslaan puffs:", error);
         Alert.alert("Fout", "Er is een fout opgetreden bij het opslaan van de puffs.");

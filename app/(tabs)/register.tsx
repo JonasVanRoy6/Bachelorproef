@@ -19,7 +19,7 @@ export default function RegisterScreen() {
     console.log("Verzonden gegevens:", data); // Controleer de gegevens die worden verzonden
 
     try {
-      const response = await fetch('http://192.168.0.105:5000/register', {
+      const response = await fetch('http://192.168.0.130:5000/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ export default function RegisterScreen() {
         value={birthDate}
         onChangeText={setBirthDate}
       />
-      <Link href="/screens/PasswordScreen" asChild>
+      <Link href="/" asChild>
       <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
         <Text style={styles.registerButtonText}>Volgende</Text>
       </TouchableOpacity>

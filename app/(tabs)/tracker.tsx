@@ -1,26 +1,25 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { usePuffs } from './screens/PuffContext';
+import { usePuffs } from '../puffcontext';
 import { Link } from 'expo-router';
 
 const TrackerScreen = () => {
   const navigation = useNavigation();
-  const context = usePuffs();
+const context = usePuffs();
 
-  console.log("TrackerScreen - context:", context);
+if (!context) {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.errorText}>
+        Fout: usePuffs() kan niet worden gebruikt buiten PuffProvider!
+      </Text>
+    </View>
+  );
+}
 
-  if (!context) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>
-          Fout: usePuffs() kan niet worden gebruikt buiten PuffProvider!
-        </Text>
-      </View>
-    );
-  }
+const { puffs } = context;
 
-  const { puffs } = context;
 
   return (
     <View style={styles.container}>

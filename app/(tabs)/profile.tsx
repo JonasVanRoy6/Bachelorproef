@@ -5,21 +5,21 @@ import { View, Text, Image, FlatList, TouchableOpacity, StyleSheet } from 'react
 const user = {
   name: 'Jelle De Boeck',
   username: '@jelle07011',
-  profilePic: require("../assets/images/spongebob.png"),
+  profilePic: require("../../assets/images/spongebob.png"),
   friends: [
-    { id: '1', name: 'Jonas', image: require("../assets/images/jonas.png") },
-    { id: '2', name: 'Arno', image: require("../assets/images/arno.png") },
-    { id: '3', name: 'Lotte', image: require("../assets/images/lotte.png") },
+    { id: '1', name: 'Jonas', image: require("../../assets/images/jonas.png") },
+    { id: '2', name: 'Arno', image: require("../../assets/images/arno.png") },
+    { id: '3', name: 'Lotte', image: require("../../assets/images/lotte.png") },
   ],
   badges: [
-    require("../assets/images/racket.png"),
-    require("../assets/images/blad.png"),
-    require("../assets/images/doel.png"),
-    require("../assets/images/hand.png"),
+    require("../../assets/images/racket.png"),
+    require("../../assets/images/blad.png"),
+    require("../../assets/images/doel.png"),
+    require("../../assets/images/hand.png"),
   ],
   suggestedFriends: [
-    { id: '4', name: 'Jens De Wachter', mutual: 3, image: require("../assets/images/jens.png") },
-    { id: '5', name: 'Andres Cochez', mutual: 3, image: require("../assets/images/andres.png") },
+    { id: '4', name: 'Jens De Wachter', mutual: 3, image: require("../../assets/images/jens.png") },
+    { id: '5', name: 'Andres Cochez', mutual: 3, image: require("../../assets/images/andres.png") },
   ],
  
 };
