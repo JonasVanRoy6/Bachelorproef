@@ -1,65 +1,83 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { Link } from 'expo-router';
+import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { useRouter } from 'expo-router';
 
 export default function PlanScreen() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const router = useRouter();
 
   const handlePlanSelection = (plan: string) => {
     setSelectedPlan(plan);
-    Alert.alert('Plan geselecteerd', `Je hebt gekozen voor: ${plan}`);
+    setModalVisible(true); // Toon de overlay
+  };
+
+  const closeModalAndNavigate = () => {
+    setModalVisible(false); // Verberg de overlay
+    router.push('/successScreen'); // Navigeer naar de "Proficiat"-pagina
   };
 
   return (
     <View style={styles.container}>
-      <Link href="/whyScreen" style={styles.backButton}>
-        <Text style={styles.backButtonText}>←</Text>
-      </Link>
-
       <Text style={styles.title}>Kies jouw traject.</Text>
       <Text style={styles.subtitle}>
         Selecteer een plan dat het beste bij jou past om geleidelijk te stoppen met vapen.
       </Text>
 
       {/* Geleidelijke Reductie Plan */}
-      <TouchableOpacity
-        style={[
-          styles.planCard,
-          selectedPlan === 'Geleidelijke Reductie' && styles.planCardSelected,
-        ]}
-        onPress={() => handlePlanSelection('Geleidelijke Reductie')}
-      >
+      <View style={[styles.planCard, selectedPlan === 'Geleidelijke Reductie' && styles.planCardSelected]}>
         <Text style={styles.planLabel}>Aanbevolen</Text>
         <Text style={styles.planTitle}>Geleidelijke Reductie</Text>
         <Text style={styles.planDescription}>Verminder met 10 puffs per week</Text>
         <Text style={styles.planFeature}>✔ Beheersbare afname</Text>
         <Text style={styles.planFeature}>✔ Grotere kans op slagen</Text>
-        <TouchableOpacity style={styles.planButton}>
+        <TouchableOpacity style={styles.planButton} onPress={() => handlePlanSelection('Geleidelijke Reductie')}>
           <Text style={styles.planButtonText}>Kies dit plan</Text>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </View>
 
       {/* Agressieve Reductie Plan */}
-      <TouchableOpacity
-        style={[
-          styles.planCard,
-          selectedPlan === 'Agressieve Reductie' && styles.planCardSelected,
-        ]}
-        onPress={() => handlePlanSelection('Agressieve Reductie')}
-      >
+      <View style={[styles.planCard, selectedPlan === 'Agressieve Reductie' && styles.planCardSelected]}>
         <Text style={styles.planTitle}>Agressieve Reductie</Text>
         <Text style={styles.planDescription}>Verminder met 50 puffs per week</Text>
         <Text style={styles.planFeature}>⚡ Snellere resultaten</Text>
         <Text style={styles.planFeature}>⚠ Meer uitdagend</Text>
-        <TouchableOpacity style={styles.planButton}>
+        <TouchableOpacity style={styles.planButton} onPress={() => handlePlanSelection('Agressieve Reductie')}>
           <Text style={styles.planButtonText}>Kies dit plan</Text>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </View>
 
-      {/* Later beslissen */}
-      <Link href="/tabs/index" style={styles.laterLink}>
-        <Text style={styles.laterText}>Later beslissen</Text>
-      </Link>
+      {/* Overlay Modal */}
+      <Modal
+        visible={modalVisible}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{selectedPlan}</Text>
+            <Text style={styles.modalSubtitle}>Plan Details</Text>
+            {selectedPlan === 'Geleidelijke Reductie' && (
+              <>
+                <Text style={styles.modalFeature}>✔ Verminder met 10 puffs per week</Text>
+                <Text style={styles.modalFeature}>✔ Beheersbare afname</Text>
+                <Text style={styles.modalFeature}>✔ Grotere kans op slagen</Text>
+              </>
+            )}
+            {selectedPlan === 'Agressieve Reductie' && (
+              <>
+                <Text style={styles.modalFeature}>⚡ Verminder met 50 puffs per week</Text>
+                <Text style={styles.modalFeature}>⚡ Snellere resultaten</Text>
+                <Text style={styles.modalFeature}>⚠ Meer uitdagend</Text>
+              </>
+            )}
+            <TouchableOpacity style={styles.modalButton} onPress={closeModalAndNavigate}>
+              <Text style={styles.modalButtonText}>Ga verder</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -69,13 +87,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#FFFFFF',
-  },
-  backButton: {
-    marginBottom: 20,
-  },
-  backButtonText: {
-    fontSize: 18,
-    color: '#333333',
   },
   title: {
     fontSize: 24,
@@ -136,13 +147,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
   },
-  laterLink: {
-    marginTop: 20,
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
     alignItems: 'center',
   },
-  laterText: {
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#333333',
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    color: '#666666',
+    marginBottom: 20,
+  },
+  modalFeature: {
     fontSize: 14,
-    color: '#00A86B',
-    textAlign: 'center',
+    color: '#333333',
+    marginBottom: 5,
+  },
+  modalButton: {
+    backgroundColor: '#00A86B',
+    paddingVertical: 15,
+    borderRadius: 25,
+    alignItems: 'center',
+    marginTop: 20,
+    width: '100%',
+  },
+  modalButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
