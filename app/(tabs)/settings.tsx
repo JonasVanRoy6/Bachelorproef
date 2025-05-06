@@ -30,7 +30,10 @@ const SettingsScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.sectionSpacing} />
-        <TouchableOpacity style={styles.item}>
+        <TouchableOpacity
+          style={styles.item}
+          onPress={() => router.push('/accountsettings')}
+>
           <FontAwesome name="user" size={18} color="#29A86E" />
           <Text style={styles.label}>Accountinstellingen</Text>
           <FontAwesome name="chevron-right" size={14} color="#ccc" />
@@ -38,7 +41,7 @@ const SettingsScreen = () => {
 
         {/* TRACKING & GOALS */}
         <Text style={styles.section}>TRACKING & GOALS</Text>
-        <TouchableOpacity style={styles.item}>
+        <TouchableOpacity style={styles.item} onPress={() => router.push('/connect-armband')}>
           <FontAwesome name="bluetooth" size={18} color="#29A86E" />
           <Text style={styles.label}>Verbind Armband</Text>
           <FontAwesome name="chevron-right" size={14} color="#ccc" />

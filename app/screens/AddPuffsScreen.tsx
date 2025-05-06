@@ -25,7 +25,7 @@ const AddPuffsScreen = () => {
     if (estimatedPuffs > 0) {
       try {
         console.log("Saving puffs:", estimatedPuffs);
-        const response = await fetch("http://192.168.0.105:5000/puffs", {
+        const response = await fetch("http://192.168.0.130:5000/puffs", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
