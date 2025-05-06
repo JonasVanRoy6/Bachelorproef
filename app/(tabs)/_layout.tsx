@@ -56,17 +56,28 @@ export default function Layout() {
             ),
           }}
         />
-    {/* Instellingen Tab */}
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Instellingen",
-          tabBarIcon: ({ color, size }) => (
-            <FontAwesome name="cogs" size={size} color={color} />
-          ),
-        }}
-      />
 
+        {/* Leaderboard Tab */}
+        <Tabs.Screen
+          name="leaderboard"
+          options={{
+            title: "Leaderboard",
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesome name="trophy" size={size} color={color} />
+            ),
+          }}
+        />
+
+        {/* Instellingen Tab */}
+        <Tabs.Screen
+          name="settings"
+          options={{
+            title: "Instellingen",
+            tabBarIcon: ({ color, size }) => (
+              <FontAwesome name="cogs" size={size} color={color} />
+            ),
+          }}
+        />
       </Tabs>
     </PuffProvider>
   );
