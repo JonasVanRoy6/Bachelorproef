@@ -36,7 +36,7 @@ export default function LeaderboardDetailsScreen() {
           </TouchableOpacity>
         </View>
 
-        <TouchableOpacity style={styles.inviteButton}>
+        <TouchableOpacity onPress={() => router.push('/invite')} style={styles.inviteButton}>
           <FontAwesome name="user-plus" size={18} color="#29A86E" style={{ marginRight: 8 }} />
           <Text style={styles.inviteText}>Vrienden uitnodigen</Text>
         </TouchableOpacity>

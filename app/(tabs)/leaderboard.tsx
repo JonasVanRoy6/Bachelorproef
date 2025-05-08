@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,8 @@ import {
   Image,
   ScrollView
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { FontAwesome } from '@expo/vector-icons';
 
 const avatarMap: Record<string, any> = {
   'andres.png': require('../../assets/images/andres.png'),
@@ -37,87 +38,114 @@ const leaderboardsData = [
 const LeaderboardScreen = () => {
   const [search, setSearch] = useState('');
   const router = useRouter();
+  const { created } = useLocalSearchParams();
+  const [showSuccess, setShowSuccess] = useState(created === 'true');
+
+  useEffect(() => {
+    if (created === 'true') {
+      const timer = setTimeout(() => setShowSuccess(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [created]);
 
   const filtered = leaderboardsData.filter(lb =>
     search.length > 0 ? lb.name.toLowerCase().includes(search.toLowerCase()) : lb.joined
   );
 
   return (
-    <ScrollView
-      style={{ backgroundColor: '#fff' }}
-      contentContainerStyle={styles.container}
-    >
-      <Text style={styles.title}>Leaderboards</Text>
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      <ScrollView
+        contentContainerStyle={styles.container}
+      >
+        <Text style={styles.title}>Leaderboards</Text>
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Mijn leaderboards</Text>
-        <TouchableOpacity><Text style={styles.addLink}>+ Toevoegen</Text></TouchableOpacity>
-      </View>
-
-      {leaderboardsData.filter(lb => lb.joined).map((lb, index) => (
-        <TouchableOpacity
-          key={index}
-          style={styles.joinedCard}
-          onPress={() => router.push('/leaderboarddetails')}
-        >
-          <View style={styles.cardTop}>
-            <Text style={styles.cardTitle}>{lb.name}</Text>
-            <View style={styles.rankBadge}><Text style={styles.rankText}>#{lb.rank}</Text></View>
-          </View>
-          <View style={styles.spacer12} />
-          <View style={styles.avatarRow}>
-            {lb.avatars.map((img, i) => (
-              <Image
-                key={i}
-                source={avatarMap[img]}
-                style={styles.avatar}
-              />
-            ))}
-            <Text style={styles.participantText}>{lb.participants} deelnemers</Text>
-          </View>
-        </TouchableOpacity>
-      ))}
-
-      <View style={styles.sectionDivider} />
-
-      <Text style={styles.sectionTitle}>Join een leaderboard</Text>
-
-      <View style={styles.searchWrapper}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Geef een leaderboardcode in"
-          value={search}
-          onChangeText={setSearch}
-          placeholderTextColor="#515151"
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')} style={styles.clearButton}>
-            <Text style={styles.clearText}>X</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Mijn leaderboards</Text>
+          <TouchableOpacity>
+            <Text
+              onPress={() => router.push('/leaderboard-create')}
+              style={styles.addLink}
+            >
+              + Toevoegen
+            </Text>
           </TouchableOpacity>
-        )}
-      </View>
-
-      {filtered.filter(lb => !lb.joined).map((lb, index) => (
-        <View key={index} style={styles.searchResultCard}>
-          <View style={styles.cardTop}>
-            <Text style={styles.cardTitle}>{lb.name}</Text>
-            <TouchableOpacity style={styles.joinButton}>
-              <Text style={styles.joinText}>Deelnemen</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.avatarRow}>
-            {lb.avatars.map((img, i) => (
-              <Image
-                key={i}
-                source={avatarMap[img]}
-                style={styles.avatar}
-              />
-            ))}
-            <Text style={styles.participantText}>{lb.participants} deelnemers</Text>
-          </View>
         </View>
-      ))}
-    </ScrollView>
+
+        {leaderboardsData.filter(lb => lb.joined).map((lb, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.joinedCard}
+            onPress={() => router.push('/leaderboarddetails')}
+          >
+            <View style={styles.cardTop}>
+              <Text style={styles.cardTitle}>{lb.name}</Text>
+              <View style={styles.rankBadge}><Text style={styles.rankText}>#{lb.rank}</Text></View>
+            </View>
+            <View style={styles.spacer12} />
+            <View style={styles.avatarRow}>
+              {lb.avatars.map((img, i) => (
+                <Image
+                  key={i}
+                  source={avatarMap[img]}
+                  style={styles.avatar}
+                />
+              ))}
+              <Text style={styles.participantText}>{lb.participants} deelnemers</Text>
+            </View>
+          </TouchableOpacity>
+        ))}
+
+        <View style={styles.sectionDivider} />
+
+        <Text style={styles.sectionTitle}>Join een leaderboard</Text>
+
+        <View style={styles.searchWrapper}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Geef een leaderboardcode in"
+            value={search}
+            onChangeText={setSearch}
+            placeholderTextColor="#515151"
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')} style={styles.clearButton}>
+              <Text style={styles.clearText}>X</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {filtered.filter(lb => !lb.joined).map((lb, index) => (
+          <View key={index} style={styles.searchResultCard}>
+            <View style={styles.cardTop}>
+              <Text style={styles.cardTitle}>{lb.name}</Text>
+              <TouchableOpacity style={styles.joinButton}>
+                <Text style={styles.joinText}>Deelnemen</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.avatarRow}>
+              {lb.avatars.map((img, i) => (
+                <Image
+                  key={i}
+                  source={avatarMap[img]}
+                  style={styles.avatar}
+                />
+              ))}
+              <Text style={styles.participantText}>{lb.participants} deelnemers</Text>
+            </View>
+          </View>
+        ))}
+      </ScrollView>
+
+      {showSuccess && (
+        <View style={styles.successBanner}>
+          <FontAwesome name="check" size={16} color="#fff" style={{ marginRight: 8 }} />
+          <Text style={styles.successText}>Leaderboard succesvol aangemaakt!</Text>
+          <TouchableOpacity onPress={() => setShowSuccess(false)}>
+            <FontAwesome name="times" size={16} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      )}
+    </View>
   );
 };
 
@@ -245,6 +273,24 @@ const styles = StyleSheet.create({
     color: '#F5F5F5',
     fontSize: 12,
     fontWeight: 'bold'
+  },
+  successBanner: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: '#29A86E',
+    borderRadius: 12,
+    height: 56,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    justifyContent: 'space-between',
+  },  
+  successText: {
+    color: '#fff',
+    fontSize: 14,
+    flex: 1,
   }
 });
 

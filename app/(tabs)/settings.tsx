@@ -77,12 +77,12 @@ const SettingsScreen = () => {
           <Text style={styles.label}>Support</Text>
           <FontAwesome name="chevron-right" size={14} color="#ccc" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.item}>
+        <TouchableOpacity onPress={() => router.push('/privacybeleid')} style={styles.item}>
           <FontAwesome name="shield" size={18} color="#29A86E" />
           <Text style={styles.label}>Privacybeleid</Text>
           <FontAwesome name="chevron-right" size={14} color="#ccc" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.item}>
+        <TouchableOpacity onPress={() => router.push('/servicevoorwaarden')} style={styles.item}>
           <FontAwesome name="file" size={18} color="#29A86E" />
           <Text style={styles.label}>Servicevoorwaarden</Text>
           <FontAwesome name="chevron-right" size={14} color="#ccc" />
