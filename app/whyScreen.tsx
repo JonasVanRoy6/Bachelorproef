@@ -1,23 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { Link } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 
 export default function WhyScreen() {
+  const router = useRouter();
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handleNext = (e: React.MouseEvent) => {
+  // Haal het userId op uit AsyncStorage
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      console.log("Ophalen userId uit AsyncStorage:", storedUserId); // Debugging
+      if (storedUserId) {
+        setUserId(storedUserId);
+      } else {
+        Alert.alert('Fout', 'Gebruiker niet gevonden. Log opnieuw in.');
+        router.push('/login'); // Stuur de gebruiker terug naar het inlogscherm
+      }
+    };
+
+    fetchUserId();
+  }, []);
+
+  const handleNext = async () => {
     if (!selectedReason) {
-      e.preventDefault(); // Voorkom navigatie
       Alert.alert('Fout', 'Selecteer een reden voordat je verder gaat.');
+      return;
+    }
+
+    const payload = { userId, reason: selectedReason }; // Stuur alleen de reason
+    console.log("Verstuurde gegevens:", payload); // Debugging
+
+    try {
+      const response = await fetch('http://192.168.0.105:5000/saveGoal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseData = await response.json();
+      console.log("Response van backend:", responseData); // Debugging
+
+      if (!response.ok) {
+        console.error("Fout van server:", responseData); // Debugging
+        throw new Error(responseData.error || 'Er is een fout opgetreden bij het opslaan van de reden.');
+      }
+
+      Alert.alert('Succes', `Je reden is opgeslagen: ${selectedReason}`);
+      router.push('/usageScreen'); // Navigeer naar het volgende scherm
+    } catch (error) {
+      console.error("Fout bij het opslaan:", error); // Debugging
+      Alert.alert('Fout', 'Er is een fout opgetreden bij het opslaan van de reden.');
     }
   };
 
   return (
     <View style={styles.container}>
-      <Link href="/goals" style={styles.backButton}>
-        <Text style={styles.backButtonText}>←</Text>
-      </Link>
-
       <Text style={styles.title}>Waarom wil je dit doen?</Text>
 
       <TouchableOpacity
@@ -48,12 +90,9 @@ export default function WhyScreen() {
         <Text style={styles.reasonButtonText}>Voor mijn welzijn</Text>
       </TouchableOpacity>
 
-      {/* Maak de hele knop klikbaar en centreer de tekst */}
-      <Link href="/usageScreen" style={styles.nextButton} onPress={handleNext}>
-        <View style={[styles.nextButtonContent, { width: '100%' }]}>
-          <Text style={styles.nextButtonText}>Volgende</Text>
-        </View>
-      </Link>
+      <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+        <Text style={styles.nextButtonText}>Volgende</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -63,13 +102,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#FFFFFF',
-  },
-  backButton: {
-    marginBottom: 20,
-  },
-  backButtonText: {
-    fontSize: 18,
-    color: '#333333',
   },
   title: {
     fontSize: 24,
@@ -98,13 +130,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#00A86B',
     paddingVertical: 15,
     borderRadius: 25,
-    marginTop: 20,
-    alignItems: 'center', // Zorg ervoor dat de inhoud horizontaal gecentreerd is
-    justifyContent: 'center', // Zorg ervoor dat de inhoud verticaal gecentreerd is
-  },
-  nextButtonContent: {
     alignItems: 'center',
-    justifyContent: 'center',
+    marginTop: 20,
   },
   nextButtonText: {
     color: '#FFFFFF',

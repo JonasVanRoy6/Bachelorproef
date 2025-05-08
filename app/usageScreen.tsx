@@ -1,19 +1,55 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function UsageScreen() {
   const [currentUsage, setCurrentUsage] = useState('');
   const [goalUsage, setGoalUsage] = useState('');
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!currentUsage || !goalUsage) {
       Alert.alert('Fout', 'Vul beide velden in voordat je verder gaat.');
       return;
     }
 
-    Alert.alert('Succes', `Je huidige gebruik: ${currentUsage}, Je doel: ${goalUsage}`);
-    // Hier kun je navigeren naar het volgende scherm of de gegevens opslaan
+    try {
+      const userId = await AsyncStorage.getItem('userId'); // Haal het userId op uit AsyncStorage
+      if (!userId) {
+        Alert.alert('Fout', 'Gebruiker niet gevonden. Log opnieuw in.');
+        return;
+      }
+
+      const payload = {
+        userId,
+        currentUsage: parseInt(currentUsage, 10),
+        goalUsage: parseInt(goalUsage, 10),
+      };
+
+      console.log("Verstuurde gegevens:", payload); // Debugging
+
+      const response = await fetch('http://192.168.0.105:5000/saveGoal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseData = await response.json();
+      console.log("Response van backend:", responseData); // Debugging
+
+      if (!response.ok) {
+        console.error("Fout van server:", responseData); // Debugging
+        throw new Error(responseData.error || 'Er is een fout opgetreden bij het opslaan van de gegevens.');
+      }
+
+      Alert.alert('Succes', 'Je gegevens zijn opgeslagen.');
+      router.push('/planScreen'); // Navigeer naar het volgende scherm
+    } catch (error) {
+      console.error("Fout bij het opslaan:", error); // Debugging
+      Alert.alert('Fout', 'Er is een fout opgetreden bij het opslaan van de gegevens.');
+    }
   };
 
   return (

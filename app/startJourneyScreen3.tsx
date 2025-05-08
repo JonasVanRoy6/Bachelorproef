@@ -23,7 +23,7 @@ export default function StartJourneyScreen() {
       </Text>
 
       {/* Volgende knop */}
-      <TouchableOpacity style={styles.nextButton} onPress={() => router.push('/startJourneyScreen2')}>
+      <TouchableOpacity style={styles.nextButton} onPress={() => router.push('/(tabs)/profile')}>
         <Text style={styles.nextButtonText}>Volgende</Text>
       </TouchableOpacity>
     </View>

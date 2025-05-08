@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Link } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RegisterScreen() {
   const [firstName, setFirstName] = useState('');
@@ -19,7 +20,7 @@ export default function RegisterScreen() {
     console.log("Verzonden gegevens:", data); // Controleer de gegevens die worden verzonden
 
     try {
-      const response = await fetch('http://192.168.0.130:5000/register', {
+      const response = await fetch('http://192.168.0.105:5000/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -30,7 +31,14 @@ export default function RegisterScreen() {
       console.log("Response status:", response.status);
 
       if (response.ok) {
+        const responseData = await response.json();
+        console.log("Response data:", responseData);
+
+        // Sla het userId op in AsyncStorage
+        await AsyncStorage.setItem('userId', responseData.userId.toString());
+
         Alert.alert('Succes', 'Gebruiker succesvol geregistreerd!');
+        // Navigeer naar het GoalsScreen
       } else {
         const errorData = await response.json();
         console.error("Foutmelding van server:", errorData);

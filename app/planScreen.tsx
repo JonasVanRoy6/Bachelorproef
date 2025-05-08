@@ -1,15 +1,52 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function PlanScreen() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const router = useRouter();
 
-  const handlePlanSelection = (plan: string) => {
+  const handlePlanSelection = async (plan: string) => {
     setSelectedPlan(plan);
     setModalVisible(true); // Toon de overlay
+
+    try {
+      const userId = await AsyncStorage.getItem('userId'); // Haal het userId op uit AsyncStorage
+      if (!userId) {
+        Alert.alert('Fout', 'Gebruiker niet gevonden. Log opnieuw in.');
+        return;
+      }
+
+      const payload = {
+        userId,
+        plan,
+      };
+
+      console.log("Verstuurde gegevens:", payload); // Debugging
+
+      const response = await fetch('http://192.168.0.105:5000/saveGoal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseData = await response.json();
+      console.log("Response van backend:", responseData); // Debugging
+
+      if (!response.ok) {
+        console.error("Fout van server:", responseData); // Debugging
+        throw new Error(responseData.error || 'Er is een fout opgetreden bij het opslaan van het plan.');
+      }
+
+      console.log('Plan succesvol opgeslagen.');
+    } catch (error) {
+      console.error("Fout bij het opslaan van het plan:", error); // Debugging
+      Alert.alert('Fout', 'Er is een fout opgetreden bij het opslaan van het plan.');
+    }
   };
 
   const closeModalAndNavigate = () => {

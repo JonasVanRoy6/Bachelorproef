@@ -1,27 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function GoalsScreen() {
   const router = useRouter();
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handleNext = () => {
+  // Haal het userId op uit AsyncStorage
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const storedUserId = await AsyncStorage.getItem('userId');
+      console.log("Ophalen userId uit AsyncStorage:", storedUserId); // Debugging
+      if (storedUserId) {
+        setUserId(storedUserId);
+      } else {
+        Alert.alert('Fout', 'Gebruiker niet gevonden. Log opnieuw in.');
+        router.push('/login'); // Stuur de gebruiker terug naar het inlogscherm
+      }
+    };
+
+    fetchUserId();
+  }, []);
+
+  const handleNext = async () => {
     if (!selectedGoal) {
       Alert.alert('Fout', 'Selecteer een doel voordat je verder gaat.');
       return;
     }
 
-    Alert.alert('Succes', `Je doel is ingesteld: ${selectedGoal}`);
-    router.push('/whyScreen'); // Navigeer naar het "Waarom"-scherm
+    try {
+      const response = await fetch('http://192.168.0.105:5000/saveGoal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, goal: selectedGoal }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Er is een fout opgetreden bij het opslaan van het doel.');
+      }
+
+      Alert.alert('Succes', `Je doel is ingesteld: ${selectedGoal}`);
+      router.push('/whyScreen'); // Navigeer naar het "Waarom"-scherm
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Fout', 'Er is een fout opgetreden bij het opslaan van het doel.');
+    }
   };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-        <Text style={styles.backButtonText}>←</Text>
-      </TouchableOpacity>
-
       <Text style={styles.title}>Wat is je doel?</Text>
 
       <TouchableOpacity
@@ -64,13 +95,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     backgroundColor: '#FFFFFF',
-  },
-  backButton: {
-    marginBottom: 20,
-  },
-  backButtonText: {
-    fontSize: 18,
-    color: '#333333',
   },
   title: {
     fontSize: 24,

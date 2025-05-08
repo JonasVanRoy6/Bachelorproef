@@ -50,13 +50,9 @@ app.get("/puffs", (req, res) => {
 
 // Endpoint om gebruikersgegevens op te slaan
 app.post("/register", (req, res) => {
-  console.log("Ontvangen POST-verzoek op /register:", req.body); // Log de ontvangen gegevens
-
   const { firstName, lastName, email, birthDate } = req.body;
 
-  // Controleer of alle velden zijn ingevuld
   if (!firstName || !lastName || !email || !birthDate) {
-    console.log("Ontbrekende velden:", { firstName, lastName, email, birthDate });
     return res.status(400).json({ error: "Alle velden zijn verplicht" });
   }
 
@@ -66,7 +62,8 @@ app.post("/register", (req, res) => {
       console.error("Fout bij het opslaan van gebruiker:", err);
       return res.status(500).json({ error: "Er is een fout opgetreden bij het opslaan van de gebruiker" });
     }
-    res.status(201).json({ message: "Gebruiker succesvol geregistreerd", id: result.insertId });
+
+    res.status(201).json({ message: "Gebruiker succesvol geregistreerd", userId: result.insertId });
   });
 });
 
@@ -95,7 +92,7 @@ app.post("/login", (req, res) => {
     return res.status(400).json({ error: "E-mailadres en wachtwoord zijn verplicht." });
   }
 
-  const query = "SELECT first_name FROM users WHERE email = ? AND password = ?";
+  const query = "SELECT id, first_name FROM users WHERE email = ? AND password = ?";
   db.query(query, [email, password], (err, results) => {
     if (err) {
       console.error("Fout bij het ophalen van gebruiker:", err);
@@ -103,10 +100,43 @@ app.post("/login", (req, res) => {
     }
 
     if (results.length > 0) {
-      res.json({ firstName: results[0].first_name });
+      res.json({ userId: results[0].id, firstName: results[0].first_name });
     } else {
       res.status(401).json({ error: "Ongeldig e-mailadres of wachtwoord." });
     }
+  });
+});
+
+// Endpoint om doelen op te slaan
+app.post("/saveGoal", (req, res) => {
+  const { userId, goal, reason, currentUsage, goalUsage, plan } = req.body;
+
+  console.log("Ontvangen gegevens:", { userId, goal, reason, currentUsage, goalUsage, plan }); // Debugging
+
+  if (!userId) {
+    console.error("Ontbrekende gegevens:", { userId, goal, reason, currentUsage, goalUsage, plan }); // Debugging
+    return res.status(400).json({ error: "Gebruiker ID is verplicht." });
+  }
+
+  const query = `
+    INSERT INTO user_goals (user_id, goal, reason, current_usage, goal_usage, plan, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, NOW())
+    ON DUPLICATE KEY UPDATE
+    goal = IF(VALUES(goal) IS NOT NULL, VALUES(goal), goal),
+    reason = IF(VALUES(reason) IS NOT NULL, VALUES(reason), reason),
+    current_usage = IF(VALUES(current_usage) IS NOT NULL, VALUES(current_usage), current_usage),
+    goal_usage = IF(VALUES(goal_usage) IS NOT NULL, VALUES(goal_usage), goal_usage),
+    plan = IF(VALUES(plan) IS NOT NULL, VALUES(plan), plan)
+  `;
+
+  db.query(query, [userId, goal, reason, currentUsage, goalUsage, plan], (err, result) => {
+    if (err) {
+      console.error("Fout bij het opslaan van de gegevens:", err); // Debugging
+      return res.status(500).json({ error: "Er is een fout opgetreden bij het opslaan van de gegevens." });
+    }
+
+    console.log("Gegevens succesvol opgeslagen:", result); // Debugging
+    res.status(201).json({ message: "Gegevens succesvol opgeslagen." });
   });
 });
 
@@ -117,5 +147,5 @@ app.get("/test", (req, res) => {
 
 // Server starten
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server draait op http://192.168.0.130:${PORT}`);
+  console.log(`🚀 Server draait op http://192.168.0.105:${PORT}`);
 });
