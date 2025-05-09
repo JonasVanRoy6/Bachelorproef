@@ -54,9 +54,7 @@ const LeaderboardScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      <ScrollView
-        contentContainerStyle={styles.container}
-      >
+      <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Leaderboards</Text>
 
         <View style={styles.sectionHeader}>
@@ -100,6 +98,7 @@ const LeaderboardScreen = () => {
         <Text style={styles.sectionTitle}>Join een leaderboard</Text>
 
         <View style={styles.searchWrapper}>
+          <FontAwesome name="search" size={16} color="#515151" style={{ marginRight: 8 }} />
           <TextInput
             style={styles.searchInput}
             placeholder="Geef een leaderboardcode in"

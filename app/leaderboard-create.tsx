@@ -36,13 +36,16 @@ export default function CreateLeaderboardScreen() {
       </View>
 
       <Text style={styles.label}>Naam leaderboard</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Geen een naam in"
-        placeholderTextColor="#999"
-        value={name}
-        onChangeText={setName}
-      />
+      <View style={styles.inputWrapper}>
+        <FontAwesome name="search" size={16} color="#515151" style={{ marginRight: 8 }} />
+        <TextInput
+          style={styles.input}
+          placeholder="Geef een naam in"
+          placeholderTextColor="#999"
+          value={name}
+          onChangeText={setName}
+        />
+      </View>
 
       <View style={styles.inviteBox}>
         <View style={styles.inviteHeader}>
@@ -68,7 +71,10 @@ export default function CreateLeaderboardScreen() {
         ))}
       </View>
 
-      <TouchableOpacity onPress={() => router.push('/leaderboard?created=true')} style={styles.createButton}>
+      <TouchableOpacity
+        onPress={() => router.push('/leaderboard?created=true')}
+        style={styles.createButton}
+      >
         <Text style={styles.createText}>Leaderboard aanmaken</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -99,14 +105,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 6,
   },
-  input: {
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
     height: 53,
     borderWidth: 1,
     borderColor: '#E3E3E3',
     borderRadius: 12,
     paddingHorizontal: 12,
-    fontSize: 16,
     marginBottom: 24,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
     color: '#000',
   },
   inviteBox: {
