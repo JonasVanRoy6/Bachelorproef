@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Alert, TouchableOpacity } from "react-native";
 import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AddPuffsScreen = () => {
   const [duration, setDuration] = useState(120);
@@ -23,13 +24,26 @@ const AddPuffsScreen = () => {
   const handleSave = async () => {
     if (estimatedPuffs > 0 && timeOfDay) {
       try {
-        console.log("Saving puffs:", estimatedPuffs, "Time of day:", timeOfDay);
+        const userId = await AsyncStorage.getItem('userId'); // Haal de userId op uit AsyncStorage
+        if (!userId) {
+          Alert.alert("Fout", "Gebruiker niet gevonden. Log opnieuw in.");
+          return;
+        }
+
+        const payload = {
+          userId,
+          puffs: estimatedPuffs,
+          timeOfDay,
+        };
+
+        console.log("Verstuurde gegevens:", payload); // Debugging
+
         const response = await fetch("http://192.168.0.105:5000/puffs", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ puffs: estimatedPuffs, timeOfDay }),
+          body: JSON.stringify(payload),
         });
 
         if (!response.ok) {

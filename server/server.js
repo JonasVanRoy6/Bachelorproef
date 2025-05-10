@@ -27,41 +27,48 @@ db.connect((err) => {
   console.log("✅ Verbonden met MySQL-database");
 });
 
-app.post("/puffs", (req, res) => {
-  const { puffs, timeOfDay } = req.body; // Ontvang zowel puffs als timeOfDay
+app.post('/puffs', (req, res) => {
+  const { userId, puffs, timeOfDay } = req.body;
 
-  if (!puffs || !timeOfDay) {
-    return res.status(400).json({ error: "Aantal puffs en tijd van de dag zijn verplicht." });
+  if (!userId || !puffs || !timeOfDay) {
+    return res.status(400).json({ error: 'Gebruiker ID, aantal puffs en tijd van de dag zijn verplicht.' });
   }
 
   const query = `
-    INSERT INTO puffs (amount, time_of_day, created_at)
-    VALUES (?, ?, NOW())
+    INSERT INTO puffs (user_id, amount, time_of_day, created_at)
+    VALUES (?, ?, ?, NOW())
   `;
 
-  db.query(query, [puffs, timeOfDay], (err, result) => {
+  db.query(query, [userId, puffs, timeOfDay], (err, result) => {
     if (err) {
-      console.error("Fout bij het opslaan van de gegevens:", err);
-      return res.status(500).json({ error: "Er is een fout opgetreden bij het opslaan van de gegevens." });
+      console.error('Fout bij het opslaan van de gegevens:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het opslaan van de gegevens.' });
     }
 
-    res.status(201).json({ message: "Gegevens succesvol opgeslagen.", id: result.insertId });
+    res.status(201).json({ message: 'Gegevens succesvol opgeslagen.', id: result.insertId });
   });
 });
 
 // Endpoint om de laatste puff-waarde op te halen
-app.get("/puffs", (req, res) => {
+app.get('/puffs', (req, res) => {
+  const { userId } = req.query; // Ontvang de user_id uit de queryparameters
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
   const query = `
     SELECT amount, time_of_day, created_at
     FROM puffs
+    WHERE user_id = ?
     ORDER BY created_at DESC
     LIMIT 10
   `;
 
-  db.query(query, (err, results) => {
+  db.query(query, [userId], (err, results) => {
     if (err) {
-      console.error("Fout bij het ophalen van de gegevens:", err);
-      return res.status(500).json({ error: "Er is een fout opgetreden bij het ophalen van de gegevens." });
+      console.error('Fout bij het ophalen van de gegevens:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van de gegevens.' });
     }
 
     res.status(200).json(results);
@@ -70,13 +77,19 @@ app.get("/puffs", (req, res) => {
 
 // Endpoint om het totaal aantal puffs van vandaag op te halen
 app.get("/puffs/today", (req, res) => {
+  const { userId } = req.query; // Ontvang de userId uit de queryparameters
+
+  if (!userId) {
+    return res.status(400).json({ error: "Gebruiker ID is verplicht." });
+  }
+
   const query = `
     SELECT SUM(amount) AS total_puffs
     FROM puffs
-    WHERE DATE(created_at) = CURDATE()
+    WHERE user_id = ? AND DATE(created_at) = CURDATE()
   `;
 
-  db.query(query, (err, results) => {
+  db.query(query, [userId], (err, results) => {
     if (err) {
       console.error("Fout bij het ophalen van het totaal aantal puffs van vandaag:", err);
       return res.status(500).json({ error: "Er is een fout opgetreden bij het ophalen van de gegevens." });

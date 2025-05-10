@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Link } from 'expo-router'; // Gebruik de router voor navigatie
+import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
- // Initialiseer de router
+  const router = useRouter(); // Initialiseer de router
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -14,7 +16,7 @@ export default function LoginScreen() {
     }
 
     try {
-      const response = await fetch('http://192.168.0.130:5000/login', {
+      const response = await fetch('http://192.168.0.105:5000/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -24,8 +26,9 @@ export default function LoginScreen() {
 
       if (response.ok) {
         const data = await response.json();
+        await AsyncStorage.setItem('userId', data.userId.toString()); // Sla de user_id op
         Alert.alert('Succes', `Welkom terug, ${data.firstName}!`);
-        router.push('/startscherm'); // Navigeer naar het startscherm
+        router.push('/'); // Navigeer naar de index.tsx-pagina
       } else {
         const errorData = await response.json();
         Alert.alert('Fout', errorData.error || 'Inloggen mislukt.');

@@ -11,6 +11,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { Link } from 'expo-router';
 import { usePuffs } from '../puffcontext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function TrackerScreen() {
   const context = usePuffs();
@@ -36,8 +37,16 @@ export default function TrackerScreen() {
   useEffect(() => {
     const fetchRecentPuffs = async () => {
       try {
-        const response = await fetch("http://192.168.0.105:5000/puffs");
+        const userId = await AsyncStorage.getItem('userId'); // Haal de user_id op
+        console.log(`Ophalen van userId uit AsyncStorage: ${userId}`); // Debugging
+        if (!userId) {
+          console.error("Gebruiker niet gevonden. Log opnieuw in.");
+          return;
+        }
+
+        const response = await fetch(`http://192.168.0.105:5000/puffs?userId=${userId}`);
         const data = await response.json();
+        console.log("Recente puffs data:", data); // Debugging
         setRecentPuffs(Array.isArray(data) ? data : []); // Zorg ervoor dat recentPuffs altijd een array is
       } catch (error) {
         console.error("Fout bij het ophalen van recente puffs:", error);
@@ -45,10 +54,22 @@ export default function TrackerScreen() {
       }
     };
 
+    fetchRecentPuffs();
+  }, []);
+
+  useEffect(() => {
     const fetchTotalPuffsToday = async () => {
       try {
-        const response = await fetch("http://192.168.0.105:5000/puffs/today");
+        const userId = await AsyncStorage.getItem('userId'); // Haal de user_id op
+        console.log(`Ophalen van userId uit AsyncStorage: ${userId}`); // Debugging
+        if (!userId) {
+          console.error("Gebruiker niet gevonden. Log opnieuw in.");
+          return;
+        }
+
+        const response = await fetch(`http://192.168.0.105:5000/puffs/today?userId=${userId}`);
         const data = await response.json();
+        console.log("Puffs data:", data); // Debugging
         setTotalPuffsToday(data.total_puffs || 0); // Stel het totaal aantal puffs van vandaag in
       } catch (error) {
         console.error("Fout bij het ophalen van het totaal aantal puffs van vandaag:", error);
@@ -56,7 +77,6 @@ export default function TrackerScreen() {
       }
     };
 
-    fetchRecentPuffs();
     fetchTotalPuffsToday();
   }, []);
 

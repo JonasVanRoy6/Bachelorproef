@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 import { usePuffs } from "../puffcontext";
 import { router } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = () => {
    // Haal de puffs op uit de context
@@ -12,8 +13,16 @@ const HomeScreen = () => {
   useEffect(() => {
     const fetchTotalPuffsToday = async () => {
       try {
-        const response = await fetch("http://192.168.0.105:5000/puffs/today");
+        const userId = await AsyncStorage.getItem('userId'); // Haal de user_id op
+        console.log(`Ophalen van userId uit AsyncStorage: ${userId}`); // Debugging
+        if (!userId) {
+          console.error("Gebruiker niet gevonden. Log opnieuw in.");
+          return;
+        }
+
+        const response = await fetch(`http://192.168.0.105:5000/puffs/today?userId=${userId}`);
         const data = await response.json();
+        console.log("Puffs data:", data); // Debugging
         setTotalPuffsToday(data.total_puffs || 0); // Stel het totaal aantal puffs van vandaag in
       } catch (error) {
         console.error("Fout bij het ophalen van het totaal aantal puffs van vandaag:", error);

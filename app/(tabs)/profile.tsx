@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const profileImage = require('../../assets/images/spongebob.png');
 
@@ -53,6 +54,19 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [invited, setInvited] = useState<string[]>([]);
   const [selectedBadge, setSelectedBadge] = useState<any | null>(null);
+  const [userName, setUserName] = useState(''); // Houd de naam van de gebruiker bij
+  const [userEmail, setUserEmail] = useState(''); // Houd het e-mailadres van de gebruiker bij
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const storedName = await AsyncStorage.getItem('userName'); // Haal de naam op
+      const storedEmail = await AsyncStorage.getItem('userEmail'); // Haal het e-mailadres op
+      setUserName(storedName || 'Onbekende gebruiker'); // Toon een fallback als de naam niet beschikbaar is
+      setUserEmail(storedEmail || 'Onbekend e-mailadres'); // Toon een fallback als het e-mailadres niet beschikbaar is
+    };
+
+    fetchUserData();
+  }, []);
 
   const toggleInvite = (name: string) => {
     setInvited((prev) =>
@@ -70,8 +84,8 @@ export default function ProfileScreen() {
               <FontAwesome name="camera" size={14} color="#fff" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.name}>Jelle De Boeck</Text>
-          <Text style={styles.username}>@jelle07011</Text>
+          <Text style={styles.name}>{userName || 'Onbekende gebruiker'}</Text> {/* Toon de naam van de gebruiker */}
+          <Text style={styles.username}>{userEmail || 'Onbekend e-mailadres'}</Text> {/* Toon het e-mailadres van de gebruiker */}
           <TouchableOpacity
             style={styles.settingsButton}
             onPress={() => router.push('/settings')}

@@ -20,7 +20,7 @@ export default function RegisterScreen() {
     console.log("Verzonden gegevens:", data); // Controleer de gegevens die worden verzonden
 
     try {
-      const response = await fetch('http://192.168.0.130:5000/register', {
+      const response = await fetch('http://192.168.0.105:5000/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -34,11 +34,13 @@ export default function RegisterScreen() {
         const responseData = await response.json();
         console.log("Response data:", responseData);
 
-        // Sla het userId op in AsyncStorage
+        // Sla het userId, de naam en het e-mailadres op in AsyncStorage
         await AsyncStorage.setItem('userId', responseData.userId.toString());
+        await AsyncStorage.setItem('userName', `${data.firstName} ${data.lastName}`); // Sla de volledige naam op
+        await AsyncStorage.setItem('userEmail', data.email); // Sla het e-mailadres op
 
         Alert.alert('Succes', 'Gebruiker succesvol geregistreerd!');
-        // Navigeer naar het GoalsScreen
+        // Navigeer naar het volgende scherm (bijvoorbeeld het profielscherm)
       } else {
         const errorData = await response.json();
         console.error("Foutmelding van server:", errorData);
