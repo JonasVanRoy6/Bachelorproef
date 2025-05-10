@@ -1,11 +1,28 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 import { usePuffs } from "../puffcontext";
-import { router } from "expo-router"; // ✅ Toegevoegd
+import { router } from "expo-router";
 
 const HomeScreen = () => {
-  const { puffs } = usePuffs(); // Haal de puffs op uit de context
+   // Haal de puffs op uit de context
   const maxPuffsPerDay = 80; // Maximale puffs per dag
+  const [totalPuffsToday, setTotalPuffsToday] = useState(0); // Houd het totaal aantal puffs van vandaag bij
+
+  // Haal het totaal aantal puffs van vandaag op
+  useEffect(() => {
+    const fetchTotalPuffsToday = async () => {
+      try {
+        const response = await fetch("http://192.168.0.105:5000/puffs/today");
+        const data = await response.json();
+        setTotalPuffsToday(data.total_puffs || 0); // Stel het totaal aantal puffs van vandaag in
+      } catch (error) {
+        console.error("Fout bij het ophalen van het totaal aantal puffs van vandaag:", error);
+        setTotalPuffsToday(0); // Stel 0 in bij een fout
+      }
+    };
+
+    fetchTotalPuffsToday();
+  }, []);
 
   return (
     <View style={styles.wrapper}>
@@ -15,7 +32,7 @@ const HomeScreen = () => {
           <Text style={styles.greeting}>Hallo, gebruiker</Text>
           <TouchableOpacity
             style={styles.settingsButton}
-            onPress={() => router.push("/settings")} // ✅ Navigeer naar instellingen
+            onPress={() => router.push("/settings")}
           >
             <Image
               source={require("../../assets/images/instellingen.png")}
@@ -32,13 +49,13 @@ const HomeScreen = () => {
             <Text style={styles.firstText}>
               Puffs vandaag:{" "}
               <Text style={styles.boldText}>
-                {puffs}/{maxPuffsPerDay}
+                {totalPuffsToday}/{maxPuffsPerDay}
               </Text>
             </Text>
             <Text style={styles.firstText}>
               Puffs over:{" "}
               <Text style={styles.boldText}>
-                {Math.max(0, maxPuffsPerDay - puffs)}
+                {Math.max(0, maxPuffsPerDay - totalPuffsToday)}
               </Text>
             </Text>
             <Text style={styles.firstText}>

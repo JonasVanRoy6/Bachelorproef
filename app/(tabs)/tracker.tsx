@@ -1,6 +1,6 @@
 // app/(tabs)/tracker.tsx
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,9 @@ import { usePuffs } from '../puffcontext';
 
 export default function TrackerScreen() {
   const context = usePuffs();
+  const [recentPuffs, setRecentPuffs] = useState([]);
+  const [totalPuffsToday, setTotalPuffsToday] = useState(0); // Houd het totaal aantal puffs van vandaag bij
+
   if (!context) {
     return (
       <View style={styles.container}>
@@ -26,15 +29,43 @@ export default function TrackerScreen() {
 
   const { puffs } = context;
   const maxPuffs = 80;
-  const remaining = Math.max(0, maxPuffs - puffs);
-  const progressWidth = Math.min((puffs / maxPuffs) * 100, 100);
+  const remaining = Math.max(0, maxPuffs - totalPuffsToday); // Gebruik het totaal aantal puffs van vandaag
+  const progressWidth = Math.min((totalPuffsToday / maxPuffs) * 100, 100);
+
+  // Haal recente puffs op van de backend
+  useEffect(() => {
+    const fetchRecentPuffs = async () => {
+      try {
+        const response = await fetch("http://192.168.0.105:5000/puffs");
+        const data = await response.json();
+        setRecentPuffs(Array.isArray(data) ? data : []); // Zorg ervoor dat recentPuffs altijd een array is
+      } catch (error) {
+        console.error("Fout bij het ophalen van recente puffs:", error);
+        setRecentPuffs([]); // Stel een lege array in bij een fout
+      }
+    };
+
+    const fetchTotalPuffsToday = async () => {
+      try {
+        const response = await fetch("http://192.168.0.105:5000/puffs/today");
+        const data = await response.json();
+        setTotalPuffsToday(data.total_puffs || 0); // Stel het totaal aantal puffs van vandaag in
+      } catch (error) {
+        console.error("Fout bij het ophalen van het totaal aantal puffs van vandaag:", error);
+        setTotalPuffsToday(0); // Stel 0 in bij een fout
+      }
+    };
+
+    fetchRecentPuffs();
+    fetchTotalPuffsToday();
+  }, []);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 64 }}>
       <View style={[styles.puffCard, styles.centered]}>
         <Text style={styles.puffTitle}>Puffs Vandaag:</Text>
         <Text style={styles.puffCount}>
-          <Text style={styles.puffValue}>{puffs}</Text>/<Text style={styles.puffMax}>{maxPuffs}</Text>
+          <Text style={styles.puffValue}>{totalPuffsToday}</Text>/<Text style={styles.puffMax}>{maxPuffs}</Text>
         </Text>
         <Text style={styles.puffsLeft}>{remaining} puffs over</Text>
         <View style={styles.progressBar}>
@@ -48,35 +79,19 @@ export default function TrackerScreen() {
         </TouchableOpacity>
       </Link>
 
-      <View style={styles.statusCard}>
-        <View style={styles.statusRow}>
-          <View>
-            <Text style={styles.statusTitle}>Status Armband</Text>
-            <Text style={styles.statusSubtitle}>Verbonden</Text>
-          </View>
-          <View style={styles.statusPill}>
-            <Text style={styles.statusPillText}>Actief</Text>
-          </View>
-        </View>
-        <View style={styles.batteryRow}>
-          <FontAwesome name="battery-three-quarters" size={16} color="#29A86E" style={{ marginRight: 8 }} />
-          <Text style={styles.batteryText}>85% Batterij</Text>
-        </View>
-      </View>
-
       <Text style={styles.activityHeader}>Recente Activiteit</Text>
       <View style={styles.activityCard}>
-        {[
-          { time: '10:45', text: '7 puffs gedetecteerd' },
-          { time: '09:48', text: '3 puffs gedetecteerd' },
-          { time: '09:48', text: '3 puffs gedetecteerd' },
-        ].map((item, index) => (
+        {recentPuffs.map((item, index) => (
           <View key={index}>
             <View style={styles.activityEntry}>
-              <Text style={styles.activityTime}>{item.time}</Text>
-              <Text style={styles.activityText}>{item.text}</Text>
+              <Text style={styles.activityTime}>
+                {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </Text>
+              <Text style={styles.activityText}>
+                {item.amount} puffs - {item.time_of_day}
+              </Text>
             </View>
-            {index < 2 && <View style={styles.divider} />}
+            {index < recentPuffs.length - 1 && <View style={styles.divider} />}
           </View>
         ))}
       </View>

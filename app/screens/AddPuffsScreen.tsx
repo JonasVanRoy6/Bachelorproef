@@ -21,30 +21,29 @@ const AddPuffsScreen = () => {
   };
 
   const handleSave = async () => {
-    console.log("handleSave called");
-    if (estimatedPuffs > 0) {
+    if (estimatedPuffs > 0 && timeOfDay) {
       try {
-        console.log("Saving puffs:", estimatedPuffs);
-        const response = await fetch("http://192.168.0.130:5000/puffs", {
+        console.log("Saving puffs:", estimatedPuffs, "Time of day:", timeOfDay);
+        const response = await fetch("http://192.168.0.105:5000/puffs", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ puffs: estimatedPuffs })
+          body: JSON.stringify({ puffs: estimatedPuffs, timeOfDay }),
         });
 
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
 
-        Alert.alert("Succes", "Puffs opgeslagen!");
-        router.push('/'); // terug naar home/index
+        Alert.alert("Succes", "Puffs en tijd van de dag opgeslagen!");
+        router.push('/'); // Navigeer terug naar de homepagina
       } catch (error) {
         console.error("Fout bij opslaan puffs:", error);
-        Alert.alert("Fout", "Er is een fout opgetreden bij het opslaan van de puffs.");
+        Alert.alert("Fout", "Er is een fout opgetreden bij het opslaan van de gegevens.");
       }
     } else {
-      Alert.alert("Ongeldige invoer", "Voer geldige gegevens in.");
+      Alert.alert("Ongeldige invoer", "Voer geldige gegevens in en selecteer een tijd van de dag.");
     }
   };
 
@@ -53,11 +52,11 @@ const AddPuffsScreen = () => {
       <Text style={styles.title}>Hoe lang heb je gevaped?</Text>
       <Slider
         style={styles.slider}
-        minimumValue={1}
+        minimumValue={0}
         maximumValue={240}
         step={1}
         value={duration}
-        onValueChange={setDuration}
+        onSlidingComplete={setDuration}
       />
       <Text>{duration} min</Text>
 

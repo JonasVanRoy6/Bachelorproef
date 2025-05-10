@@ -28,23 +28,61 @@ db.connect((err) => {
 });
 
 app.post("/puffs", (req, res) => {
-    const { puffs } = req.body; // Zorg ervoor dat je het juiste veld ontvangt
-    if (!puffs) return res.status(400).json({ error: "Aantal puffs is verplicht" });
-  
-    const query = "INSERT INTO puffs (amount, created_at) VALUES (?, NOW())";
-    db.query(query, [puffs], (err, result) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.status(201).json({ message: "Puffs opgeslagen", id: result.insertId });
-    });
+  const { puffs, timeOfDay } = req.body; // Ontvang zowel puffs als timeOfDay
+
+  if (!puffs || !timeOfDay) {
+    return res.status(400).json({ error: "Aantal puffs en tijd van de dag zijn verplicht." });
+  }
+
+  const query = `
+    INSERT INTO puffs (amount, time_of_day, created_at)
+    VALUES (?, ?, NOW())
+  `;
+
+  db.query(query, [puffs, timeOfDay], (err, result) => {
+    if (err) {
+      console.error("Fout bij het opslaan van de gegevens:", err);
+      return res.status(500).json({ error: "Er is een fout opgetreden bij het opslaan van de gegevens." });
+    }
+
+    res.status(201).json({ message: "Gegevens succesvol opgeslagen.", id: result.insertId });
   });
-  
+});
 
 // Endpoint om de laatste puff-waarde op te halen
 app.get("/puffs", (req, res) => {
-  const query = "SELECT SUM(amount) AS total_puffs FROM puffs WHERE DATE(created_at) = CURDATE()";
+  const query = `
+    SELECT amount, time_of_day, created_at
+    FROM puffs
+    ORDER BY created_at DESC
+    LIMIT 10
+  `;
+
   db.query(query, (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.json({ total_puffs: results[0].total_puffs || 0 });
+    if (err) {
+      console.error("Fout bij het ophalen van de gegevens:", err);
+      return res.status(500).json({ error: "Er is een fout opgetreden bij het ophalen van de gegevens." });
+    }
+
+    res.status(200).json(results);
+  });
+});
+
+// Endpoint om het totaal aantal puffs van vandaag op te halen
+app.get("/puffs/today", (req, res) => {
+  const query = `
+    SELECT SUM(amount) AS total_puffs
+    FROM puffs
+    WHERE DATE(created_at) = CURDATE()
+  `;
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Fout bij het ophalen van het totaal aantal puffs van vandaag:", err);
+      return res.status(500).json({ error: "Er is een fout opgetreden bij het ophalen van de gegevens." });
+    }
+
+    res.status(200).json({ total_puffs: results[0].total_puffs || 0 });
   });
 });
 
