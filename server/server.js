@@ -191,6 +191,138 @@ app.post("/saveGoal", (req, res) => {
   });
 });
 
+// Endpoint om het actieve plan van een gebruiker op te halen
+app.get('/user/active-plan', (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
+  const query = `
+    SELECT plan
+    FROM user_goals
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+
+  db.query(query, [userId], (err, results) => {
+    if (err) {
+      console.error('Fout bij het ophalen van het actieve plan:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van het plan.' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Geen actief plan gevonden voor deze gebruiker.' });
+    }
+
+    res.status(200).json({ plan: results[0].plan });
+  });
+});
+
+// Endpoint om het plan van een gebruiker bij te werken
+app.post('/user/update-plan', (req, res) => {
+  const { userId, plan } = req.body;
+
+  if (!userId || !plan) {
+    return res.status(400).json({ error: 'Gebruiker ID en plan zijn verplicht.' });
+  }
+
+  const query = `
+    UPDATE user_goals
+    SET plan = ?
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+
+  db.query(query, [plan, userId], (err, result) => {
+    if (err) {
+      console.error('Fout bij het bijwerken van het plan:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het bijwerken van het plan.' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Geen records bijgewerkt. Controleer of de gebruiker bestaat.' });
+    }
+
+    res.status(200).json({ message: 'Plan succesvol bijgewerkt.' });
+  });
+});
+
+// Endpoint om het doel van een gebruiker bij te werken
+app.post('/user/update-goals', (req, res) => {
+  const { userId, goal } = req.body;
+
+  if (!userId || !goal) {
+    return res.status(400).json({ error: 'Gebruiker ID en doel zijn verplicht.' });
+  }
+
+  const query = `
+    INSERT INTO user_goals (user_id, goal)
+    VALUES (?, ?)
+    ON DUPLICATE KEY UPDATE goal = VALUES(goal)
+  `;
+
+  db.query(query, [userId, goal], (err, result) => {
+    if (err) {
+      console.error('Fout bij het opslaan van het doel:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het opslaan van het doel.' });
+    }
+
+    res.status(200).json({ message: 'Doel succesvol opgeslagen.' });
+  });
+});
+
+// Endpoint om de reden van een gebruiker bij te werken
+app.post('/user/update-reason', (req, res) => {
+  const { userId, reason } = req.body;
+
+  if (!userId || !reason) {
+    return res.status(400).json({ error: 'Gebruiker ID en reden zijn verplicht.' });
+  }
+
+  const query = `
+    INSERT INTO user_goals (user_id, reason)
+    VALUES (?, ?)
+    ON DUPLICATE KEY UPDATE reason = VALUES(reason)
+  `;
+
+  db.query(query, [userId, reason], (err, result) => {
+    if (err) {
+      console.error('Fout bij het opslaan van de reden:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het opslaan van de reden.' });
+    }
+
+    res.status(200).json({ message: 'Reden succesvol opgeslagen.' });
+  });
+});
+
+// Endpoint om het gebruik van een gebruiker bij te werken
+app.post('/user/update-puffs', (req, res) => {
+  const { userId, currentUsage, goalsUsage } = req.body;
+
+  if (!userId || !currentUsage || !goalsUsage) {
+    return res.status(400).json({ error: 'Gebruiker ID, huidige gebruik en doelgebruik zijn verplicht.' });
+  }
+
+  const query = `
+    INSERT INTO user_goals (user_id, current_usage, goal_usage)
+    VALUES (?, ?, ?)
+    ON DUPLICATE KEY UPDATE current_usage = VALUES(current_usage), goal_usage = VALUES(goal_usage)
+  `;
+
+  db.query(query, [userId, currentUsage, goalsUsage], (err, result) => {
+    if (err) {
+      console.error('Fout bij het opslaan van het gebruik:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het opslaan van het gebruik.' });
+    }
+
+    res.status(200).json({ message: 'Gebruik succesvol opgeslagen.' });
+  });
+});
+
 // Test endpoint
 app.get("/test", (req, res) => {
   res.send("Server werkt!");

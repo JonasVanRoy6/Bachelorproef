@@ -1,12 +1,45 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function DoelenPuffsScreen() {
   const [current, setCurrent] = useState('');
   const [goal, setGoal] = useState('');
   const router = useRouter();
+
+  const savePuffs = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        console.error('Gebruiker niet gevonden. Log opnieuw in.');
+        return;
+      }
+
+      console.log('Verstuurde gegevens:', { userId, currentUsage: current, goalsUsage: goal });
+
+      const response = await fetch('http://192.168.0.105:5000/user/update-puffs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, currentUsage: current, goalsUsage: goal }),
+      });
+
+      if (response.ok) {
+        Alert.alert('Succes', 'Gebruik succesvol opgeslagen!');
+        router.push('/settings?updated=doelen'); // Navigeer naar instellingen of een ander scherm
+      } else {
+        const errorData = await response.json();
+        console.error('Foutmelding van server:', errorData);
+        Alert.alert('Fout', 'Er is een probleem opgetreden bij het opslaan van het gebruik.');
+      }
+    } catch (error) {
+      console.error('Fout bij het opslaan van het gebruik:', error);
+      Alert.alert('Fout', 'Kan geen verbinding maken met de server.');
+    }
+  };
 
   return (
     <KeyboardAvoidingView
@@ -40,8 +73,9 @@ export default function DoelenPuffsScreen() {
       />
 
       <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push('/settings?updated=doelen')}
+        style={[styles.button, (!current || !goal) && styles.buttonDisabled]}
+        onPress={savePuffs}
+        disabled={!current || !goal}
       >
         <Text style={styles.buttonText}>Opslaan</Text>
       </TouchableOpacity>
@@ -79,6 +113,9 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 40,
+  },
+  buttonDisabled: {
+    backgroundColor: '#E3E3E3',
   },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });

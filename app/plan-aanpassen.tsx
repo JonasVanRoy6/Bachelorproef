@@ -1,17 +1,77 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function PlanAanpassenScreen() {
   const router = useRouter();
-  const [selectedPlan, setSelectedPlan] = useState('geleidelijk');
+  const [selectedPlan, setSelectedPlan] = useState('');
+  const [activePlan, setActivePlan] = useState('');
+
+  // Haal het actieve plan op bij het laden van de pagina
+  useEffect(() => {
+    const fetchActivePlan = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) {
+          console.error('Gebruiker niet gevonden. Log opnieuw in.');
+          return;
+        }
+
+        const response = await fetch(`http://192.168.0.105:5000/user/active-plan?userId=${userId}`);
+        const data = await response.json();
+        setActivePlan(data.plan); // Stel het actieve plan in
+        setSelectedPlan(data.plan); // Stel het geselecteerde plan in
+      } catch (error) {
+        console.error('Fout bij het ophalen van het actieve plan:', error);
+      }
+    };
+
+    fetchActivePlan();
+  }, []);
+
+  // Functie om het plan bij te werken
+  const updatePlan = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      console.log('Verstuurde gegevens:', { userId, plan: selectedPlan });
+
+      if (!userId) {
+        console.error('Gebruiker niet gevonden. Log opnieuw in.');
+        return;
+      }
+
+      const response = await fetch('http://192.168.0.105:5000/user/update-plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, plan: selectedPlan }),
+      });
+
+      console.log('Response status:', response.status);
+
+      if (response.ok) {
+        Alert.alert('Succes', 'Plan succesvol bijgewerkt!');
+        setActivePlan(selectedPlan); // Werk het actieve plan bij
+      } else {
+        const errorData = await response.json();
+        console.error('Foutmelding van server:', errorData);
+        Alert.alert('Fout', 'Er is een probleem opgetreden bij het bijwerken van het plan.');
+      }
+    } catch (error) {
+      console.error('Fout bij het bijwerken van het plan:', error);
+      Alert.alert('Fout', 'Kan geen verbinding maken met de server.');
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -41,8 +101,22 @@ export default function PlanAanpassenScreen() {
             <Text style={styles.benefitText}>Grotere kans op slagen</Text>
           </View>
         </View>
-        <TouchableOpacity style={styles.blackButton} onPress={() => setSelectedPlan('geleidelijk')}>
-          <Text style={styles.buttonText}>Kies dit plan</Text>
+        <TouchableOpacity
+          style={[
+            styles.blackButton,
+            activePlan === 'geleidelijk' && styles.whiteButton, // Actieve knop krijgt witte stijl
+          ]}
+          onPress={() => setSelectedPlan('geleidelijk')}
+          disabled={activePlan === 'geleidelijk'} // Knop is uitgeschakeld als het plan actief is
+        >
+          <Text
+            style={[
+              styles.buttonText,
+              activePlan === 'geleidelijk' && styles.whiteButtonText, // Tekststijl voor actieve knop
+            ]}
+          >
+            {activePlan === 'geleidelijk' ? 'Actief Plan' : 'Kies dit plan'}
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -62,17 +136,25 @@ export default function PlanAanpassenScreen() {
         </View>
         <TouchableOpacity
           style={[
-            styles.whiteButton,
-            selectedPlan === 'agressief' && styles.whiteButtonSelected,
+            styles.blackButton,
+            activePlan === 'agressief' && styles.whiteButton, // Actieve knop krijgt witte stijl
           ]}
           onPress={() => setSelectedPlan('agressief')}
+          disabled={activePlan === 'agressief'} // Knop is uitgeschakeld als het plan actief is
         >
-          <Text style={styles.whiteButtonText}>Kies dit plan</Text>
+          <Text
+            style={[
+              styles.buttonText,
+              activePlan === 'agressief' && styles.whiteButtonText, // Tekststijl voor actieve knop
+            ]}
+          >
+            {activePlan === 'agressief' ? 'Actief Plan' : 'Kies dit plan'}
+          </Text>
         </TouchableOpacity>
       </View>
 
       {/* Opslaan knop */}
-      <TouchableOpacity style={styles.saveButton} onPress={() => router.push('/settings')}>
+      <TouchableOpacity style={styles.saveButton} onPress={updatePlan}>
         <Text style={styles.saveButtonText}>Wijzigingen opslaan</Text>
       </TouchableOpacity>
     </ScrollView>

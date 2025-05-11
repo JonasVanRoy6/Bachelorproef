@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const reasons = [
   'Voor mijn gezondheid',
@@ -13,6 +14,36 @@ const reasons = [
 export default function GoalsWhyScreen() {
   const router = useRouter();
   const [selected, setSelected] = useState('');
+
+  const saveReason = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        console.error('Gebruiker niet gevonden. Log opnieuw in.');
+        return;
+      }
+
+      const response = await fetch('http://192.168.0.105:5000/user/update-reason', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, reason: selected }),
+      });
+
+      if (response.ok) {
+        Alert.alert('Succes', 'Reden succesvol opgeslagen!');
+        router.push('/goals-puffs'); // Navigeer naar het volgende scherm
+      } else {
+        const errorData = await response.json();
+        console.error('Foutmelding van server:', errorData);
+        Alert.alert('Fout', 'Er is een probleem opgetreden bij het opslaan van de reden.');
+      }
+    } catch (error) {
+      console.error('Fout bij het opslaan van de reden:', error);
+      Alert.alert('Fout', 'Kan geen verbinding maken met de server.');
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -31,20 +62,24 @@ export default function GoalsWhyScreen() {
           key={index}
           style={[
             styles.option,
-            selected === reason && styles.optionSelected
+            selected === reason && styles.optionSelected,
           ]}
           onPress={() => setSelected(reason)}
         >
-          <Text style={[
-            styles.optionText,
-            selected === reason && styles.optionTextSelected
-          ]}>{reason}</Text>
+          <Text
+            style={[
+              styles.optionText,
+              selected === reason && styles.optionTextSelected,
+            ]}
+          >
+            {reason}
+          </Text>
         </TouchableOpacity>
       ))}
 
       <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push('/goals-puffs')}
+        style={[styles.button, !selected && styles.buttonDisabled]}
+        onPress={saveReason}
         disabled={!selected}
       >
         <Text style={styles.buttonText}>Volgende</Text>
@@ -101,9 +136,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
+  buttonDisabled: {
+    backgroundColor: '#E3E3E3',
+  },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
-  }
+  },
 });
