@@ -1,121 +1,145 @@
-import React, { useEffect, useState } from "react";
-import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
-import { usePuffs } from "../puffcontext";
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  StatusBar,
+} from "react-native";
 import { router } from "expo-router";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome5, MaterialIcons, Feather } from "@expo/vector-icons";
 
 const HomeScreen = () => {
-   // Haal de puffs op uit de context
-  const maxPuffsPerDay = 80; // Maximale puffs per dag
-  const [totalPuffsToday, setTotalPuffsToday] = useState(0); // Houd het totaal aantal puffs van vandaag bij
+  const [activeChallenge, setActiveChallenge] = useState("Vakantie Naar Spanje");
 
-  // Haal het totaal aantal puffs van vandaag op
-  useEffect(() => {
-    const fetchTotalPuffsToday = async () => {
-      try {
-        const userId = await AsyncStorage.getItem('userId'); // Haal de user_id op
-        console.log(`Ophalen van userId uit AsyncStorage: ${userId}`); // Debugging
-        if (!userId) {
-          console.error("Gebruiker niet gevonden. Log opnieuw in.");
-          return;
-        }
+  const challenges = [
+    {
+      title: "Vakantie Naar Spanje",
+      amount: 30,
+      goal: 350,
+      icon: <FontAwesome5 name="suitcase-rolling" size={16} color="#29A86E" />,
+    },
+    {
+      title: "Nieuwe Trui",
+      amount: 40,
+      goal: 45,
+      icon: <FontAwesome5 name="tshirt" size={16} color="#3ED9E2" />,
+    },
+  ];
 
-        const response = await fetch(`http://192.168.0.105:5000/puffs/today?userId=${userId}`);
-        const data = await response.json();
-        console.log("Puffs data:", data); // Debugging
-        setTotalPuffsToday(data.total_puffs || 0); // Stel het totaal aantal puffs van vandaag in
-      } catch (error) {
-        console.error("Fout bij het ophalen van het totaal aantal puffs van vandaag:", error);
-        setTotalPuffsToday(0); // Stel 0 in bij een fout
-      }
-    };
-
-    fetchTotalPuffsToday();
-  }, []);
+  const handleGoalPress = (route) => {
+    router.push(`/${route}`);
+  };
 
   return (
     <View style={styles.wrapper}>
-      <ScrollView style={styles.container}>
-        {/* Header */}
+      <StatusBar backgroundColor="#29A86E" barStyle="light-content" />
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <View style={styles.curvedBackground} />
+
         <View style={styles.header}>
-          <Text style={styles.greeting}>Hallo, gebruiker</Text>
+          <TouchableOpacity onPress={() => router.push("/profile")}>
+          <Image
+            source={require("../../assets/images/jonas.png")}
+            style={styles.profileImage}
+          />
+          </TouchableOpacity>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={styles.helloText}>Hallo Jelle!</Text>
+            <Text style={styles.subText}>Je bent op de goede weg</Text>
+          </View>
           <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={() => router.push("/settings")}
+            style={styles.settingsIcon}
+            onPress={() => router.push('/settings')}
           >
-            <Image
-              source={require("../../assets/images/instellingen.png")}
-              style={styles.settingsIcon}
-            />
+          <FontAwesome name="cog" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
 
-        {/* Progress Section */}
-        <View style={styles.progressCard}>
-          <Text style={styles.progressTitle}>4 dagen</Text>
-          <Text style={styles.progressSubtitle}>onder je doel</Text>
-          <View style={styles.progressDetails}>
-            <Text style={styles.firstText}>
-              Puffs vandaag:{" "}
-              <Text style={styles.boldText}>
-                {totalPuffsToday}/{maxPuffsPerDay}
-              </Text>
-            </Text>
-            <Text style={styles.firstText}>
-              Puffs over:{" "}
-              <Text style={styles.boldText}>
-                {Math.max(0, maxPuffsPerDay - totalPuffsToday)}
-              </Text>
-            </Text>
-            <Text style={styles.firstText}>
-              Plan: <Text style={styles.boldText}>10 puffs per week</Text>
-            </Text>
+        <View style={styles.streakCard}>
+          <View style={styles.streakHeader}>
+            <Text style={styles.streakTitle}>Huidige Streak</Text>
+            <Text style={styles.streakCount}>16 dagen</Text>
+          </View>
+          <View style={styles.statsRow}>
+            <View style={[styles.statBox, { backgroundColor: "rgba(41, 168, 110, 0.15)" }]}>
+              <Text style={[styles.statLabel, { color: "#29A86E", textAlign: "center" }]}>Geld{"\n"}Bespaard</Text>
+              <Text style={[styles.statValue, { color: "#29A86E", textAlign: "center" }]}>€123</Text>
+            </View>
+            <View style={[styles.statBox, { backgroundColor: "rgba(112, 97, 187, 0.15)" }]}>
+              <Text style={[styles.statLabel, { color: "#7061BB", textAlign: "center" }]}>Puffs{"\n"}Vermeden</Text>
+              <Text style={[styles.statValue, { color: "#7061BB", textAlign: "center" }]}>97</Text>
+            </View>
           </View>
         </View>
 
-        {/* Stats Section */}
-        <Text style={styles.sectionTitle}>Mijn voortgang</Text>
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <View style={styles.statsimagecontainer}>
-              <Text style={styles.statTitle}>Gemiddeld</Text>
-              <Image source={require("../../assets/images/speed.png")} style={styles.statIcon} />
-            </View>
-            <Text style={styles.Textgemiddeld}>
-              Je zit gemiddeld 35 puffs per dag onder je maximum aantal.
-            </Text>
-            <Text style={styles.statValue}>45 per dag</Text>
+        <Text style={styles.sectionTitle}>Mijn Doelen</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingLeft: 16, paddingRight: 32 }}
+          style={{ marginTop: 16 }}
+        >
+          {[
+            { label: "Gezondheid", icon: <Feather name="heart" size={24} color="#29A86E" />, color: "#29A86E", route: "gezondheid-doelen" },
+            { label: "Mentaal", icon: <MaterialIcons name="psychology" size={24} color="#7061BB" />, color: "#7061BB", route: "mentaal-doelen" },
+            { label: "Duurzaamheid", icon: <Feather name="sun" size={24} color="#3ED9E2" />, color: "#3ED9E2", route: "duurzaamheid-doelen" },
+            { label: "Geld", icon: <FontAwesome5 name="piggy-bank" size={24} color="#29A86E" />, color: "#29A86E", route: "geld-doelen" },
+          ].map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              onPress={() => handleGoalPress(item.route)}
+              style={[styles.goalTab, { backgroundColor: item.color + "26", marginRight: index === 3 ? 0 : 16 }]}
+            >
+              {item.icon}
+              <Text style={[styles.goalText, { color: item.color }]}>{item.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        <View style={{ marginTop: 24 }}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Mijn Uitdagingen</Text>
+            <Text style={styles.viewAll}>Alles bekijken</Text>
           </View>
-          <View style={styles.statCard}>
-            <View style={styles.statsimagecontainer}>
-              <Text style={styles.statTitle}>Streak</Text>
-              <Image source={require("../../assets/images/streak.png")} style={styles.statIcon} />
-            </View>
-            <Text style={styles.Textgemiddeld}>
-              Je zit gemiddeld 35 puffs per dag onder je maximum aantal.
-            </Text>
-            <Text style={styles.statValue}>13 dagen</Text>
-          </View>
-          <View style={styles.statCard}>
-            <View style={styles.statsimagecontainer}>
-              <Text style={styles.statTitle}>Geld bespaard</Text>
-              <Image source={require("../../assets/images/money.png")} style={styles.statIcon} />
-            </View>
-            <Text style={styles.Textgemiddeld}>
-              Je zit gemiddeld 35 puffs per dag onder je maximum aantal.
-            </Text>
-            <Text style={styles.statValue}>€5</Text>
-          </View>
-          <View style={styles.statCard}>
-            <View style={styles.statsimagecontainer}>
-              <Text style={styles.statTitle}>Levensvoordeel</Text>
-              <Image source={require("../../assets/images/hart.png")} style={styles.statIcon} />
-            </View>
-            <Text style={styles.Textgemiddeld}>
-              Je zit gemiddeld 35 puffs per dag onder je maximum aantal.
-            </Text>
-            <Text style={styles.statValue}>3 dagen</Text>
-          </View>
+
+          {challenges.map((item, index) => (
+            <TouchableOpacity
+              key={index}
+              style={[styles.challengeCard, index === 1 ? { marginBottom: 16 } : null]}
+              onPress={() => setActiveChallenge(item.title)}
+            >
+              <View style={styles.challengeHeader}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  {item.icon}
+                  <Text style={styles.challengeTitle}>{item.title}</Text>
+                </View>
+                <Text
+                  style={[styles.statusTag, {
+                    backgroundColor: activeChallenge === item.title ? "#E6F5EC" : "#EAEAEA",
+                    color: activeChallenge === item.title ? "#29A86E" : "#8C8C8C"
+                  }]}
+                >
+                  {activeChallenge === item.title ? "Actief" : "Niet-Actief"}
+                </Text>
+              </View>
+              <View style={styles.progressBarBg}>
+                <View
+                  style={[styles.progressBarFg, {
+                    width: `${(item.amount / item.goal) * 100}%`,
+                    backgroundColor: item.title === "Vakantie Naar Spanje" ? "#29A86E" : "#3ED9E2"
+                  }]}
+                />
+              </View>
+              <View style={styles.goalRow}>
+                <Text style={styles.goalLabel}>€{item.amount} bespaard</Text>
+                <Text style={styles.goalLabel}>Doel: €{item.goal}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
       </ScrollView>
     </View>
@@ -123,64 +147,120 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, backgroundColor: "#fff" },
-  container: { flex: 1, backgroundColor: "#fff", paddingHorizontal: 16 },
+  wrapper: { flex: 1, backgroundColor: "#fff", position: "relative" },
+  container: { flex: 1, backgroundColor: "#fff" },
+  curvedBackground: {
+    height: 240,
+    backgroundColor: "#29A86E",
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    marginBottom: -230,
+  },
   header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 60,
+    marginBottom: 24,
+    paddingHorizontal: 16,
+  },
+  profileImage: { width: 48, height: 48, borderRadius: 24 },
+  helloText: { fontSize: 20, fontWeight: "600", color: "#fff" },
+  subText: { fontSize: 16, color: "#fff" },
+  settingsIcon: { width: 24, height: 24 },
+  streakCard: {
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
+    marginHorizontal: 32,
+  },
+  streakHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 50,
-    marginBottom: 20,
+    marginBottom: 12,
   },
-  greeting: { fontSize: 24, fontWeight: "bold", color: "#000" },
-  settingsButton: { padding: 8 },
-  settingsIcon: { width: 24, height: 24 },
-  firstText: { color: "white" },
-  progressCard: {
-    backgroundColor: "#29A86E",
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 20,
+  streakTitle: { fontSize: 16, fontWeight: "bold", color: "#252525" },
+  streakCount: { fontSize: 24, fontWeight: "bold", color: "#29A86E" },
+  statsRow: { flexDirection: "row", gap: 12 },
+  statBox: {
+    flex: 1,
+    height: 96,
+    borderRadius: 8,
+    padding: 12,
+    justifyContent: "center",
   },
-  progressTitle: { fontSize: 36, fontWeight: "bold", color: "white" },
-  progressSubtitle: { fontSize: 16, color: "white", marginBottom: 10 },
-  progressDetails: { marginTop: 10 },
-  boldText: { fontWeight: "bold", color: "white" },
-  sectionTitle: { fontSize: 20, fontWeight: "bold", marginVertical: 10 },
-  statsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  statsimagecontainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  Textgemiddeld: { fontSize: 13, marginBottom: 20, marginTop: 20 },
-  statCard: {
-    backgroundColor: "white",
-    width: "48%",
-    padding: 16,
-    borderRadius: 10,
-    marginBottom: 10,
-    borderStyle: "solid",
-    borderWidth: 1,
-    borderColor: "#E3E3E3",
-    elevation: 2,
-  },
-  statTitle: {
-    fontSize: 13,
-    fontWeight: "600",
-    marginBottom: 5,
-    textAlign: "center",
-  },
-  statIcon: { width: 20, height: 20, marginBottom: 10 },
-  statValue: {
-    fontSize: 20,
+  statLabel: { fontSize: 14 },
+  statValue: { fontSize: 20, fontWeight: "bold" },
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: "bold",
-    color: "black",
-    textAlign: "right",
+    color: "#252525",
+    paddingHorizontal: 16,
   },
+  goalTab: {
+    width: 128,
+    height: 76,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  goalText: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginTop: 6,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 24,
+    paddingHorizontal: 16,
+  },
+  viewAll: { fontSize: 14, color: "#29A86E" },
+  challengeCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    marginHorizontal: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  challengeHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  challengeTitle: { fontSize: 16, fontWeight: "600", color: "#252525" },
+  statusTag: {
+    fontSize: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 16,
+  },
+  progressBarBg: {
+    width: "100%",
+    height: 8,
+    backgroundColor: "#E0E0E0",
+    borderRadius: 4,
+    marginTop: 22,
+  },
+  progressBarFg: { height: 8, borderRadius: 4 },
+  goalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  goalLabel: { fontSize: 14, color: "#252525" },
 });
 
 export default HomeScreen;
