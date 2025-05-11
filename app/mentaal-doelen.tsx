@@ -12,51 +12,52 @@ import { router } from 'expo-router';
 
 const doelen = [
   {
-    icon: <FontAwesome5 name="lungs" size={20} color="#29A86E" />,
-    title: 'Beter ademen',
+    icon: <FontAwesome5 name="brain" size={20} color="#7061BB" />,
+    title: 'Kalme geest',
     progress: 0.28,
     progressText: '28%',
-    description: 'Na 48 uur begint je ademhaling te verbeteren door minder vapen.',
+    description: 'Je ervaart al minder stress en voelt je rustiger.',
   },
   {
-    icon: <Feather name="zap" size={20} color="#29A86E" />,
-    title: 'Meer energie',
-    progress: 0.57,
-    progressText: '57%',
-    description: 'Je voelt je fitter en hebt meer energie in je dagelijkse activiteiten.',
-  },
-  {
-    icon: <FontAwesome5 name="smile" size={20} color="#29A86E" />,
-    title: 'Smaak en geur herstellen',
+    icon: <Feather name="wind" size={20} color="#7061BB" />,
+    title: 'Rustiger leven',
     progress: 0.08,
     progressText: '8%',
-    description: 'Na een week merk je dat je smaak- en reukvermogen terugkomen.',
+    description: 'Cravings nemen aanzienlijk af, waardoor je meer controle hebt.',
   },
   {
-    icon: <FontAwesome5 name="ban" size={20} color="#29A86E" />,
-    title: 'Minder cravings',
-    progress: 0.04,
-    progressText: '4%',
-    description: 'Na twee weken zijn de meeste nicotine-cravings verdwenen.',
+    icon: <FontAwesome5 name="eye" size={20} color="#7061BB" />,
+    title: 'Meer focus',
+    progress: 0.02,
+    progressText: '2%',
+    description: 'Je concentratie en geheugen verbeteren merkbaar.',
   },
   {
-    icon: <FontAwesome5 name="heartbeat" size={20} color="#29A86E" />,
-    title: 'Longgezondheid verbeteren',
+    icon: <FontAwesome5 name="smile-beam" size={20} color="#7061BB" />,
+    title: 'Vrij van zorgen',
     progress: 0.006,
     progressText: '0.6%',
-    description: 'Je longcapaciteit herstelt zich binnen enkele maanden.',
+    description: 'Angstgevoelens nemen af, en je ervaart meer mentale stabiliteit.',
+  },
+  {
+    icon: <FontAwesome5 name="user-shield" size={20} color="#7061BB" />,
+    title: 'Zelfverzekerd',
+    progress: 0.0016,
+    progressText: '0.16%',
+    description: 'Je voelt je sterker en hebt meer controle over je keuzes.',
   },
 ];
 
-const GezondheidDoelen = () => {
+
+const MentaalDoelen = () => {
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor="#29A86E" barStyle="light-content" />
+      <StatusBar backgroundColor="#7061BB" barStyle="light-content" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <FontAwesome name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Gezondheid</Text>
+        <Text style={styles.headerTitle}>Mentaal</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -95,7 +96,7 @@ const GezondheidDoelen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#29A86E',
+    backgroundColor: '#7061BB',
     paddingTop: 64,
   },
   header: {
@@ -117,7 +118,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   progressCard: {
-    backgroundColor: '#DFF2E9',
+    backgroundColor: '#EAE8F5',
     borderRadius: 16,
     marginHorizontal: 36,
     height: 80,
@@ -135,10 +136,10 @@ const styles = StyleSheet.create({
   progressLabel: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#29A86E',
+    color: '#7061BB',
   },
   progressPercentage: {
-    backgroundColor: 'rgba(41, 168, 110, 0.15)',
+    backgroundColor: 'rgba(112, 97, 187, 0.15)',
     width: 48,
     height: 28,
     borderRadius: 24,
@@ -148,17 +149,17 @@ const styles = StyleSheet.create({
   progressPercentageText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#29A86E',
+    color: '#7061BB',
   },
   progressBarBackground: {
     height: 8,
     width: 228,
-    backgroundColor: 'rgba(41, 168, 110, 0.15)',
+    backgroundColor: 'rgba(112, 97, 187, 0.15)',
     borderRadius: 4,
   },
   progressBarForeground: {
     height: 8,
-    backgroundColor: '#29A86E',
+    backgroundColor: '#7061BB',
     borderRadius: 4,
   },
   scroll: {
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   iconContainer: {
-    backgroundColor: 'rgba(41, 168, 110, 0.15)',
+    backgroundColor: 'rgba(112, 97, 187, 0.15)',
     borderRadius: 24,
     width: 48,
     height: 48,
@@ -195,7 +196,7 @@ const styles = StyleSheet.create({
   percentage: {
     fontWeight: 'bold',
     fontSize: 16,
-    color: '#29A86E',
+    color: '#7061BB',
   },
   barBackground: {
     height: 8,
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
   },
   barFill: {
     height: 8,
-    backgroundColor: '#29A86E',
+    backgroundColor: '#7061BB',
     borderRadius: 4,
   },
   description: {
@@ -220,4 +221,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default GezondheidDoelen;
+export default MentaalDoelen;

@@ -12,43 +12,43 @@ import { router } from 'expo-router';
 
 const doelen = [
   {
-    icon: <FontAwesome5 name="lungs" size={20} color="#29A86E" />,
-    title: 'Beter ademen',
+    icon: <FontAwesome5 name="coffee" size={20} color="#29A86E" />,
+    title: 'Trakteer jezelf',
     progress: 0.28,
     progressText: '28%',
-    description: 'Na 48 uur begint je ademhaling te verbeteren door minder vapen.',
+    description: 'Genoeg gespaard voor een heerlijke kop koffie bij je favoriete café.',
   },
   {
-    icon: <Feather name="zap" size={20} color="#29A86E" />,
-    title: 'Meer energie',
-    progress: 0.57,
-    progressText: '57%',
-    description: 'Je voelt je fitter en hebt meer energie in je dagelijkse activiteiten.',
-  },
-  {
-    icon: <FontAwesome5 name="smile" size={20} color="#29A86E" />,
-    title: 'Smaak en geur herstellen',
+    icon: <Feather name="smile" size={20} color="#29A86E" />,
+    title: 'Een avondje uit',
     progress: 0.08,
     progressText: '8%',
-    description: 'Na een week merk je dat je smaak- en reukvermogen terugkomen.',
+    description: 'Een smakelijk diner of een avondje uit met vrienden.',
   },
   {
-    icon: <FontAwesome5 name="ban" size={20} color="#29A86E" />,
-    title: 'Minder cravings',
-    progress: 0.04,
-    progressText: '4%',
-    description: 'Na twee weken zijn de meeste nicotine-cravings verdwenen.',
+    icon: <FontAwesome5 name="suitcase" size={20} color="#29A86E" />,
+    title: 'Kleine vakantie',
+    progress: 0.02,
+    progressText: '2%',
+    description: 'Je kunt nu een dagtrip of weekendje weg plannen.',
   },
   {
-    icon: <FontAwesome5 name="heartbeat" size={20} color="#29A86E" />,
-    title: 'Longgezondheid verbeteren',
+    icon: <FontAwesome5 name="mobile-alt" size={20} color="#29A86E" />,
+    title: 'Nieuwe gadget',
     progress: 0.006,
     progressText: '0.6%',
-    description: 'Je longcapaciteit herstelt zich binnen enkele maanden.',
+    description: 'Je hebt genoeg gespaard voor een mooie investering, zoals een gadget of abonnement.',
+  },
+  {
+    icon: <FontAwesome5 name="money-bill-wave" size={20} color="#29A86E" />,
+    title: 'Levensverandering',
+    progress: 0.0016,
+    progressText: '0.16%',
+    description: 'Je hebt een aanzienlijk bedrag bespaard – denk aan een vakantie of grote aankoop!',
   },
 ];
 
-const GezondheidDoelen = () => {
+const GeldDoelen = () => {
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#29A86E" barStyle="light-content" />
@@ -56,7 +56,7 @@ const GezondheidDoelen = () => {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <FontAwesome name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Gezondheid</Text>
+        <Text style={styles.headerTitle}>Geld</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -220,4 +220,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default GezondheidDoelen;
+export default GeldDoelen;
