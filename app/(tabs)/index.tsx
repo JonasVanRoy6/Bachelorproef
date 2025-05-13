@@ -103,8 +103,11 @@ const HomeScreen = () => {
         <View style={{ marginTop: 24 }}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Mijn Uitdagingen</Text>
-            <Text style={styles.viewAll}>Alles bekijken</Text>
+            <TouchableOpacity onPress={() => router.push("/challenges")}>
+              <Text style={styles.viewAll}>Alles bekijken</Text>
+            </TouchableOpacity>
           </View>
+
 
           {challenges.map((item, index) => (
             <TouchableOpacity
