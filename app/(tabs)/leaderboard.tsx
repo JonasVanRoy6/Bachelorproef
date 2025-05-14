@@ -52,6 +52,53 @@ const LeaderboardScreen = () => {
     search.length > 0 ? lb.name.toLowerCase().includes(search.toLowerCase()) : lb.joined
   );
 
+  const createLeaderboard = async () => {
+    try {
+      const userId = await getUserId();
+
+      if (!userId) {
+        alert('Kan de ingelogde gebruiker niet vinden.');
+        return;
+      }
+
+      const response = await fetch('http://192.168.0.105:5000/leaderboard/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          userId,
+          friends: selectedFriends, // Stuur de geselecteerde vrienden mee
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        alert(data.message);
+
+        // Voeg het nieuwe leaderboard toe aan de lijst
+        const newLeaderboard = {
+          name: data.name,
+          participants: selectedFriends.length,
+          rank: leaderboardsData.length + 1, // Voeg een nieuwe rank toe
+          avatars: selectedFriends.map(friend => friend.avatar || 'default.png'), // Voeg avatars toe
+          joined: true,
+        };
+
+        leaderboardsData.unshift(newLeaderboard); // Voeg het nieuwe leaderboard toe aan de lijst
+
+        // Navigeer naar het leaderboard-scherm
+        router.push('/leaderboard');
+      } else {
+        alert(data.error || 'Er is iets misgegaan bij het aanmaken van het leaderboard.');
+      }
+    } catch (error) {
+      console.error('Fout bij het aanmaken van het leaderboard:', error);
+      alert('Kan geen verbinding maken met de server.');
+    }
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <ScrollView contentContainerStyle={styles.container}>

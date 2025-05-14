@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   View,
   Text,
@@ -10,34 +11,93 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-const initialFriends = [
-  {
-    name: 'Jonas',
-    username: '@JonasVR',
-    img: require('../assets/images/jonas.png'),
-    added: true,
-  },
-  {
-    name: 'Lotte',
-    username: '@Lotte3690',
-    img: require('../assets/images/lotte.png'),
-    added: true,
-  },
-  {
-    name: 'Arno',
-    username: '@ArnoVanCalster',
-    img: require('../assets/images/arno.png'),
-    added: true,
-  },
-];
+const getUserId = async (): Promise<number | null> => {
+  try {
+    const userId = await AsyncStorage.getItem('userId');
+    return userId ? parseInt(userId, 10) : null;
+  } catch (error) {
+    console.error('Fout bij het ophalen van de gebruiker-ID:', error);
+    return null;
+  }
+};
+
+const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[]>>) => {
+  try {
+    const userId = await getUserId(); // Haal de ingelogde gebruiker-ID op
+
+    if (!userId) {
+      alert('Kan de ingelogde gebruiker niet vinden.');
+      return;
+    }
+
+    const response = await fetch(`http://192.168.0.105:5000/user/friends?userId=${userId}`);
+    const data = await response.json();
+
+    if (response.ok) {
+      // Voeg de `added`-eigenschap toe aan elke vriend
+      const friendsWithAdded = data.map((friend: any) => ({
+        ...friend,
+        added: false, // Standaard op false
+      }));
+      setFriends(friendsWithAdded);
+    } else {
+      alert(data.error || 'Er is iets misgegaan bij het ophalen van vrienden.');
+    }
+  } catch (error) {
+    console.error('Fout bij het ophalen van vrienden:', error);
+    alert('Kan geen verbinding maken met de server.');
+  }
+};
+
+const removeFriendFromDatabase = async (friendId: number) => {
+  try {
+    const userId = await getUserId(); // Haal de ingelogde gebruiker-ID op
+
+    if (!userId) {
+      alert('Kan de ingelogde gebruiker niet vinden.');
+      return;
+    }
+
+    const response = await fetch('http://192.168.0.105:5000/user/remove-friend', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        friendId,
+      }),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      alert(data.message); // Laat een melding zien als het succesvol is
+    } else {
+      alert(data.error || 'Er is iets misgegaan bij het verwijderen van de vriend.');
+    }
+  } catch (error) {
+    console.error('Fout bij het verwijderen van de vriend:', error);
+    alert('Kan geen verbinding maken met de server.');
+  }
+};
 
 export default function FriendsListScreen() {
   const router = useRouter();
-  const [friends, setFriends] = useState(initialFriends);
+  const [friends, setFriends] = useState<any[]>([]);
 
-  const toggleFriend = (index: number) => {
+  useEffect(() => {
+    fetchFriends(setFriends); // Haal vrienden op bij het laden van de pagina
+  }, []);
+
+  const removeFriend = async (index: number) => {
+    const friend = friends[index];
+
+    // Verwijder vriend uit de database
+    await removeFriendFromDatabase(friend.id);
+
+    // Verwijder vriend uit de lijst
     const updated = [...friends];
-    updated[index].added = !updated[index].added;
+    updated.splice(index, 1); // Verwijder de vriend uit de array
     setFriends(updated);
   };
 
@@ -56,22 +116,19 @@ export default function FriendsListScreen() {
       <View style={styles.friendList}>
         {friends.map((friend, index) => (
           <View key={index} style={styles.friendCard}>
-            <Image source={friend.img} style={styles.avatar} />
+            <Image source={{ uri: 'https://via.placeholder.com/48' }} style={styles.avatar} />
             <View style={styles.info}>
-              <Text style={styles.name}>{friend.name}</Text>
-              <Text style={styles.username}>{friend.username}</Text>
+              <Text style={styles.name}>{friend.name} {friend.last_name}</Text>
+              <Text style={styles.username}>{friend.email}</Text>
             </View>
             <TouchableOpacity
-              style={[
-                styles.actionButton,
-                friend.added && styles.checkedButton,
-              ]}
-              onPress={() => toggleFriend(index)}
+              style={styles.actionButton}
+              onPress={() => removeFriend(index)} // Verwijder vriend bij klikken
             >
               <FontAwesome
-                name={friend.added ? 'check' : 'user-plus'}
+                name="check" // Toon standaard het check-icoon
                 size={16}
-                color={friend.added ? '#29A86E' : '#29A86E'}
+                color="#29A86E"
               />
             </TouchableOpacity>
           </View>

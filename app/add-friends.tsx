@@ -10,41 +10,95 @@ import {
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const allUsers = [
-  {
-    name: 'Andres',
-    username: '@AndresCochez',
-    img: require('../assets/images/andres.png'),
-  },
-  {
-    name: 'Andres',
-    username: '@AndresCrs',
-    img: require('../assets/images/jonas.png'),
-  },
-  {
-    name: 'Andres',
-    username: '@AndresC531',
-    img: require('../assets/images/lotte.png'),
-  },
-];
+type User = {
+  id: number;
+  name: string;
+  last_name: string;
+  email: string;
+};
+
+const saveUserId = async (userId: number) => {
+  try {
+    await AsyncStorage.setItem('userId', userId.toString());
+  } catch (error) {
+    console.error('Fout bij het opslaan van de gebruiker-ID:', error);
+  }
+};
+
+const getUserId = async (): Promise<number | null> => {
+  try {
+    const userId = await AsyncStorage.getItem('userId');
+    return userId ? parseInt(userId, 10) : null;
+  } catch (error) {
+    console.error('Fout bij het ophalen van de gebruiker-ID:', error);
+    return null;
+  }
+};
+
+const addFriendToDatabase = async (friendId: number) => {
+  try {
+    const userId = await getUserId();
+    console.log('Ingelogde gebruiker-ID:', userId); // Debugging
+
+    if (!userId) {
+      alert('Kan de ingelogde gebruiker niet vinden.');
+      return;
+    }
+
+    const response = await fetch('http://192.168.0.105:5000/user/add-friend', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        friendId,
+      }),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      alert(data.message);
+    } else {
+      alert(data.error || 'Er is iets misgegaan');
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Kan geen verbinding maken met de server');
+  }
+};
+
+const fetchUsers = async (searchTerm: string, setAllUsers: React.Dispatch<React.SetStateAction<User[]>>) => {
+  try {
+    const response = await fetch(`http://192.168.0.105:5000/user/search?search=${searchTerm}`);
+    const data = await response.json();
+
+    if (response.ok) {
+      setAllUsers(data);
+    } else {
+      alert(data.error || 'Er is iets misgegaan bij het ophalen van gebruikers.');
+    }
+  } catch (error) {
+    console.error(error);
+    alert('Kan geen verbinding maken met de server.');
+  }
+};
 
 export default function AddFriendsScreen() {
   const router = useRouter();
   const [search, setSearch] = useState('');
-  const [added, setAdded] = useState<string[]>([]);
+  const [added, setAdded] = useState<number[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
 
-  const toggleAdd = (username: string) => {
+  const toggleAdd = (userId: number) => {
     setAdded((prev) =>
-      prev.includes(username)
-        ? prev.filter((u) => u !== username)
-        : [...prev, username]
+      prev.includes(userId)
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId]
     );
   };
-
-  const filtered = allUsers.filter((user) =>
-    `${user.name}${user.username}`.toLowerCase().includes(search.toLowerCase())
-  );
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -62,10 +116,13 @@ export default function AddFriendsScreen() {
         <FontAwesome name="search" size={16} color="#515151" style={{ marginRight: 8 }} />
         <TextInput
           style={styles.searchInput}
-          placeholder="Gebruikersnaam"
+          placeholder="Zoek op naam of e-mailadres"
           placeholderTextColor="#515151"
           value={search}
-          onChangeText={setSearch}
+          onChangeText={(text) => {
+            setSearch(text);
+            fetchUsers(text, setAllUsers); // Haal gebruikers op bij het wijzigen van de zoektekst
+          }}
         />
         {search.length > 0 && (
           <TouchableOpacity onPress={() => setSearch('')}>
@@ -74,29 +131,32 @@ export default function AddFriendsScreen() {
         )}
       </View>
 
-      {/* Results only shown if searching */}
-      {search.length > 0 && (
+      {/* Results */}
+      {allUsers.length > 0 && (
         <>
-          <Text style={styles.resultCount}>{filtered.length} resultaat{filtered.length !== 1 ? 'en' : ''}</Text>
+          <Text style={styles.resultCount}>{allUsers.length} resultaat{allUsers.length !== 1 ? 'en' : ''}</Text>
 
-          {filtered.map((user, index) => (
-            <View key={index} style={styles.card}>
-              <Image source={user.img} style={styles.avatar} />
+          {allUsers.map((user) => (
+            <View key={user.id} style={styles.card}>
+              <Image source={{ uri: 'https://via.placeholder.com/48' }} style={styles.avatar} />
               <View style={{ flex: 1 }}>
-                <Text style={styles.name}>{user.name}</Text>
-                <Text style={styles.username}>{user.username}</Text>
+                <Text style={styles.name}>{user.name} {user.last_name}</Text>
+                <Text style={styles.username}>{user.email}</Text>
               </View>
               <TouchableOpacity
                 style={[
                   styles.actionButton,
-                  added.includes(user.username) && styles.checkedButton,
+                  added.includes(user.id) && styles.checkedButton,
                 ]}
-                onPress={() => toggleAdd(user.username)}
+                onPress={() => {
+                  toggleAdd(user.id);
+                  addFriendToDatabase(user.id);
+                }}
               >
                 <FontAwesome
-                  name={added.includes(user.username) ? 'check' : 'user-plus'}
+                  name={added.includes(user.id) ? 'check' : 'user-plus'}
                   size={16}
-                  color={added.includes(user.username) ? '#29A86E' : '#29A86E'}
+                  color={added.includes(user.id) ? '#29A86E' : '#29A86E'}
                 />
               </TouchableOpacity>
             </View>

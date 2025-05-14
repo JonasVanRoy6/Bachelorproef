@@ -323,6 +323,265 @@ app.post('/user/update-puffs', (req, res) => {
   });
 });
 
+// Endpoint om een vriend toe te voegen
+app.post('/user/add-friend', (req, res) => {
+  const { userId, friendId } = req.body;
+
+  if (!userId || !friendId) {
+    return res.status(400).json({ error: 'Gebruiker ID en vriend ID zijn verplicht.' });
+  }
+
+  const query = `
+    INSERT INTO friends (user_id, friend_id)
+    VALUES (?, ?)
+  `;
+
+  db.query(query, [userId, friendId], (err, result) => {
+    if (err) {
+      console.error('Fout bij het toevoegen van de vriend:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het toevoegen van de vriend.' });
+    }
+
+    res.status(201).json({ message: 'Vriend succesvol toegevoegd.' });
+  });
+});
+
+// Endpoint om een vriend te verwijderen
+app.delete('/user/remove-friend', (req, res) => {
+  const { userId, friendId } = req.body;
+
+  if (!userId || !friendId) {
+    return res.status(400).json({ error: 'Gebruiker ID en vriend ID zijn verplicht.' });
+  }
+
+  const query = `
+    DELETE FROM friends
+    WHERE user_id = ? AND friend_id = ?
+  `;
+
+  db.query(query, [userId, friendId], (err, result) => {
+    if (err) {
+      console.error('Fout bij het verwijderen van de vriend:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het verwijderen van de vriend.' });
+    }
+
+    res.status(200).json({ message: 'Vriend succesvol verwijderd.' });
+  });
+});
+
+// Endpoint om vrienden van een gebruiker op te halen
+app.get('/user/friends', (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
+  const query = `
+    SELECT u.id, u.first_name AS name, u.last_name, u.email
+    FROM friends f
+    JOIN users u ON u.id = f.friend_id
+    WHERE f.user_id = ?
+  `;
+
+  db.query(query, [userId], (err, results) => {
+    if (err) {
+      console.error('Fout bij het ophalen van vrienden:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van vrienden.' });
+    }
+
+    res.status(200).json(results);
+  });
+});
+
+// Endpoint om gebruikers te zoeken
+app.get('/user/search', (req, res) => {
+  const { search } = req.query;
+
+  if (!search) {
+    return res.status(400).json({ error: 'Zoekterm is verplicht.' });
+  }
+
+  const query = `
+    SELECT id, first_name AS name, last_name, email
+    FROM users
+    WHERE email LIKE ? OR first_name LIKE ? OR last_name LIKE ?
+  `;
+
+  db.query(query, [`%${search}%`, `%${search}%`, `%${search}%`], (err, results) => {
+    if (err) {
+      console.error('Fout bij het ophalen van gebruikers:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van gebruikers.' });
+    }
+
+    res.status(200).json(results);
+  });
+});
+
+// Endpoint om een leaderboard aan te maken
+app.post('/leaderboard/create', (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
+  const query = `INSERT INTO leaderboards (user_id) VALUES (?)`;
+
+  db.query(query, [userId], (err, result) => {
+    if (err) {
+      console.error('Fout bij het aanmaken van het leaderboard:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het aanmaken van het leaderboard.' });
+    }
+
+    const leaderboardId = result.insertId;
+    res.status(201).json({ leaderboardId });
+  });
+});
+
+app.post('/leaderboard/add-friend', (req, res) => {
+  const { leaderboardId, friendId } = req.body;
+
+  if (!leaderboardId || !friendId) {
+    return res.status(400).json({ error: 'Leaderboard ID en vriend ID zijn verplicht.' });
+  }
+
+  const query = `
+    INSERT INTO leaderboard_friends (leaderboard_id, friend_id)
+    VALUES (?, ?)
+  `;
+
+  db.query(query, [leaderboardId, friendId], (err, result) => {
+    if (err) {
+      console.error('Fout bij het toevoegen van de vriend aan het leaderboard:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het toevoegen van de vriend aan het leaderboard.' });
+    }
+
+    res.status(201).json({ message: 'Vriend succesvol toegevoegd aan het leaderboard.' });
+  });
+});
+
+app.post('/leaderboard/add-friends', (req, res) => {
+  const { leaderboardId, friends } = req.body;
+
+  if (!leaderboardId || !friends || !Array.isArray(friends)) {
+    return res.status(400).json({ error: 'Leaderboard ID en vrienden zijn verplicht.' });
+  }
+
+  const friendValues = friends.map(friendId => [leaderboardId, friendId, new Date()]);
+  const addFriendsQuery = `INSERT INTO leaderboard_friends (leaderboard_id, friend_id, added_at) VALUES ?`;
+
+  db.query(addFriendsQuery, [friendValues], (err) => {
+    if (err) {
+      console.error('Fout bij het toevoegen van vrienden aan het leaderboard:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het toevoegen van vrienden aan het leaderboard.' });
+    }
+
+    res.status(201).json({ message: 'Vrienden succesvol toegevoegd aan het leaderboard.' });
+  });
+});
+
+app.get('/leaderboard/friends', (req, res) => {
+  const { leaderboardId } = req.query;
+
+  if (!leaderboardId) {
+    return res.status(400).json({ error: 'Leaderboard ID is verplicht.' });
+  }
+
+  const query = `
+    SELECT u.id, u.first_name AS name, u.last_name, u.email
+    FROM leaderboard_friends lf
+    JOIN users u ON u.id = lf.friend_id
+    WHERE lf.leaderboard_id = ?
+  `;
+
+  db.query(query, [leaderboardId], (err, results) => {
+    if (err) {
+      console.error('Fout bij het ophalen van vrienden van het leaderboard:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van vrienden van het leaderboard.' });
+    }
+
+    res.status(200).json(results);
+  });
+});
+
+app.delete('/leaderboard/friends', (req, res) => {
+  const { leaderboardId, friendId } = req.body;
+
+  if (!leaderboardId || !friendId) {
+    return res.status(400).json({ error: 'Leaderboard ID en vriend ID zijn verplicht.' });
+  }
+
+  const query = `DELETE FROM leaderboard_friends WHERE leaderboard_id = ? AND friend_id = ?`;
+
+  db.query(query, [leaderboardId, friendId], (err, result) => {
+    if (err) {
+      console.error('Fout bij het verwijderen van de vriend:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het verwijderen van de vriend.' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Vriend niet gevonden in het leaderboard.' });
+    }
+
+    res.status(200).json({ message: 'Vriend succesvol verwijderd.' });
+  });
+});
+
+app.post('/leaderboard/update', (req, res) => {
+  const { leaderboardId, name } = req.body;
+
+  if (!leaderboardId || !name) {
+    return res.status(400).json({ error: 'Leaderboard ID en naam zijn verplicht.' });
+  }
+
+  const query = `UPDATE leaderboards SET name = ? WHERE id = ?`;
+
+  db.query(query, [name, leaderboardId], (err) => {
+    if (err) {
+      console.error('Fout bij het bijwerken van het leaderboard:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het bijwerken van het leaderboard.' });
+    }
+
+    res.status(200).json({ message: 'Leaderboard succesvol bijgewerkt.' });
+  });
+});
+
+app.post('/leaderboard/create-with-friends', (req, res) => {
+  console.log('Ontvangen verzoek:', req.body);
+
+  const { userId, friends } = req.body;
+
+  if (!userId || !friends || !Array.isArray(friends)) {
+    console.error('Ongeldige invoer:', { userId, friends });
+    return res.status(400).json({ error: 'Gebruiker ID en vrienden zijn verplicht.' });
+  }
+
+  // Stap 1: Maak het leaderboard aan
+  const createLeaderboardQuery = `INSERT INTO leaderboards (user_id) VALUES (?)`;
+  db.query(createLeaderboardQuery, [userId], (err, result) => {
+    if (err) {
+      console.error('Fout bij het aanmaken van het leaderboard:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het aanmaken van het leaderboard.' });
+    }
+
+    const leaderboardId = result.insertId;
+
+    // Stap 2: Voeg vrienden toe aan het leaderboard
+    const friendValues = friends.map(friendId => [leaderboardId, friendId, new Date()]);
+    const addFriendsQuery = `INSERT INTO leaderboard_friends (leaderboard_id, friend_id, added_at) VALUES ?`;
+
+    db.query(addFriendsQuery, [friendValues], (err) => {
+      if (err) {
+        console.error('Fout bij het toevoegen van vrienden aan het leaderboard:', err);
+        return res.status(500).json({ error: 'Er is een fout opgetreden bij het toevoegen van vrienden aan het leaderboard.' });
+      }
+
+      res.status(201).json({ message: 'Leaderboard en vrienden succesvol aangemaakt.', leaderboardId });
+    });
+  });
+});
+
 // Test endpoint
 app.get("/test", (req, res) => {
   res.send("Server werkt!");
@@ -330,5 +589,6 @@ app.get("/test", (req, res) => {
 
 // Server starten
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server draait op http://192.168.0.130:${PORT}`);
+  console.log(`🚀 Server draait op http://192.168.0.105:${PORT}`);
 });
+

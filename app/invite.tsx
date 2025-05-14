@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,33 +9,119 @@ import {
   ScrollView
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const allUsers = [
-  { name: 'Jens', username: '@JensDeW', img: require('../assets/images/andres.png'), invited: false, recommended: true },
-  { name: 'Lotte', username: '@Lottex4', img: require('../assets/images/lotte.png'), invited: false, recommended: true },
-  { name: 'Milan', username: '@MilanS', img: require('../assets/images/jonas.png'), invited: true },
-  { name: 'Arno', username: '@ArnoVanCalster', img: require('../assets/images/arno.png'), invited: false },
-  { name: 'Andres', username: '@AndresCochez', img: require('../assets/images/andres.png'), invited: false },
-];
+const getUserId = async (): Promise<number | null> => {
+  try {
+    const userId = await AsyncStorage.getItem('userId');
+    return userId ? parseInt(userId, 10) : null;
+  } catch (error) {
+    console.error('Fout bij het ophalen van de gebruiker-ID:', error);
+    return null;
+  }
+};
+
+const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[]>>) => {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      alert('Kan de ingelogde gebruiker niet vinden.');
+      return;
+    }
+
+    const response = await fetch(`http://192.168.0.105:5000/user/friends?userId=${userId}`);
+    const data = await response.json();
+
+    if (response.ok) {
+      const friendsWithInvited = data.map((friend: any) => ({
+        ...friend,
+        invited: false,
+      }));
+      setFriends(friendsWithInvited);
+    } else {
+      alert(data.error || 'Er is iets misgegaan bij het ophalen van vrienden.');
+    }
+  } catch (error) {
+    console.error('Fout bij het ophalen van vrienden:', error);
+    alert('Kan geen verbinding maken met de server.');
+  }
+};
 
 export default function InviteScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const [search, setSearch] = useState('');
-  const [users, setUsers] = useState(allUsers);
+  const [selectedFriends, setSelectedFriends] = useState<any[]>([]);
+  const [friends, setFriends] = useState<any[]>([]);
 
-  const handleInvite = (username: string) => {
-    setUsers(prev =>
-      prev.map(u => u.username === username ? { ...u, invited: !u.invited } : u)
+  useEffect(() => {
+    fetchFriends(setFriends);
+  }, []);
+
+  useEffect(() => {
+    if (params.friends) {
+      try {
+        const parsedFriends = JSON.parse(params.friends as string);
+        if (JSON.stringify(friends) !== JSON.stringify(parsedFriends)) {
+          setFriends(parsedFriends);
+        }
+      } catch (error) {
+        console.error('Fout bij het parsen van vrienden:', error);
+      }
+    }
+  }, [params.friends]);
+
+  const handleInvite = (friendId: number) => {
+    setFriends(prev =>
+      prev.map(friend =>
+        friend.id === friendId ? { ...friend, invited: !friend.invited } : friend
+      )
     );
   };
 
-  const filtered = users.filter(u =>
+  const createLeaderboardWithFriends = async () => {
+    try {
+      const userId = await getUserId();
+      if (!userId) {
+        alert('Kan de ingelogde gebruiker niet vinden.');
+        return;
+      }
+
+      const invitedFriends = friends.filter(friend => friend.invited).map(friend => friend.id);
+
+      if (invitedFriends.length === 0) {
+        alert('Selecteer minstens één vriend om een leaderboard aan te maken.');
+        return;
+      }
+
+      const response = await fetch('http://192.168.0.105:5000/leaderboard/create-with-friends', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, friends: invitedFriends }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        alert(data.error || 'Er is iets misgegaan bij het aanmaken van het leaderboard.');
+        return;
+      }
+
+      router.replace({
+        pathname: '/leaderboard-create',
+        params: { leaderboardId: data.leaderboardId },
+      });
+    } catch (error) {
+      console.error('Fout bij het aanmaken van het leaderboard:', error);
+      alert('Kan geen verbinding maken met de server.');
+    }
+  };
+
+  const filtered = friends.filter(u =>
     search.length === 0 || u.name.toLowerCase().includes(search.toLowerCase())
   );
-
-  const recommended = filtered.filter(u => u.recommended);
-  const other = filtered.filter(u => !u.recommended);
 
   return (
     <View style={styles.wrapper}>
@@ -45,7 +131,7 @@ export default function InviteScreen() {
             <FontAwesome name="arrow-left" size={24} color="#29A86E" />
           </TouchableOpacity>
           <Text style={styles.title}>Vrienden Uitnodigen</Text>
-          <View style={{ width: 24 }} /> {/* Voor centrering */}
+          <View style={{ width: 24 }} />
         </View>
 
         <View style={styles.searchWrapper}>
@@ -57,40 +143,27 @@ export default function InviteScreen() {
             value={search}
             onChangeText={setSearch}
           />
-          {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')}>
-              <FontAwesome name="times-circle" size={18} color="#29A86E" />
-            </TouchableOpacity>
-          )}
         </View>
 
-        {search.length > 0 ? (
-          <>
-            <Text style={styles.resultCount}>{filtered.length} resultaat{filtered.length !== 1 ? 'en' : ''}</Text>
-            <ScrollView contentContainerStyle={styles.list}>
-              {filtered.map(user => (
-                <UserCard key={user.username} user={user} onToggle={handleInvite} />
-              ))}
-            </ScrollView>
-          </>
-        ) : (
-          <ScrollView contentContainerStyle={styles.list}>
-            <Text style={styles.section}>Aanbevolen</Text>
-            {recommended.map(user => (
-              <UserCard key={user.username} user={user} onToggle={handleInvite} />
-            ))}
-            <Text style={styles.section}>Vriendenlijst</Text>
-            {other.map(user => (
-              <UserCard key={user.username} user={user} onToggle={handleInvite} />
-            ))}
-          </ScrollView>
-        )}
+        <ScrollView contentContainerStyle={styles.list}>
+          {filtered.map(user => (
+            <UserCard
+              key={user.id}
+              user={user}
+              onToggle={() => handleInvite(user.id)}
+            />
+          ))}
+        </ScrollView>
+
+        <TouchableOpacity onPress={createLeaderboardWithFriends} style={styles.doneButton}>
+          <Text style={styles.doneText}>Klaar</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-function UserCard({ user, onToggle }: { user: any; onToggle: (u: string) => void }) {
+function UserCard({ user, onToggle }: { user: any; onToggle: () => void }) {
   return (
     <View style={styles.card}>
       <View style={styles.userRow}>
@@ -102,7 +175,7 @@ function UserCard({ user, onToggle }: { user: any; onToggle: (u: string) => void
       </View>
       <TouchableOpacity
         style={user.invited ? styles.invitedButton : styles.inviteButton}
-        onPress={() => onToggle(user.username)}
+        onPress={onToggle}
       >
         <Text style={user.invited ? styles.invitedText : styles.inviteText}>
           {user.invited ? 'Uitgenodigd' : 'Uitnodigen'}
@@ -210,6 +283,19 @@ const styles = StyleSheet.create({
   },
   invitedText: {
     fontSize: 14,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  doneButton: {
+    backgroundColor: '#29A86E',
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  doneText: {
+    fontSize: 16,
     color: '#fff',
     fontWeight: '600',
   },
