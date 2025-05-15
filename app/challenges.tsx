@@ -7,16 +7,23 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
-import { FontAwesome, FontAwesome5, Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  FontAwesome,
+  FontAwesome5,
+  Feather,
+  MaterialCommunityIcons,
+} from '@expo/vector-icons';
 import { router } from 'expo-router';
 
 const ICONS = {
   reizen: <FontAwesome5 name="suitcase-rolling" size={24} color="#29A86E" />,
   kleding: <FontAwesome5 name="tshirt" size={24} color="#3ED9E2" />,
-  voeding: <MaterialCommunityIcons name="silverware-fork-knife" size={24} color="#FF7373" />,
+  voeding: (
+    <MaterialCommunityIcons name="silverware-fork-knife" size={24} color="#FF7373" />
+  ),
   elektronica: <FontAwesome5 name="mobile-alt" size={24} color="#7061BB" />,
   cadeau: <FontAwesome name="gift" size={24} color="#FFCD0F" />,
-};
+} as const;
 
 const kleuren = {
   reizen: '#29A86E',
@@ -24,7 +31,7 @@ const kleuren = {
   voeding: '#FF7373',
   elektronica: '#7061BB',
   cadeau: '#FFCD0F',
-};
+} as const;
 
 const achtergrondKleurBox = {
   elektronica: '#EAE8F5',
@@ -32,9 +39,20 @@ const achtergrondKleurBox = {
   kleding: '#E2FAFB',
   voeding: '#FFEAEA',
   cadeau: '#FFF8DB',
+} as const;
+
+type Thema = keyof typeof kleuren;
+
+type Challenge = {
+  id: number;
+  titel: string;
+  thema: Thema;
+  bedrag: number;
+  huidig: number;
+  menuOpen?: boolean;
 };
 
-const initActief = {
+const initActief: Challenge = {
   id: 1,
   titel: 'Nieuwe Iphone',
   thema: 'elektronica',
@@ -42,7 +60,7 @@ const initActief = {
   huidig: 190,
 };
 
-const initOverige = [
+const initOverige: Challenge[] = [
   { id: 2, titel: 'Vakantie Naar Spanje', thema: 'reizen', bedrag: 350, huidig: 30 },
   { id: 3, titel: 'Nieuwe Trui', thema: 'kleding', bedrag: 45, huidig: 40 },
   { id: 4, titel: 'Uit Eten Gaan', thema: 'voeding', bedrag: 60, huidig: 5 },
@@ -50,20 +68,28 @@ const initOverige = [
 ];
 
 const Challenges = () => {
-  const [actieve, setActieve] = useState(initActief);
-  const [overige, setOverige] = useState(initOverige);
+  const [actieve, setActieve] = useState<Challenge>(initActief);
+  const [overige, setOverige] = useState<Challenge[]>(initOverige);
 
-  const maakActief = (nieuw) => {
-    setOverige(prev => [...prev.filter(u => u.id !== nieuw.id), { ...actieve, menuOpen: false }]);
+  const maakActief = (nieuw: Challenge) => {
+    setOverige((prev) => [
+      ...prev.filter((u) => u.id !== nieuw.id),
+      { ...actieve, menuOpen: false },
+    ]);
     setActieve(nieuw);
   };
 
-  const getOpacityColor = (kleur) => kleur + '26';
+  const getOpacityColor = (kleur: string) => kleur + '26';
 
   return (
     <View style={{ flex: 1 }}>
-      <StatusBar backgroundColor={kleuren[actieve.thema]} barStyle="light-content" />
-      <View style={[styles.topContainer, { backgroundColor: kleuren[actieve.thema] }]}>
+      <StatusBar
+        backgroundColor={kleuren[actieve.thema]}
+        barStyle="light-content"
+      />
+      <View
+        style={[styles.topContainer, { backgroundColor: kleuren[actieve.thema] }]}
+      >
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
             <FontAwesome name="arrow-left" size={24} color="#fff" />
@@ -73,27 +99,83 @@ const Challenges = () => {
         </View>
 
         <View style={styles.cardContainer}>
-          <View style={[styles.challengeCard, { backgroundColor: achtergrondKleurBox[actieve.thema] || '#fff' }]}>
+          <View
+            style={[
+              styles.challengeCard,
+              {
+                backgroundColor:
+                  achtergrondKleurBox[actieve.thema] || '#fff',
+              },
+            ]}
+          >
             <View style={styles.cardTop}>
-              <View style={[styles.iconBox, { backgroundColor: getOpacityColor(kleuren[actieve.thema]) }]}>
+              <View
+                style={[
+                  styles.iconBox,
+                  {
+                    backgroundColor: getOpacityColor(
+                      kleuren[actieve.thema]
+                    ),
+                  },
+                ]}
+              >
                 {ICONS[actieve.thema]}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.title}>{actieve.titel}</Text>
                 <Text style={styles.subtitle}>Bespaar €{actieve.bedrag}</Text>
               </View>
-              <View style={[styles.actiefTag, { backgroundColor: getOpacityColor(kleuren[actieve.thema]) }]}>
-                <Text style={[styles.actiefTagText, { color: kleuren[actieve.thema] }]}>Actief</Text>
+              <View
+                style={[
+                  styles.actiefTag,
+                  {
+                    backgroundColor: getOpacityColor(kleuren[actieve.thema]),
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.actiefTagText,
+                    { color: kleuren[actieve.thema] },
+                  ]}
+                >
+                  Actief
+                </Text>
               </View>
             </View>
             <View style={[styles.cardBottom, { marginBottom: 8 }]}>
               <Text style={styles.progressLabel}>Progressie</Text>
-              <Text style={[styles.progressValue, { color: kleuren[actieve.thema], fontWeight: '600' }]}>
+              <Text
+                style={[
+                  styles.progressValue,
+                  {
+                    color: kleuren[actieve.thema],
+                    fontWeight: '600',
+                  },
+                ]}
+              >
                 €{actieve.huidig} / €{actieve.bedrag}
               </Text>
             </View>
-            <View style={[styles.progressBarBg, { backgroundColor: getOpacityColor(kleuren[actieve.thema]) }]}>
-              <View style={[styles.progressBarFill, { width: `${(actieve.huidig / actieve.bedrag) * 100}%`, backgroundColor: kleuren[actieve.thema] }]} />
+            <View
+              style={[
+                styles.progressBarBg,
+                {
+                  backgroundColor: getOpacityColor(kleuren[actieve.thema]),
+                },
+              ]}
+            >
+              <View
+                style={[
+                  styles.progressBarFill,
+                  {
+                    width: `${
+                      (actieve.huidig / actieve.bedrag) * 100
+                    }%`,
+                    backgroundColor: kleuren[actieve.thema],
+                  },
+                ]}
+              />
             </View>
           </View>
         </View>
@@ -102,7 +184,13 @@ const Challenges = () => {
       <View style={styles.scrollWrapper}>
         <View style={styles.overigeHeaderSticky}>
           <Text style={styles.overigeTitle}>Overige Uitdagingen</Text>
-          <TouchableOpacity style={[styles.plusCircle, { backgroundColor: kleuren[actieve.thema] }]}>
+          <TouchableOpacity
+            style={[
+              styles.plusCircle,
+              { backgroundColor: kleuren[actieve.thema] },
+            ]}
+            onPress={() => router.push('/challenges-add')}
+          >
             <FontAwesome name="plus" size={16} color="#F5F5F5" />
           </TouchableOpacity>
         </View>
@@ -110,9 +198,24 @@ const Challenges = () => {
         <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
           {overige.map((item) => (
             <View key={item.id} style={styles.challengeWrapper}>
-              <View style={[styles.challengeCard, styles.overigeCard, { backgroundColor: '#fff' }]}>
+              <View
+                style={[
+                  styles.challengeCard,
+                  styles.overigeCard,
+                  { backgroundColor: '#fff' },
+                ]}
+              >
                 <View style={styles.cardTop}>
-                  <View style={[styles.iconBox, { backgroundColor: getOpacityColor(kleuren[item.thema]) }]}>
+                  <View
+                    style={[
+                      styles.iconBox,
+                      {
+                        backgroundColor: getOpacityColor(
+                          kleuren[item.thema]
+                        ),
+                      },
+                    ]}
+                  >
                     {ICONS[item.thema]}
                   </View>
                   <View style={{ flex: 1 }}>
@@ -121,9 +224,13 @@ const Challenges = () => {
                   </View>
                   <TouchableOpacity
                     onPress={() => {
-                      setOverige(overige.map((o) =>
-                        o.id === item.id ? { ...o, menuOpen: !o.menuOpen } : { ...o, menuOpen: false }
-                      ));
+                      setOverige((prev) =>
+                        prev.map((o) =>
+                          o.id === item.id
+                            ? { ...o, menuOpen: !o.menuOpen }
+                            : { ...o, menuOpen: false }
+                        )
+                      );
                     }}
                   >
                     <Feather name="more-vertical" size={24} color="#515151" />
@@ -132,24 +239,50 @@ const Challenges = () => {
 
                 {item.menuOpen && (
                   <View style={styles.popupMenu}>
-                    <TouchableOpacity onPress={() => maakActief(item)} style={styles.popupOption}>
+                    <TouchableOpacity
+                      onPress={() => maakActief(item)}
+                      style={styles.popupOption}
+                    >
                       <Text style={styles.popupText}>Maak Actief</Text>
                     </TouchableOpacity>
                     <View style={styles.divider} />
                     <TouchableOpacity style={styles.popupOption}>
-                      <Text style={[styles.popupText, { color: '#999' }]}>Verwijder</Text>
+                      <Text style={[styles.popupText, { color: '#999' }]}>
+                        Verwijder
+                      </Text>
                     </TouchableOpacity>
                   </View>
                 )}
 
                 <View style={[styles.cardBottom, { marginBottom: 8 }]}>
                   <Text style={styles.progressLabel}>Progressie</Text>
-                  <Text style={[styles.progressValue, { color: kleuren[item.thema], fontWeight: '600' }]}>
+                  <Text
+                    style={[
+                      styles.progressValue,
+                      {
+                        color: kleuren[item.thema],
+                        fontWeight: '600',
+                      },
+                    ]}
+                  >
                     €{item.huidig} / €{item.bedrag}
                   </Text>
                 </View>
-                <View style={[styles.progressBarBg, { backgroundColor: '#F5F5F5' }]}>
-                  <View style={[styles.progressBarFill, { width: `${(item.huidig / item.bedrag) * 100}%`, backgroundColor: kleuren[item.thema] }]} />
+                <View
+                  style={[
+                    styles.progressBarBg,
+                    { backgroundColor: '#F5F5F5' },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.progressBarFill,
+                      {
+                        width: `${(item.huidig / item.bedrag) * 100}%`,
+                        backgroundColor: kleuren[item.thema],
+                      },
+                    ]}
+                  />
                 </View>
               </View>
             </View>
