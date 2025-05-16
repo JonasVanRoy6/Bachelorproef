@@ -1,155 +1,309 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
-import { Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
+import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 
-const screenWidth = Dimensions.get('window').width;
+const periods = ['Dag', 'Week', 'Maand'] as const;
+type Period = typeof periods[number];
 
 const StatsScreen = () => {
-  const [selectedPeriod, setSelectedPeriod] = useState('Dag');
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('Dag');
 
-  const getChartData = () => {
+  const chartData = {
+    Dag: [15, 20, 35, 70, 90, 80, 40, 30],
+    Week: [46, 60, 35, 50, 30, 65, 55],
+    Maand: [60, 90, 40, 20],
+  };
+
+  const xLabels = {
+    Dag: ['0:00', '3:00', '6:00', '9:00', '12:00', '15:00', '18:00', '21:00'],
+    Week: ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'],
+    Maand: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+  };
+
+  const getAverageLabel = () => {
     switch (selectedPeriod) {
-      case 'Dag':
-        return {
-          labels: ["6:00", "10:00", "14:00", "18:00", "22:00"],
-          datasets: [
-            {
-              data: [0, 10, 20, 40, 60],
-            },
-          ],
-        };
-      case 'Week':
-        return {
-          labels: ["Ma", "Di", "Wo", "Do", "Vr", "Za", "Zo"],
-          datasets: [
-            {
-              data: [50, 60, 70, 80, 90, 100, 110],
-            },
-          ],
-        };
-      case 'Maand':
-        return {
-          labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
-          datasets: [
-            {
-              data: [200, 300, 400, 500],
-            },
-          ],
-        };
-      default:
-        return {
-          labels: [],
-          datasets: [
-            {
-              data: [],
-            },
-          ],
-        };
+      case 'Dag': return 'Gemiddeld per uur';
+      case 'Week': return 'Gemiddeld per dag';
+      case 'Maand': return 'Gemiddeld per week';
     }
   };
 
+  const scaleFactor = 140 / 80;
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={[styles.tabButton, selectedPeriod === 'Dag' && styles.selectedButton]}
-          onPress={() => setSelectedPeriod('Dag')}
-        >
-          <Text style={styles.tabButtonText}>Dag</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tabButton, selectedPeriod === 'Week' && styles.selectedButton]}
-          onPress={() => setSelectedPeriod('Week')}
-        >
-          <Text style={styles.tabButtonText}>Week</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tabButton, selectedPeriod === 'Maand' && styles.selectedButton]}
-          onPress={() => setSelectedPeriod('Maand')}
-        >
-          <Text style={styles.tabButtonText}>Maand</Text>
-        </TouchableOpacity>
+      <Text style={styles.title}>Statistieken</Text>
+
+      <View style={styles.selectorWrapper}>
+        {periods.map((period) => (
+          <TouchableOpacity
+            key={period}
+            onPress={() => setSelectedPeriod(period)}
+            style={styles.selectorButtonWrapper}
+          >
+            <View
+              style={[
+                styles.selectorButton,
+                selectedPeriod === period && styles.selectorButtonActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.selectorText,
+                  selectedPeriod === period && styles.selectorTextActive,
+                ]}
+              >
+                {period}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        ))}
       </View>
 
-      <View style={styles.usageContainer}>
-        <Text style={styles.usageTitle}>Gebruik Vandaag</Text>
-        <Text style={styles.usageDate}>24 mar. 2025</Text>
-        <View style={styles.usageStats}>
-          <Text style={styles.usageStat}>46 Puffs</Text>
-          <Text style={styles.usageStat}>12m Duur</Text>
-          <Text style={styles.usageStat}>2.1 ml Vloeistof</Text>
-        </View>
-      </View>
+      <ScrollView
+        contentContainerStyle={{ paddingTop: 0, paddingBottom: 16 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.inner}>
+          <View style={styles.widgetRow}>
+            <View style={styles.statBox}>
+              <MaterialCommunityIcons name="smoking" size={24} color="#29A86E" style={styles.icon} />
+              <Text style={styles.statLabel}>Puffs</Text>
+              <Text style={styles.statValue}>46</Text>
+            </View>
+            <View style={styles.statBox}>
+              <MaterialCommunityIcons name="timer-outline" size={24} color="#29A86E" style={styles.icon} />
+              <Text style={styles.statLabel}>Duur</Text>
+              <Text style={styles.statValue}>12m</Text>
+            </View>
+            <View style={styles.statBox}>
+              <MaterialCommunityIcons name="water-outline" size={24} color="#29A86E" style={styles.icon} />
+              <Text style={styles.statLabel}>Vloeistof</Text>
+              <Text style={styles.statValue}>2.1 ml</Text>
+            </View>
+          </View>
 
-      <LineChart
-        data={getChartData()}
-        width={screenWidth - 40}
-        height={220}
-        chartConfig={{
-          backgroundColor: "#ffffff",
-          backgroundGradientFrom: "#ffffff",
-          backgroundGradientTo: "#ffffff",
-          decimalPlaces: 0,
-          color: (opacity = 1) => `rgba(0, 128, 0, ${opacity})`,
-          labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-          style: {
-            borderRadius: 16,
-          },
-          propsForDots: {
-            r: "6",
-            strokeWidth: "2",
-            stroke: "#4caf50",
-          },
-        }}
-        style={{
-          marginVertical: 8,
-          borderRadius: 16,
-        }}
-      />
+          <View style={styles.chartWidget}>
+            <View style={styles.widgetHeader}>
+              <Text style={styles.widgetTitle}>
+                Gebruik {selectedPeriod === 'Dag' ? 'Vandaag' : selectedPeriod === 'Week' ? 'Deze Week' : 'Deze Maand'}
+              </Text>
+              <Text style={styles.widgetSub}>24 mar. 2025</Text>
+            </View>
+            <View style={styles.chartContainer}>
+              {chartData[selectedPeriod].map((value, i) => (
+                <View key={i} style={styles.barWrapper}>
+                  <View style={[styles.bar, { height: value * scaleFactor }]} />
+                  <Text style={styles.barLabel}>{xLabels[selectedPeriod][i]}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
 
-      <View style={styles.peakUsageContainer}>
-        <Text style={styles.peakUsageTitle}>Piekgebruik</Text>
-        <View style={styles.peakUsageItem}>
-          <Text style={styles.peakUsageTime}>8:00 - 10:00</Text>
-          <View style={styles.peakUsageBar}>
-            <View style={[styles.peakUsageProgress, { width: '50%' }]} />
+          <View style={styles.peakWidget}>
+            <Text style={[styles.widgetTitle, { marginBottom: 16 }]}>Piekgebruik</Text>
+            <View style={styles.peakBlock}>
+              <Text style={styles.peakLabel}>8:00 - 10:00</Text>
+              <View style={styles.peakBarBg}><View style={[styles.peakBarFill, { width: 214 }]} /></View>
+            </View>
+            <View style={styles.peakBlock}>
+              <Text style={styles.peakLabel}>14:00 - 16:00</Text>
+              <View style={styles.peakBarBg}><View style={[styles.peakBarFill, { width: 214 }]} /></View>
+            </View>
+            <View style={styles.peakBlock}>
+              <Text style={styles.peakLabel}>18:00 - 21:00</Text>
+              <View style={styles.peakBarBg}><View style={[styles.peakBarFill, { width: 214 }]} /></View>
+            </View>
+          </View>
+
+          <View style={styles.compareWidget}>
+            <View>
+              <Text style={styles.compareLabel}>{getAverageLabel()}</Text>
+              <Text style={styles.compareValue}>6.5</Text>
+            </View>
+            <Text style={styles.compareChange}>↓ 8%</Text>
+          </View>
+
+          <View style={styles.compareWidget}>
+            <View>
+              <Text style={styles.compareLabel}>vs. gisteren</Text>
+              <Text style={styles.compareValue}>+12%</Text>
+            </View>
+            <Feather name="trending-up" size={20} color="#29A86E" />
+          </View>
+
+          <View style={styles.compareWidget}>
+            <View>
+              <Text style={styles.compareLabel}>vs. vorige week</Text>
+              <Text style={styles.compareValue}>-8%</Text>
+            </View>
+            <Feather name="trending-down" size={20} color="#29A86E" />
+          </View>
+
+          <View style={styles.compareWidget}>
+            <View>
+              <Text style={styles.compareLabel}>vs. vorige maand</Text>
+              <Text style={styles.compareValue}>-15%</Text>
+            </View>
+            <Feather name="trending-down" size={20} color="#29A86E" />
           </View>
         </View>
-        <View style={styles.peakUsageItem}>
-          <Text style={styles.peakUsageTime}>14:00 - 16:00</Text>
-          <View style={styles.peakUsageBar}>
-            <View style={[styles.peakUsageProgress, { width: '70%' }]} />
-          </View>
-        </View>
-        <View style={styles.peakUsageItem}>
-          <Text style={styles.peakUsageTime}>18:00 - 21:00</Text>
-          <View style={styles.peakUsageBar}>
-            <View style={[styles.peakUsageProgress, { width: '90%' }]} />
-          </View>
-        </View>
-      </View>
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8', padding: 20 },
-  header: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 20 },
-  tabButton: { padding: 10, borderRadius: 5, backgroundColor: '#e0e0e0' },
-  selectedButton: { backgroundColor: '#4caf50' },
-  tabButtonText: { fontSize: 16, fontWeight: 'bold' },
-  usageContainer: { backgroundColor: '#fff', padding: 20, borderRadius: 10, marginBottom: 20 },
-  usageTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 5 },
-  usageDate: { fontSize: 14, color: 'gray', marginBottom: 10 },
-  usageStats: { flexDirection: 'row', justifyContent: 'space-between' },
-  usageStat: { fontSize: 16, fontWeight: 'bold' },
-  peakUsageContainer: { backgroundColor: '#fff', padding: 20, borderRadius: 10, marginTop: 20 },
-  peakUsageTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  peakUsageItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  peakUsageTime: { fontSize: 14, color: 'gray', width: '30%' },
-  peakUsageBar: { flex: 1, height: 10, backgroundColor: '#e0e0e0', borderRadius: 5, overflow: 'hidden' },
-  peakUsageProgress: { height: '100%', backgroundColor: '#4caf50' },
+  container: { flex: 1, backgroundColor: '#fff', paddingTop: 64 },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#252525',
+    marginBottom: 24,
+  },
+  inner: {
+    paddingHorizontal: 16,
+  },
+  selectorWrapper: {
+    flexDirection: 'row',
+    width: 370,
+    height: 44,
+    alignSelf: 'center',
+    borderRadius: 16,
+    backgroundColor: '#F5F5F5',
+    marginBottom: 16,
+    padding: 4,
+  },
+  selectorButtonWrapper: { flex: 1 },
+  selectorButton: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: 36,
+    borderRadius: 12,
+  },
+  selectorButtonActive: { backgroundColor: '#29A86E' },
+  selectorText: { fontSize: 14, color: '#515151', fontWeight: '500' },
+  selectorTextActive: { color: '#F5F5F5' },
+  widgetRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    marginBottom: 24,
+    width: 370,
+    alignSelf: 'center',
+  },
+  statBox: {
+    width: 112,
+    height: 103,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+    paddingTop: 12,
+    paddingBottom: 12,
+    paddingHorizontal: 16,
+    justifyContent: 'space-between',
+  },
+  icon: { marginBottom: 6 },
+  statLabel: { fontSize: 14, color: '#515151' },
+  statValue: { fontSize: 24, fontWeight: 'bold', color: '#252525' },
+  chartWidget: {
+    width: 370,
+    height: 284,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    alignSelf: 'center',
+    marginBottom: 24,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  widgetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  widgetTitle: { fontSize: 18, fontWeight: '600', color: '#252525' },
+  widgetSub: { fontSize: 14, color: '#29A86E' },
+  chartContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    flex: 1,
+  },
+  barWrapper: { alignItems: 'center' },
+  bar: {
+    width: 22,
+    backgroundColor: '#29A86E',
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+  },
+  barLabel: { fontSize: 12, color: '#515151', marginTop: 4 },
+  peakWidget: {
+    width: 370,
+    height: 180,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    alignSelf: 'center',
+    marginBottom: 24,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  peakBlock: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  peakLabel: { fontSize: 14, color: '#252525', width: 100, marginRight: 24 },
+  peakBarBg: {
+    width: 214,
+    height: 8,
+    backgroundColor: '#DFF2E9',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  peakBarFill: {
+    height: '100%',
+    backgroundColor: '#29A86E',
+    borderRadius: 4,
+  },
+  compareWidget: {
+    width: 370,
+    height: 68,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    alignSelf: 'center',
+    marginBottom: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  compareLabel: { fontSize: 14, color: '#515151' },
+  compareValue: { fontSize: 20, fontWeight: '600', color: '#252525', marginTop: -2 },
+  compareChange: { fontSize: 14, color: '#29A86E' },
 });
 
 export default StatsScreen;
