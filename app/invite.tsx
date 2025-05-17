@@ -1,0 +1,302 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  ScrollView
+} from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const getUserId = async (): Promise<number | null> => {
+  try {
+    const userId = await AsyncStorage.getItem('userId');
+    return userId ? parseInt(userId, 10) : null;
+  } catch (error) {
+    console.error('Fout bij het ophalen van de gebruiker-ID:', error);
+    return null;
+  }
+};
+
+const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[]>>) => {
+  try {
+    const userId = await getUserId();
+    if (!userId) {
+      alert('Kan de ingelogde gebruiker niet vinden.');
+      return;
+    }
+
+    const response = await fetch(`http://192.168.0.105:5000/user/friends?userId=${userId}`);
+    const data = await response.json();
+
+    if (response.ok) {
+      const friendsWithInvited = data.map((friend: any) => ({
+        ...friend,
+        invited: false,
+      }));
+      setFriends(friendsWithInvited);
+    } else {
+      alert(data.error || 'Er is iets misgegaan bij het ophalen van vrienden.');
+    }
+  } catch (error) {
+    console.error('Fout bij het ophalen van vrienden:', error);
+    alert('Kan geen verbinding maken met de server.');
+  }
+};
+
+export default function InviteScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams();
+  const [search, setSearch] = useState('');
+  const [selectedFriends, setSelectedFriends] = useState<any[]>([]);
+  const [friends, setFriends] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchFriends(setFriends);
+  }, []);
+
+  useEffect(() => {
+    if (params.friends) {
+      try {
+        const parsedFriends = JSON.parse(params.friends as string);
+        if (JSON.stringify(friends) !== JSON.stringify(parsedFriends)) {
+          setFriends(parsedFriends);
+        }
+      } catch (error) {
+        console.error('Fout bij het parsen van vrienden:', error);
+      }
+    }
+  }, [params.friends]);
+
+  const handleInvite = (friendId: number) => {
+    setFriends(prev =>
+      prev.map(friend =>
+        friend.id === friendId ? { ...friend, invited: !friend.invited } : friend
+      )
+    );
+  };
+
+  const createLeaderboardWithFriends = async () => {
+    try {
+      const userId = await getUserId();
+      if (!userId) {
+        alert('Kan de ingelogde gebruiker niet vinden.');
+        return;
+      }
+
+      const invitedFriends = friends.filter(friend => friend.invited).map(friend => friend.id);
+
+      if (invitedFriends.length === 0) {
+        alert('Selecteer minstens één vriend om een leaderboard aan te maken.');
+        return;
+      }
+
+      const response = await fetch('http://192.168.0.105:5000/leaderboard/create-with-friends', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, friends: invitedFriends }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        alert(data.error || 'Er is iets misgegaan bij het aanmaken van het leaderboard.');
+        return;
+      }
+
+      router.replace({
+        pathname: '/leaderboard-create',
+        params: { leaderboardId: data.leaderboardId },
+      });
+    } catch (error) {
+      console.error('Fout bij het aanmaken van het leaderboard:', error);
+      alert('Kan geen verbinding maken met de server.');
+    }
+  };
+
+  const filtered = friends.filter(u =>
+    search.length === 0 || u.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <View style={styles.wrapper}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <FontAwesome name="arrow-left" size={24} color="#29A86E" />
+          </TouchableOpacity>
+          <Text style={styles.title}>Vrienden Uitnodigen</Text>
+          <View style={{ width: 24 }} />
+        </View>
+
+        <View style={styles.searchWrapper}>
+          <FontAwesome name="search" size={18} color="#999" style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Gebruikersnaam"
+            placeholderTextColor="#515151"
+            value={search}
+            onChangeText={setSearch}
+          />
+        </View>
+
+        <ScrollView contentContainerStyle={styles.list}>
+          {filtered.map(user => (
+            <UserCard
+              key={user.id}
+              user={user}
+              onToggle={() => handleInvite(user.id)}
+            />
+          ))}
+        </ScrollView>
+
+        <TouchableOpacity onPress={createLeaderboardWithFriends} style={styles.doneButton}>
+          <Text style={styles.doneText}>Klaar</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+function UserCard({ user, onToggle }: { user: any; onToggle: () => void }) {
+  return (
+    <View style={styles.card}>
+      <View style={styles.userRow}>
+        <Image source={user.img} style={styles.avatar} />
+        <View>
+          <Text style={styles.name}>{user.name}</Text>
+          <Text style={styles.username}>{user.username}</Text>
+        </View>
+      </View>
+      <TouchableOpacity
+        style={user.invited ? styles.invitedButton : styles.inviteButton}
+        onPress={onToggle}
+      >
+        <Text style={user.invited ? styles.invitedText : styles.inviteText}>
+          {user.invited ? 'Uitgenodigd' : 'Uitnodigen'}
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  wrapper: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  container: {
+    paddingTop: 64,
+    paddingHorizontal: 20,
+    flex: 1,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  searchWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E3E3E3',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    height: 53,
+    marginBottom: 16,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#000',
+  },
+  resultCount: {
+    fontSize: 14,
+    color: '#515151',
+    marginBottom: 16,
+  },
+  list: {
+    paddingBottom: 40,
+  },
+  section: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginVertical: 12,
+  },
+  card: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#E3E3E3',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: '#fff',
+  },
+  userRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 12,
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  username: {
+    fontSize: 14,
+    color: '#515151',
+  },
+  inviteButton: {
+    backgroundColor: '#fff',
+    borderColor: '#29A86E',
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+  },
+  inviteText: {
+    fontSize: 14,
+    color: '#29A86E',
+    fontWeight: '600',
+  },
+  invitedButton: {
+    backgroundColor: '#29A86E',
+    borderRadius: 20,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+  },
+  invitedText: {
+    fontSize: 14,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  doneButton: {
+    backgroundColor: '#29A86E',
+    borderRadius: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  doneText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: '600',
+  },
+});
