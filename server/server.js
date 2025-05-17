@@ -420,6 +420,7 @@ app.get('/user/search', (req, res) => {
 
 // Endpoint om een leaderboard aan te maken
 app.post('/leaderboard/create', (req, res) => {
+
   const { userId, name } = req.body;
 
   if (!userId || !name) {
@@ -429,17 +430,21 @@ app.post('/leaderboard/create', (req, res) => {
   const query = `INSERT INTO leaderboards (user_id, name) VALUES (?, ?)`;
 
   db.query(query, [userId, name], (err, result) => {
+
+
     if (err) {
       console.error('Fout bij het aanmaken van het leaderboard:', err);
       return res.status(500).json({ error: 'Er is een fout opgetreden bij het aanmaken van het leaderboard.' });
     }
 
     const leaderboardId = result.insertId;
+
     res.status(201).json({
       message: 'Leaderboard succesvol aangemaakt.',
       leaderboardId,
       name, // Zorg ervoor dat de naam wordt teruggestuurd
     });
+
   });
 });
 
@@ -586,6 +591,7 @@ app.post('/leaderboard/create-with-friends', (req, res) => {
   });
 });
 
+
 app.get('/leaderboards', (req, res) => {
   const { userId } = req.query;
 
@@ -649,6 +655,7 @@ app.get('/leaderboard/details', (req, res) => {
     res.status(200).json(results);
   });
 });
+
 
 // Test endpoint
 app.get("/test", (req, res) => {

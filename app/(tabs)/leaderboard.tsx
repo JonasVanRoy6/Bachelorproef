@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const avatarMap: Record<string, any> = {
   'andres.png': require('../../assets/images/andres.png'),
@@ -30,12 +32,15 @@ export const getUserId = async (): Promise<string | null> => {
   }
 };
 
+
 const LeaderboardScreen = () => {
   const [search, setSearch] = useState('');
   const router = useRouter();
   const { created } = useLocalSearchParams();
   const [showSuccess, setShowSuccess] = useState(created === 'true');
+
   const [leaderboards, setLeaderboards] = useState<any[]>([]);
+
 
   useEffect(() => {
     if (created === 'true') {
@@ -43,6 +48,7 @@ const LeaderboardScreen = () => {
       return () => clearTimeout(timer);
     }
   }, [created]);
+
 
   useEffect(() => {
     fetchLeaderboards();
@@ -75,6 +81,7 @@ const LeaderboardScreen = () => {
   };
 
   const filtered = leaderboards.filter(lb =>
+
     search.length > 0 ? lb.name.toLowerCase().includes(search.toLowerCase()) : lb.joined
   );
 
@@ -105,15 +112,19 @@ const LeaderboardScreen = () => {
 
         // Voeg het nieuwe leaderboard toe aan de lijst
         const newLeaderboard = {
+
           id: data.leaderboardId, // Zorg ervoor dat het ID wordt toegevoegd
           name: data.name, // Zorg ervoor dat de naam correct wordt ingesteld
           participants: selectedFriends.length,
           rank: leaderboards.length + 1, // Voeg een nieuwe rank toe
+
           avatars: selectedFriends.map(friend => friend.avatar || 'default.png'), // Voeg avatars toe
           joined: true,
         };
 
+
         setLeaderboards([newLeaderboard, ...leaderboards]); // Voeg het nieuwe leaderboard toe aan de lijst
+
 
         // Navigeer naar het leaderboard-scherm
         router.push('/leaderboard');
@@ -126,9 +137,11 @@ const LeaderboardScreen = () => {
     }
   };
 
+
   const uniqueLeaderboards = leaderboards.filter(
     (lb, index, self) => index === self.findIndex((t) => t.id === lb.id)
   );
+
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -147,6 +160,7 @@ const LeaderboardScreen = () => {
           </TouchableOpacity>
         </View>
 
+
         {uniqueLeaderboards.map((lb, index) => (
           <TouchableOpacity
             key={index}
@@ -161,6 +175,7 @@ const LeaderboardScreen = () => {
               <View style={styles.rankBadge}>
                 <Text style={styles.rankText}>#{index + 1}</Text>
               </View>
+
             </View>
           </TouchableOpacity>
         ))}

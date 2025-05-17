@@ -118,6 +118,7 @@ export default function CreateLeaderboardScreen() {
         return;
       }
 
+
       if (!name.trim()) {
         alert('Geef een naam op voor het leaderboard.');
         return;
@@ -131,7 +132,10 @@ export default function CreateLeaderboardScreen() {
         body: JSON.stringify({
           name,
           userId,
+
           friends: selectedFriends.map(friend => friend.id), // Stuur alleen de IDs van de vrienden
+
+
         }),
       });
 
@@ -139,11 +143,16 @@ export default function CreateLeaderboardScreen() {
       if (response.ok) {
         alert(data.message);
 
+
         // Navigeer naar het leaderboard-scherm en geef de nieuwe data door
         router.push({
           pathname: '/leaderboard',
           params: { created: 'true' },
         });
+
+        // Navigeer naar het leaderboard-scherm
+        router.push('/leaderboard');
+
       } else {
         alert(data.error || 'Er is iets misgegaan bij het aanmaken van het leaderboard.');
       }
