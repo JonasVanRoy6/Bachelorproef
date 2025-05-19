@@ -667,3 +667,67 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server draait op http://192.168.0.105:${PORT}`);
 });
 
+app.get('/leaderboard/details-with-rank', (req, res) => {
+  const { leaderboardId, userId } = req.query;
+
+  if (!leaderboardId || !userId) {
+    return res.status(400).json({ error: 'Leaderboard ID en user ID zijn verplicht.' });
+  }
+
+  const query = `
+    SELECT 
+      u.id AS user_id,
+      u.first_name AS name,
+      COALESCE(SUM(p.amount), 0) AS total_puffs,
+      RANK() OVER (ORDER BY COALESCE(SUM(p.amount), 0) ASC) AS rank
+    FROM (
+      SELECT friend_id AS user_id FROM leaderboard_friends WHERE leaderboard_id = ?
+      UNION
+      SELECT user_id FROM leaderboards WHERE id = ?
+    ) AS all_users
+    JOIN users u ON u.id = all_users.user_id
+    LEFT JOIN puffs p ON p.user_id = u.id AND YEARWEEK(p.created_at, 1) = YEARWEEK(CURDATE(), 1)
+    GROUP BY u.id, u.first_name
+  `;
+
+  db.query(query, [leaderboardId, leaderboardId], (err, results) => {
+    if (err) {
+      console.error('Fout bij het ophalen van leaderboarddetails:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van leaderboarddetails.' });
+    }
+
+    const user = results.find(r => r.user_id == userId);
+    const userRank = user ? user.rank : null;
+
+    res.status(200).json({ leaderboard: results, userRank });
+  });
+});
+
+app.delete('/leaderboard/delete', (req, res) => {
+  const { leaderboardId } = req.query;
+
+  if (!leaderboardId) {
+    return res.status(400).json({ error: 'Leaderboard ID is verplicht.' });
+  }
+
+  // Eerst: verwijder alle koppelingen (foreign key constraint veiligheid)
+  const deleteFriends = `DELETE FROM leaderboard_friends WHERE leaderboard_id = ?`;
+  const deleteLeaderboard = `DELETE FROM leaderboards WHERE id = ?`;
+
+  db.query(deleteFriends, [leaderboardId], (err) => {
+    if (err) {
+      console.error('Fout bij verwijderen van leaderboard_friends:', err);
+      return res.status(500).json({ error: 'Fout bij verwijderen van leden.' });
+    }
+
+    db.query(deleteLeaderboard, [leaderboardId], (err2) => {
+      if (err2) {
+        console.error('Fout bij verwijderen van leaderboard:', err2);
+        return res.status(500).json({ error: 'Fout bij verwijderen van leaderboard.' });
+      }
+
+      res.status(200).json({ message: 'Leaderboard succesvol verwijderd.' });
+    });
+  });
+});
+

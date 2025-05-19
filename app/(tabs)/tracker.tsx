@@ -44,7 +44,7 @@ export default function TrackerScreen() {
           return;
         }
 
-        const response = await fetch(`http://192.168.0.130:5000/puffs?userId=${userId}`);
+        const response = await fetch(`http://192.168.0.105:5000/puffs?userId=${userId}`);
         const data = await response.json();
         console.log("Recente puffs data:", data); // Debugging
         setRecentPuffs(Array.isArray(data) ? data : []); // Zorg ervoor dat recentPuffs altijd een array is
@@ -67,7 +67,7 @@ export default function TrackerScreen() {
           return;
         }
 
-        const response = await fetch(`http://192.168.0.130:5000/puffs/today?userId=${userId}`);
+        const response = await fetch(`http://192.168.0.105:5000/puffs/today?userId=${userId}`);
         const data = await response.json();
         console.log("Puffs data:", data); // Debugging
         setTotalPuffsToday(data.total_puffs || 0); // Stel het totaal aantal puffs van vandaag in

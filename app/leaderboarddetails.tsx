@@ -8,36 +8,48 @@ import {
   ScrollView
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
+
 
 export default function LeaderboardDetailsScreen() {
   const router = useRouter();
-  const leaderboardId = router.query?.leaderboardId; // Haal de leaderboardId op uit de queryparameters
+  const { leaderboardId } = useLocalSearchParams();
   const [leaderboardData, setLeaderboardData] = useState([]);
-
-  console.log('Ontvangen leaderboardId:', leaderboardId);
-
-  const fetchLeaderboardDetails = async () => {
-    try {
-      const response = await fetch(`http://192.168.0.105:5000/leaderboard/details?leaderboardId=${leaderboardId}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setLeaderboardData(data); // Stel de opgehaalde gegevens in de state in
-      } else {
-        alert(data.error || 'Er is iets misgegaan bij het ophalen van leaderboarddetails.');
-      }
-    } catch (error) {
-      console.error('Fout bij het ophalen van leaderboarddetails:', error);
-      alert('Kan geen verbinding maken met de server.');
-    }
-  };
+  const [userRank, setUserRank] = useState(null);
+  const [userId, setUserId] = useState(null);
 
   useEffect(() => {
-    if (leaderboardId) {
-      fetchLeaderboardDetails();
-    }
+    const fetchLeaderboardDetails = async () => {
+      const id = await AsyncStorage.getItem('userId');
+      setUserId(id);
+      if (leaderboardId && id) {
+        try {
+          const res = await fetch(`http://192.168.0.105:5000/leaderboard/details-with-rank?leaderboardId=${leaderboardId}&userId=${id}`);
+          const data = await res.json();
+  
+          const updatedList = data.leaderboard
+            .sort((a, b) => a.total_puffs - b.total_puffs)
+            .map((user, index) => ({
+              ...user,
+              name: user.user_id === id ? 'Jij' : user.name,
+              rank: index + 1
+            }));
+  
+          setLeaderboardData(updatedList);
+          setUserRank(updatedList.find(u => u.user_id === id)?.rank);
+  
+        } catch (err) {
+          console.error('Fout bij ophalen leaderboarddetails:', err);
+          alert('Fout bij ophalen van leaderboardgegevens');
+        }
+      }
+    };
+  
+    fetchLeaderboardDetails();
   }, [leaderboardId]);
+  
 
   if (!leaderboardId) {
     return (
@@ -69,10 +81,10 @@ export default function LeaderboardDetailsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {leaderboardData.map((user, index) => (
+        {leaderboardData.map((user) => (
           <View
-            key={index}
-            style={[styles.card, user.user_id === userId && styles.activeCard]} // Highlight de ingelogde gebruiker
+            key={user.user_id}
+            style={[styles.card, user.user_id === userId && styles.activeCard]}
           >
             <Text style={styles.rank}>{user.rank}</Text>
             <Image source={require('../assets/images/andres.png')} style={styles.avatar} />
@@ -82,7 +94,49 @@ export default function LeaderboardDetailsScreen() {
             </View>
           </View>
         ))}
+        {userRank && (
+          <Text style={styles.yourRankText}>Jouw positie: #{userRank}</Text>
+        )}
       </ScrollView>
+      <TouchableOpacity
+  style={styles.deleteButton}
+  onPress={() => {
+    Alert.alert(
+      'Bevestiging',
+      'Weet je zeker dat je dit leaderboard wilt verwijderen?',
+      [
+        { text: 'Annuleer', style: 'cancel' },
+        {
+          text: 'Verwijder',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const res = await fetch(`http://192.168.0.105:5000/leaderboard/delete?leaderboardId=${leaderboardId}`, {
+                method: 'DELETE'
+              });
+
+              const data = await res.json();
+
+              if (res.ok) {
+                alert(data.message || 'Leaderboard verwijderd');
+                router.push('/leaderboard');
+              } else {
+                alert(data.error || 'Verwijderen mislukt');
+              }
+            } catch (err) {
+              console.error('Fout bij verwijderen:', err);
+              alert('Er is een fout opgetreden bij het verwijderen.');
+            }
+          }
+        }
+      ]
+    );
+  }}
+>
+  <Text style={styles.deleteText}>Verwijder leaderboard</Text>
+</TouchableOpacity>
+
+
     </View>
   );
 }
@@ -178,4 +232,26 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
   },
+  yourRankText: {
+    fontSize: 16,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    marginTop: 12,
+  },
+  deleteButton: {
+    marginTop: 20,
+    marginBottom: 20,
+    marginHorizontal: 20,
+    backgroundColor: '#FF4D4D',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  
+  deleteText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  }
+  
 });

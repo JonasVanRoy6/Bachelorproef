@@ -10,11 +10,9 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
-const avatarMap: Record<string, any> = {
+const avatarMap = {
   'andres.png': require('../../assets/images/andres.png'),
   'jens.png': require('../../assets/images/jens.png'),
   'jonas.png': require('../../assets/images/jonas.png'),
@@ -22,9 +20,9 @@ const avatarMap: Record<string, any> = {
   'lotte.png': require('../../assets/images/lotte.png'),
 };
 
-export const getUserId = async (): Promise<string | null> => {
+export const getUserId = async () => {
   try {
-    const userId = await AsyncStorage.getItem('userId'); // Haal de gebruiker-ID op uit AsyncStorage
+    const userId = await AsyncStorage.getItem('userId');
     return userId;
   } catch (error) {
     console.error('Fout bij het ophalen van de gebruiker-ID:', error);
@@ -32,15 +30,12 @@ export const getUserId = async (): Promise<string | null> => {
   }
 };
 
-
 const LeaderboardScreen = () => {
   const [search, setSearch] = useState('');
   const router = useRouter();
   const { created } = useLocalSearchParams();
   const [showSuccess, setShowSuccess] = useState(created === 'true');
-
-  const [leaderboards, setLeaderboards] = useState<any[]>([]);
-
+  const [leaderboards, setLeaderboards] = useState([]);
 
   useEffect(() => {
     if (created === 'true') {
@@ -49,16 +44,13 @@ const LeaderboardScreen = () => {
     }
   }, [created]);
 
-
   useEffect(() => {
     fetchLeaderboards();
   }, []);
 
   const fetchLeaderboards = async () => {
-    console.log('fetchLeaderboards wordt aangeroepen');
     try {
-      const userId = await getUserId(); // Haal de ingelogde gebruiker-ID op
-
+      const userId = await getUserId();
       if (!userId) {
         alert('Kan de ingelogde gebruiker niet vinden.');
         return;
@@ -67,13 +59,20 @@ const LeaderboardScreen = () => {
       const response = await fetch(`http://192.168.0.105:5000/leaderboards?userId=${userId}`);
       const data = await response.json();
 
-      console.log('Opgehaalde leaderboards:', data); // Controleer de opgehaalde data
+      const detailedLeaderboards = await Promise.all(data.map(async lb => {
+        const res = await fetch(`http://192.168.0.105:5000/leaderboard/details-with-rank?leaderboardId=${lb.leaderboard_id}&userId=${userId}`);
+        const detail = await res.json();
 
-      if (response.ok) {
-        setLeaderboards(data); // Stel de opgehaalde leaderboards in de state in
-      } else {
-        alert(data.error || 'Er is iets misgegaan bij het ophalen van leaderboards.');
-      }
+        return {
+          id: lb.leaderboard_id,
+          name: lb.leaderboard_name,
+          participants: detail.leaderboard.length, // inclusief ingelogde gebruiker
+          rank: detail.userRank,
+          joined: true,
+        };
+      }));
+
+      setLeaderboards(detailedLeaderboards);
     } catch (error) {
       console.error('Fout bij het ophalen van leaderboards:', error);
       alert('Kan geen verbinding maken met de server.');
@@ -81,67 +80,12 @@ const LeaderboardScreen = () => {
   };
 
   const filtered = leaderboards.filter(lb =>
-
     search.length > 0 ? lb.name.toLowerCase().includes(search.toLowerCase()) : lb.joined
   );
-
-  const createLeaderboard = async () => {
-    try {
-      const userId = await getUserId();
-
-      if (!userId) {
-        alert('Kan de ingelogde gebruiker niet vinden.');
-        return;
-      }
-
-      const response = await fetch('http://192.168.0.105:5000/leaderboard/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          userId,
-          friends: selectedFriends, // Stuur de geselecteerde vrienden mee
-        }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        alert(data.message);
-
-        // Voeg het nieuwe leaderboard toe aan de lijst
-        const newLeaderboard = {
-
-          id: data.leaderboardId, // Zorg ervoor dat het ID wordt toegevoegd
-          name: data.name, // Zorg ervoor dat de naam correct wordt ingesteld
-          participants: selectedFriends.length,
-          rank: leaderboards.length + 1, // Voeg een nieuwe rank toe
-
-          avatars: selectedFriends.map(friend => friend.avatar || 'default.png'), // Voeg avatars toe
-          joined: true,
-        };
-
-
-        setLeaderboards([newLeaderboard, ...leaderboards]); // Voeg het nieuwe leaderboard toe aan de lijst
-
-
-        // Navigeer naar het leaderboard-scherm
-        router.push('/leaderboard');
-      } else {
-        alert(data.error || 'Er is iets misgegaan bij het aanmaken van het leaderboard.');
-      }
-    } catch (error) {
-      console.error('Fout bij het aanmaken van het leaderboard:', error);
-      alert('Kan geen verbinding maken met de server.');
-    }
-  };
-
 
   const uniqueLeaderboards = leaderboards.filter(
     (lb, index, self) => index === self.findIndex((t) => t.id === lb.id)
   );
-
 
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
@@ -160,28 +104,25 @@ const LeaderboardScreen = () => {
           </TouchableOpacity>
         </View>
 
-
         {uniqueLeaderboards.map((lb, index) => (
           <TouchableOpacity
             key={index}
             style={styles.joinedCard}
             onPress={() => {
-              console.log('Navigeren naar leaderboarddetails met ID:', lb.id);
               router.push(`/leaderboarddetails?leaderboardId=${lb.id}`);
             }}
           >
             <View style={styles.cardTop}>
               <Text style={styles.cardTitle}>{lb.name || 'Naam ontbreekt'}</Text>
               <View style={styles.rankBadge}>
-                <Text style={styles.rankText}>#{index + 1}</Text>
+                <Text style={styles.rankText}>#{lb.rank || '-'}</Text>
               </View>
-
             </View>
+            <Text style={{ marginTop: 4, color: '#777' }}>{lb.participants} deelnemers</Text>
           </TouchableOpacity>
         ))}
 
         <View style={styles.sectionDivider} />
-
         <Text style={styles.sectionTitle}>Join een leaderboard</Text>
 
         <View style={styles.searchWrapper}>
@@ -199,38 +140,7 @@ const LeaderboardScreen = () => {
             </TouchableOpacity>
           )}
         </View>
-
-        {filtered.filter(lb => !lb.joined).map((lb, index) => (
-          <View key={index} style={styles.searchResultCard}>
-            <View style={styles.cardTop}>
-              <Text style={styles.cardTitle}>{lb.name}</Text>
-              <TouchableOpacity style={styles.joinButton}>
-                <Text style={styles.joinText}>Deelnemen</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.avatarRow}>
-              {lb.avatars.map((img, i) => (
-                <Image
-                  key={i}
-                  source={avatarMap[img]}
-                  style={styles.avatar}
-                />
-              ))}
-              <Text style={styles.participantText}>{lb.participants} deelnemers</Text>
-            </View>
-          </View>
-        ))}
       </ScrollView>
-
-      {showSuccess && (
-        <View style={styles.successBanner}>
-          <FontAwesome name="check" size={16} color="#fff" style={{ marginRight: 8 }} />
-          <Text style={styles.successText}>Leaderboard succesvol aangemaakt!</Text>
-          <TouchableOpacity onPress={() => setShowSuccess(false)}>
-            <FontAwesome name="times" size={16} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 };
@@ -271,15 +181,6 @@ const styles = StyleSheet.create({
     borderColor: '#E3E3E3',
     marginTop: 10,
   },
-  searchResultCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 15,
-    height: 82,
-    borderWidth: 0.8,
-    borderColor: '#E3E3E3',
-    marginTop: 16,
-  },
   cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -299,26 +200,6 @@ const styles = StyleSheet.create({
   rankText: {
     fontWeight: 'bold',
     fontSize: 12,
-  },
-  spacer12: {
-    height: 12,
-  },
-  avatarRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 0,
-    marginBottom: 32,
-  },
-  avatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginRight: 5,
-  },
-  participantText: {
-    marginLeft: 10,
-    fontSize: 12,
-    color: '#555'
   },
   sectionDivider: {
     height: 1,
@@ -347,36 +228,6 @@ const styles = StyleSheet.create({
   clearText: {
     fontWeight: 'bold',
     color: '#29A86E'
-  },
-  joinButton: {
-    backgroundColor: '#29A86E',
-    borderRadius: 6,
-    height: 32,
-    justifyContent: 'center',
-    paddingHorizontal: 12,
-  },
-  joinText: {
-    color: '#F5F5F5',
-    fontSize: 12,
-    fontWeight: 'bold'
-  },
-  successBanner: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    backgroundColor: '#29A86E',
-    borderRadius: 12,
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    justifyContent: 'space-between',
-  },  
-  successText: {
-    color: '#fff',
-    fontSize: 14,
-    flex: 1,
   }
 });
 
