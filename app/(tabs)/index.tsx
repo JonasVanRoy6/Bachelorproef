@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -9,26 +9,87 @@ import {
   StatusBar,
 } from "react-native";
 import { router } from "expo-router";
-import { FontAwesome } from '@expo/vector-icons';
-import { FontAwesome5, MaterialIcons, Feather } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome5, MaterialIcons, Feather,MaterialCommunityIcons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const ICONS = {
+  reizen: <FontAwesome5 name="suitcase-rolling" size={24} color="#29A86E" />,
+  kleding: <FontAwesome5 name="tshirt" size={24} color="#3ED9E2" />,
+  voeding: (
+    <MaterialCommunityIcons name="silverware-fork-knife" size={24} color="#FF7373" />
+  ),
+  elektronica: <FontAwesome5 name="mobile-alt" size={24} color="#7061BB" />,
+  cadeau: <FontAwesome name="gift" size={24} color="#FFCD0F" />,
+} as const;
+
+const kleuren = {
+  reizen: "#29A86E",
+  kleding: "#3ED9E2",
+  voeding: "#FF7373",
+  elektronica: "#7061BB",
+  cadeau: "#FFCD0F",
+};
 
 const HomeScreen = () => {
-  const [activeChallenge, setActiveChallenge] = useState("Vakantie Naar Spanje");
+  const [activeChallenge, setActiveChallenge] = useState(null);
+  const [challenges, setChallenges] = useState([]);
+  const [userName, setUserName] = useState("");
+  const [totalSaved, setTotalSaved] = useState(0);
 
-  const challenges = [
-    {
-      title: "Vakantie Naar Spanje",
-      amount: 30,
-      goal: 350,
-      icon: <FontAwesome5 name="suitcase-rolling" size={16} color="#29A86E" />,
-    },
-    {
-      title: "Nieuwe Trui",
-      amount: 40,
-      goal: 45,
-      icon: <FontAwesome5 name="tshirt" size={16} color="#3ED9E2" />,
-    },
-  ];
+  useEffect(() => {
+    const fetchChallenges = async () => {
+      try {
+        const userId = await AsyncStorage.getItem("userId");
+        if (!userId) {
+          alert("Kan de ingelogde gebruiker niet vinden.");
+          return;
+        }
+
+        const response = await fetch(`http://192.168.0.105:5000/challenges?userId=${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setActiveChallenge(data[0]); // Stel de eerste uitdaging in als actief
+          setChallenges(data); // Stel alle uitdagingen in
+        } else {
+          alert(data.error || "Er is iets misgegaan bij het ophalen van uitdagingen.");
+        }
+      } catch (error) {
+        console.error("Fout bij het ophalen van uitdagingen:", error);
+        alert("Kan geen verbinding maken met de server.");
+      }
+    };
+
+    fetchChallenges();
+  }, []);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userId = await AsyncStorage.getItem("userId");
+        if (!userId) {
+          alert("Kan de ingelogde gebruiker niet vinden.");
+          return;
+        }
+
+        const response = await fetch(`http://192.168.0.105:5000/user-data?userId=${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setUserName(data.firstName); // Stel de voornaam in
+          setTotalSaved(data.totalPuffs * 0.01); // Bereken het totale bespaarde bedrag
+        } else {
+          alert(data.error || "Er is iets misgegaan bij het ophalen van gebruikersgegevens.");
+        }
+      } catch (error) {
+        console.error("Fout bij het ophalen van gebruikersgegevens:", error);
+        alert("Kan geen verbinding maken met de server.");
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const handleGoalPress = (route) => {
     router.push(`/${route}`);
@@ -42,20 +103,20 @@ const HomeScreen = () => {
 
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.push("/profile")}>
-          <Image
-            source={require("../../assets/images/jonas.png")}
-            style={styles.profileImage}
-          />
+            <Image
+              source={require("../../assets/images/jonas.png")}
+              style={styles.profileImage}
+            />
           </TouchableOpacity>
           <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={styles.helloText}>Hallo Jelle!</Text>
+            <Text style={styles.helloText}>Hallo {userName}!</Text>
             <Text style={styles.subText}>Je bent op de goede weg</Text>
           </View>
           <TouchableOpacity
             style={styles.settingsIcon}
-            onPress={() => router.push('/settings')}
+            onPress={() => router.push("/settings")}
           >
-          <FontAwesome name="cog" size={24} color="#fff" />
+            <FontAwesome name="cog" size={24} color="#fff" />
           </TouchableOpacity>
         </View>
 
@@ -66,12 +127,20 @@ const HomeScreen = () => {
           </View>
           <View style={styles.statsRow}>
             <View style={[styles.statBox, { backgroundColor: "rgba(41, 168, 110, 0.15)" }]}>
-              <Text style={[styles.statLabel, { color: "#29A86E", textAlign: "center" }]}>Geld{"\n"}Bespaard</Text>
-              <Text style={[styles.statValue, { color: "#29A86E", textAlign: "center" }]}>€123</Text>
+              <Text style={[styles.statLabel, { color: "#29A86E", textAlign: "center" }]}>
+                Geld{"\n"}Bespaard
+              </Text>
+              <Text style={[styles.statValue, { color: "#29A86E", textAlign: "center" }]}>
+                €{totalSaved.toFixed(2)}
+              </Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: "rgba(112, 97, 187, 0.15)" }]}>
-              <Text style={[styles.statLabel, { color: "#7061BB", textAlign: "center" }]}>Puffs{"\n"}Vermeden</Text>
-              <Text style={[styles.statValue, { color: "#7061BB", textAlign: "center" }]}>97</Text>
+              <Text style={[styles.statLabel, { color: "#7061BB", textAlign: "center" }]}>
+                Puffs{"\n"}Vermeden
+              </Text>
+              <Text style={[styles.statValue, { color: "#7061BB", textAlign: "center" }]}>
+                97
+              </Text>
             </View>
           </View>
         </View>
@@ -108,40 +177,44 @@ const HomeScreen = () => {
             </TouchableOpacity>
           </View>
 
-
           {challenges.map((item, index) => (
-            <TouchableOpacity
-              key={index}
+            <View
+              key={item.challenge_id}
               style={[styles.challengeCard, index === 1 ? { marginBottom: 16 } : null]}
-              onPress={() => setActiveChallenge(item.title)}
             >
               <View style={styles.challengeHeader}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  {item.icon}
-                  <Text style={styles.challengeTitle}>{item.title}</Text>
+                  {ICONS[item.thema] || <FontAwesome name="question" size={24} color="#29A86E" />}
+                  <Text style={styles.challengeTitle}>{item.titel}</Text>
                 </View>
                 <Text
-                  style={[styles.statusTag, {
-                    backgroundColor: activeChallenge === item.title ? "#E6F5EC" : "#EAEAEA",
-                    color: activeChallenge === item.title ? "#29A86E" : "#8C8C8C"
-                  }]}
+                  style={[
+                    styles.statusTag,
+                    {
+                      backgroundColor: activeChallenge?.challenge_id === item.challenge_id ? "#E6F5EC" : "#EAEAEA",
+                      color: activeChallenge?.challenge_id === item.challenge_id ? "#29A86E" : "#8C8C8C",
+                    },
+                  ]}
                 >
-                  {activeChallenge === item.title ? "Actief" : "Niet-Actief"}
+                  {activeChallenge?.challenge_id === item.challenge_id ? "Actief" : "Niet-Actief"}
                 </Text>
               </View>
               <View style={styles.progressBarBg}>
                 <View
-                  style={[styles.progressBarFg, {
-                    width: `${(item.amount / item.goal) * 100}%`,
-                    backgroundColor: item.title === "Vakantie Naar Spanje" ? "#29A86E" : "#3ED9E2"
-                  }]}
+                  style={[
+                    styles.progressBarFg,
+                    {
+                      width: `${(item.huidig / (item.bedrag * 100)) * 100}%`, // Correcte berekening
+                      backgroundColor: kleuren[item.thema] || "#29A86E",
+                    },
+                  ]}
                 />
               </View>
               <View style={styles.goalRow}>
-                <Text style={styles.goalLabel}>€{item.amount} bespaard</Text>
-                <Text style={styles.goalLabel}>Doel: €{item.goal}</Text>
+                <Text style={styles.goalLabel}>€{(item.huidig / 100).toFixed(2)} gespaard</Text>
+                <Text style={styles.goalLabel}>Doel: €{item.bedrag}</Text>
               </View>
-            </TouchableOpacity>
+            </View>
           ))}
         </View>
       </ScrollView>

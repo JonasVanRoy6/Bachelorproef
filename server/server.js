@@ -731,3 +731,113 @@ app.delete('/leaderboard/delete', (req, res) => {
   });
 });
 
+app.post('/challenges/create', (req, res) => {
+  const { userId, icon, title, budget } = req.body;
+
+  if (!userId || !icon || !title || !budget) {
+    return res.status(400).json({ error: 'Alle velden zijn verplicht.' });
+  }
+
+  const query = `
+    INSERT INTO challenges (user_id, icon, title, budget)
+    VALUES (?, ?, ?, ?)
+  `;
+
+  db.query(query, [userId, icon, title, budget], (err, result) => {
+    if (err) {
+      console.error('Fout bij het opslaan van de uitdaging:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het opslaan van de uitdaging.' });
+    }
+
+    res.status(201).json({ message: 'Uitdaging succesvol aangemaakt.' });
+  });
+});
+
+app.get('/challenges', (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
+  const query = `
+    SELECT 
+      c.id AS challenge_id,
+      c.title AS titel,
+      c.icon AS thema,
+      c.budget AS bedrag,
+      COALESCE(SUM(p.amount), 0) AS huidig,
+      u.active_challenge_id
+    FROM challenges c
+    LEFT JOIN puffs p ON p.user_id = c.user_id
+    LEFT JOIN users u ON u.id = c.user_id
+    WHERE c.user_id = ?
+    GROUP BY c.id, c.title, c.icon, c.budget, u.active_challenge_id
+    ORDER BY c.id = u.active_challenge_id DESC, c.created_at DESC
+  `;
+
+  db.query(query, [userId], (err, results) => {
+    if (err) {
+      console.error('Fout bij het ophalen van uitdagingen:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van uitdagingen.' });
+    }
+
+    res.status(200).json(results);
+  });
+});
+
+app.post('/challenges/set-active', (req, res) => {
+  const { userId, challengeId } = req.body;
+
+  if (!userId || !challengeId) {
+    return res.status(400).json({ error: 'Gebruiker ID en uitdaging ID zijn verplicht.' });
+  }
+
+  const query = `
+    UPDATE users
+    SET active_challenge_id = ?
+    WHERE id = ?
+  `;
+
+  db.query(query, [challengeId, userId], (err, result) => {
+    if (err) {
+      console.error('Fout bij het instellen van de actieve uitdaging:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het instellen van de actieve uitdaging.' });
+    }
+
+    res.status(200).json({ message: 'Actieve uitdaging succesvol bijgewerkt.' });
+  });
+});
+
+app.get('/user-data', (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
+  const query = `
+    SELECT 
+      u.first_name AS firstName,
+      u.email AS email, -- Voeg het e-mailadres toe
+      COALESCE(SUM(p.amount), 0) AS totalPuffs
+    FROM users u
+    LEFT JOIN puffs p ON p.user_id = u.id
+    WHERE u.id = ?
+    GROUP BY u.id
+  `;
+
+  db.query(query, [userId], (err, results) => {
+    if (err) {
+      console.error('Fout bij het ophalen van gebruikersgegevens:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van gebruikersgegevens.' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Gebruiker niet gevonden.' });
+    }
+
+    res.status(200).json(results[0]);
+  });
+});
+

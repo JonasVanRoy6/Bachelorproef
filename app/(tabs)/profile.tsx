@@ -59,10 +59,26 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const storedName = await AsyncStorage.getItem('userName'); // Haal de naam op
-      const storedEmail = await AsyncStorage.getItem('userEmail'); // Haal het e-mailadres op
-      setUserName(storedName || 'Onbekende gebruiker'); // Toon een fallback als de naam niet beschikbaar is
-      setUserEmail(storedEmail || 'Onbekend e-mailadres'); // Toon een fallback als het e-mailadres niet beschikbaar is
+      try {
+        const userId = await AsyncStorage.getItem('userId'); // Haal de ingelogde gebruiker-ID op
+        if (!userId) {
+          alert('Kan de ingelogde gebruiker niet vinden.');
+          return;
+        }
+
+        const response = await fetch(`http://192.168.0.105:5000/user-data?userId=${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setUserName(data.firstName); // Stel de voornaam in
+          setUserEmail(data.email); // Stel het e-mailadres in
+        } else {
+          alert(data.error || 'Er is iets misgegaan bij het ophalen van gebruikersgegevens.');
+        }
+      } catch (error) {
+        console.error('Fout bij het ophalen van gebruikersgegevens:', error);
+        alert('Kan geen verbinding maken met de server.');
+      }
     };
 
     fetchUserData();

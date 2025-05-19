@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { FontAwesome5, FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ICON_OPTIONS = [
   { key: 'reizen', icon: <FontAwesome5 name="suitcase-rolling" size={28} />, color: '#29A86E' },
@@ -23,9 +24,45 @@ const ChallengesAdd = () => {
   const [titel, setTitel] = useState('');
   const [bedrag, setBedrag] = useState('');
 
-  const handleCreate = () => {
-    // Later back-end toevoegen, nu gewoon terug
-    router.back();
+  const handleCreate = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId'); // Haal de ingelogde gebruiker-ID op
+  
+      if (!userId) {
+        alert('Kan de ingelogde gebruiker niet vinden.');
+        return;
+      }
+  
+      if (!titel.trim() || !bedrag.trim()) {
+        alert('Vul alle velden in.');
+        return;
+      }
+  
+      const response = await fetch('http://192.168.0.105:5000/challenges/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId,
+          icon: selectedIcon,
+          title: titel,
+          budget: parseFloat(bedrag),
+        }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        alert(data.message);
+        router.back(); // Ga terug naar het vorige scherm
+      } else {
+        alert(data.error || 'Er is iets misgegaan bij het aanmaken van de uitdaging.');
+      }
+    } catch (error) {
+      console.error('Fout bij het aanmaken van de uitdaging:', error);
+      alert('Kan geen verbinding maken met de server.');
+    }
   };
 
   const getOpacityColor = (hex: string, percent: number = 15) => {
