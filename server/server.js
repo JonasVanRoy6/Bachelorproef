@@ -818,13 +818,13 @@ app.get('/user-data', (req, res) => {
 
   const query = `
     SELECT 
-      u.first_name AS firstName,
-      u.email AS email, -- Voeg het e-mailadres toe
-      COALESCE(SUM(p.amount), 0) AS totalPuffs
-    FROM users u
-    LEFT JOIN puffs p ON p.user_id = u.id
-    WHERE u.id = ?
-    GROUP BY u.id
+      first_name AS firstName,
+      last_name AS lastName,
+      email,
+      birth_date AS birthDate,
+      password -- Voeg het wachtwoord toe
+    FROM users
+    WHERE id = ?
   `;
 
   db.query(query, [userId], (err, results) => {
@@ -838,6 +838,87 @@ app.get('/user-data', (req, res) => {
     }
 
     res.status(200).json(results[0]);
+  });
+});
+
+app.post('/update-user-data', (req, res) => {
+  const { userId, firstName, lastName, email, birthDate, newPassword } = req.body;
+
+  if (!userId || !firstName || !lastName || !email || !birthDate) {
+    return res.status(400).json({ error: 'Alle velden zijn verplicht.' });
+  }
+
+  const query = `
+    UPDATE users
+    SET first_name = ?, last_name = ?, email = ?, birth_date = ?
+    ${newPassword ? ', password = ?' : ''} -- Voeg het wachtwoord toe als het is opgegeven
+    WHERE id = ?
+  `;
+
+  const params = newPassword
+    ? [firstName, lastName, email, birthDate, newPassword, userId]
+    : [firstName, lastName, email, birthDate, userId];
+
+  db.query(query, params, (err, result) => {
+    if (err) {
+      console.error('Fout bij het bijwerken van gebruikersgegevens:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het bijwerken van gebruikersgegevens.' });
+    }
+
+    res.status(200).json({ message: 'Gebruikersgegevens succesvol bijgewerkt.' });
+  });
+});
+
+app.post('/delete-account', (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
+  // Queries om gerelateerde gegevens te verwijderen
+  const deleteFriendsQuery = `DELETE FROM friends WHERE user_id = ? OR friend_id = ?;`;
+  const deletePuffsQuery = `DELETE FROM puffs WHERE user_id = ?;`;
+  const deleteGoalsQuery = `DELETE FROM user_goals WHERE user_id = ?;`;
+  const deleteChallengesQuery = `DELETE FROM challenges WHERE user_id = ?;`;
+  const deleteUserQuery = `DELETE FROM users WHERE id = ?;`;
+
+  // Voer de queries uit in volgorde
+  db.query(deleteFriendsQuery, [userId, userId], (err) => {
+    if (err) {
+      console.error('Fout bij het verwijderen van vrienden:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het verwijderen van vrienden.' });
+    }
+
+    db.query(deletePuffsQuery, [userId], (err) => {
+      if (err) {
+        console.error('Fout bij het verwijderen van puffs:', err);
+        return res.status(500).json({ error: 'Er is een fout opgetreden bij het verwijderen van puffs.' });
+      }
+
+      db.query(deleteGoalsQuery, [userId], (err) => {
+        if (err) {
+          console.error('Fout bij het verwijderen van doelen:', err);
+          return res.status(500).json({ error: 'Er is een fout opgetreden bij het verwijderen van doelen.' });
+        }
+
+        db.query(deleteChallengesQuery, [userId], (err) => {
+          if (err) {
+            console.error('Fout bij het verwijderen van uitdagingen:', err);
+            return res.status(500).json({ error: 'Er is een fout opgetreden bij het verwijderen van uitdagingen.' });
+          }
+
+          db.query(deleteUserQuery, [userId], (err) => {
+            if (err) {
+              console.error('Fout bij het verwijderen van de gebruiker:', err);
+              return res.status(500).json({ error: 'Er is een fout opgetreden bij het verwijderen van de gebruiker.' });
+            }
+
+            res.status(200).json({ message: 'Account en gerelateerde gegevens succesvol verwijderd.' });
+          });
+        });
+      });
+    });
   });
 });
 

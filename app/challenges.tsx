@@ -66,7 +66,7 @@ const Challenges = () => {
           return;
         }
 
-        const response = await fetch(`http://192.168.0.130:5000/challenges?userId=${userId}`);
+        const response = await fetch(`http://192.168.0.105:5000/challenges?userId=${userId}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -97,7 +97,7 @@ const Challenges = () => {
         return;
       }
 
-      const response = await fetch('http://192.168.0.130:5000/challenges/set-active', {
+      const response = await fetch('http://192.168.0.105:5000/challenges/set-active', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

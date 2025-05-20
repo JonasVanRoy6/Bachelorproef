@@ -33,7 +33,7 @@ const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[
       return;
     }
 
-    const response = await fetch(`http://192.168.0.130:5000/user/friends?userId=${userId}`);
+    const response = await fetch(`http://192.168.0.105:5000/user/friends?userId=${userId}`);
     const data = await response.json();
 
     if (response.ok) {
@@ -97,7 +97,7 @@ export default function InviteScreen() {
         return;
       }
 
-      const response = await fetch('http://192.168.0.130:5000/leaderboard/create-with-friends', {
+      const response = await fetch('http://192.168.0.105:5000/leaderboard/create-with-friends', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

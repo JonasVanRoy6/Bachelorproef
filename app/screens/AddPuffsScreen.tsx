@@ -38,7 +38,7 @@ const AddPuffsScreen = () => {
 
         console.log("Verstuurde gegevens:", payload); // Debugging
 
-        const response = await fetch("http://192.168.0.130:5000/puffs", {
+        const response = await fetch("http://192.168.0.105:5000/puffs", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

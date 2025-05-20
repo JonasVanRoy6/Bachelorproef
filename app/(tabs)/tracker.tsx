@@ -40,7 +40,7 @@ export default function TrackerScreen() {
       try {
         const userId = await AsyncStorage.getItem('userId');
         if (!userId) return;
-        const response = await fetch(`http://192.168.0.130:5000/puffs?userId=${userId}`);
+        const response = await fetch(`http://192.168.0.105:5000/puffs?userId=${userId}`);
         const data = await response.json();
         setRecentPuffs(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -57,7 +57,7 @@ export default function TrackerScreen() {
       try {
         const userId = await AsyncStorage.getItem('userId');
         if (!userId) return;
-        const response = await fetch(`http://192.168.0.130:5000/puffs/today?userId=${userId}`);
+        const response = await fetch(`http://192.168.0.105:5000/puffs/today?userId=${userId}`);
         const data = await response.json();
         setTotalPuffsToday(data.total_puffs || 0);
       } catch (error) {

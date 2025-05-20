@@ -49,7 +49,7 @@ const addFriendToDatabase = async (friendId: number) => {
       return;
     }
 
-    const response = await fetch('http://192.168.0.130:5000/user/add-friend', {
+    const response = await fetch('http://192.168.0.105:5000/user/add-friend', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, friendId }),
@@ -73,7 +73,7 @@ const fetchUsers = async (
 ) => {
   try {
     const response = await fetch(
-      `http://192.168.0.130:5000/user/search?search=${searchTerm}`
+      `http://192.168.0.105:5000/user/search?search=${searchTerm}`
     );
     const data = await response.json();
 

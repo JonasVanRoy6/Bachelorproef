@@ -60,7 +60,7 @@ export default function CreateLeaderboardScreen() {
 
   const fetchFriendsFromDatabase = async () => {
     try {
-      const response = await fetch(`http://192.168.0.130:5000/leaderboard/friends?leaderboardId=${leaderboardId}`);
+      const response = await fetch(`http://192.168.0.105:5000/leaderboard/friends?leaderboardId=${leaderboardId}`);
       const data = await response.json();
       if (response.ok) {
         setFriends(data);
@@ -79,7 +79,7 @@ export default function CreateLeaderboardScreen() {
 
   const updateLeaderboardName = async () => {
     try {
-      const response = await fetch(`http://192.168.0.130:5000/leaderboard/update`, {
+      const response = await fetch(`http://192.168.0.105:5000/leaderboard/update`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ leaderboardId, name }),

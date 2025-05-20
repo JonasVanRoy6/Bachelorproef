@@ -25,7 +25,7 @@ export default function PasswordScreen() {
     }
 
     try {
-      const response = await fetch('http://192.168.0.130:5000/register-password', {
+      const response = await fetch('http://192.168.0.105:5000/register-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),

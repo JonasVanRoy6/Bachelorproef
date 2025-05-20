@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -131,9 +132,38 @@ const SettingsScreen = () => {
 
             <TouchableOpacity
               style={styles.deleteConfirmButton}
-              onPress={() => {
-                if (showDeleteModal) router.replace('/register');
-                if (showLogoutModal) router.replace('/login');
+              onPress={async () => {
+                if (showDeleteModal) {
+                  try {
+                    const userId = await AsyncStorage.getItem('userId');
+                    if (!userId) {
+                      alert('Kan de ingelogde gebruiker niet vinden.');
+                      return;
+                    }
+
+                    // Roep het backend-endpoint aan om het account te verwijderen
+                    const response = await fetch('http://192.168.0.105:5000/delete-account', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({ userId }),
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                      alert('Account succesvol verwijderd.');
+                      await AsyncStorage.removeItem('userId'); // Verwijder de gebruikersgegevens lokaal
+                      router.replace('/register'); // Navigeer naar het register-scherm
+                    } else {
+                      alert(data.error || 'Er is iets misgegaan bij het verwijderen van het account.');
+                    }
+                  } catch (error) {
+                    console.error('Fout bij het verwijderen van het account:', error);
+                    alert('Kan geen verbinding maken met de server.');
+                  }
+                }
               }}
             >
               <Text style={styles.deleteConfirmText}>

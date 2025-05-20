@@ -23,7 +23,7 @@ export default function GoalsWhyScreen() {
         return;
       }
 
-      const response = await fetch('http://192.168.0.130:5000/user/update-reason', {
+      const response = await fetch('http://192.168.0.105:5000/user/update-reason', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -38,7 +38,7 @@ export default function GoalsScreen() {
     }
 
     try {
-      const response = await fetch('http://192.168.0.130:5000/saveGoal', {
+      const response = await fetch('http://192.168.0.105:5000/saveGoal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

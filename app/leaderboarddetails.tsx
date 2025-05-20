@@ -28,7 +28,7 @@ export default function LeaderboardDetailsScreen() {
       setUserId(id);
       if (leaderboardId && id) {
         try {
-          const res = await fetch(`http://192.168.0.130:5000/leaderboard/details-with-rank?leaderboardId=${leaderboardId}&userId=${id}`);
+          const res = await fetch(`http://192.168.0.105:5000/leaderboard/details-with-rank?leaderboardId=${leaderboardId}&userId=${id}`);
           const data = await res.json();
 
           const updatedList = data.leaderboard
@@ -112,7 +112,7 @@ export default function LeaderboardDetailsScreen() {
                 style: 'destructive',
                 onPress: async () => {
                   try {
-                    const res = await fetch(`http://192.168.0.130:5000/leaderboard/delete?leaderboardId=${leaderboardId}`, {
+                    const res = await fetch(`http://192.168.0.105:5000/leaderboard/delete?leaderboardId=${leaderboardId}`, {
                       method: 'DELETE',
                     });
 

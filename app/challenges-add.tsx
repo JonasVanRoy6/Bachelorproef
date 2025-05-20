@@ -41,7 +41,7 @@ const ChallengesAdd = () => {
         return;
       }
 
-      const response = await fetch('http://192.168.0.130:5000/challenges/create', {
+      const response = await fetch('http://192.168.0.105:5000/challenges/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

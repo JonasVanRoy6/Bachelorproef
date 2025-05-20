@@ -31,7 +31,7 @@ const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[
       return;
     }
 
-    const response = await fetch(`http://192.168.0.130:5000/user/friends?userId=${userId}`);
+    const response = await fetch(`http://192.168.0.105:5000/user/friends?userId=${userId}`);
     const data = await response.json();
 
     if (response.ok) {
@@ -58,7 +58,7 @@ const removeFriendFromDatabase = async (friendId: number) => {
       return;
     }
 
-    const response = await fetch('http://192.168.0.130:5000/user/remove-friend', {
+    const response = await fetch('http://192.168.0.105:5000/user/remove-friend', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

@@ -60,11 +60,11 @@ const LeaderboardScreen = () => {
         return;
       }
 
-      const response = await fetch(`http://192.168.0.130:5000/leaderboards?userId=${userId}`);
+      const response = await fetch(`http://192.168.0.105:5000/leaderboards?userId=${userId}`);
       const data = await response.json();
 
       const detailedLeaderboards = await Promise.all(data.map(async lb => {
-        const res = await fetch(`http://192.168.0.130:5000/leaderboard/details-with-rank?leaderboardId=${lb.leaderboard_id}&userId=${userId}`);
+        const res = await fetch(`http://192.168.0.105:5000/leaderboard/details-with-rank?leaderboardId=${lb.leaderboard_id}&userId=${userId}`);
         const detail = await res.json();
 
         return {
