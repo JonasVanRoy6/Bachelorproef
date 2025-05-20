@@ -2,13 +2,19 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
   Modal,
+  Dimensions,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = (SCREEN_WIDTH - 60) / 3;
+const MODAL_WIDTH = SCREEN_WIDTH * 0.9;
 
 type Badge = {
   name: string;
@@ -69,14 +75,12 @@ export default function BadgesScreen() {
             const fullOpacity = achieved ? 1 : 0.65;
             const iconColor = achieved ? badge.color : '#515151';
             const circleBg =
-              achieved && iconColor
-                ? `${iconColor}4D`
-                : '#5151514D';
+              achieved && iconColor ? `${iconColor}4D` : '#5151514D';
 
             return (
               <TouchableOpacity
                 key={index}
-                style={[styles.badgeCard, { opacity: fullOpacity }]}
+                style={[styles.badgeCard, { opacity: fullOpacity, width: CARD_WIDTH }]}
                 onPress={() => setSelectedBadge(badge)}
               >
                 <View style={[styles.badgeCircle, { backgroundColor: circleBg }]}>
@@ -94,7 +98,7 @@ export default function BadgesScreen() {
       {selectedBadge && (
         <Modal transparent animationType="fade">
           <View style={styles.modalOverlay}>
-            <View style={styles.modalBox}>
+            <View style={[styles.modalBox, { width: MODAL_WIDTH }]}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>{selectedBadge.name}</Text>
                 <TouchableOpacity onPress={() => setSelectedBadge(null)}>
@@ -106,7 +110,9 @@ export default function BadgesScreen() {
                 <View
                   style={[
                     styles.modalIconCircle,
-                    { backgroundColor: `${selectedBadge.color || '#515151'}4D` },
+                    {
+                      backgroundColor: `${selectedBadge.color || '#515151'}4D`,
+                    },
                   ]}
                 >
                   <FontAwesome
@@ -208,7 +214,6 @@ const styles = StyleSheet.create({
     rowGap: 16,
   },
   badgeCard: {
-    width: 112,
     height: 120,
     borderWidth: 0.8,
     borderColor: '#E3E3E3',
@@ -242,6 +247,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
+    alignSelf: 'center',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -281,8 +287,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginTop: 8,
-    width: 354,
-    alignSelf: 'center',
   },
   detailsTitle: {
     fontSize: 16,

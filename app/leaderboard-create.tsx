@@ -5,26 +5,25 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
-  ScrollView
+  ScrollView,
+  Dimensions,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+
+const { width } = Dimensions.get('window');
+const CONTENT_PADDING = 20;
 
 function UserCard({ user, onRemove }: { user: any; onRemove: () => void }) {
   return (
     <View style={styles.card}>
       <View style={styles.userRow}>
-       
         <View>
           <Text style={styles.name}>{user.name || 'Onbekende gebruiker'}</Text>
           <Text style={styles.username}>{user.username || ''}</Text>
         </View>
       </View>
-      <TouchableOpacity
-        style={styles.removeButton}
-        onPress={onRemove}
-      >
+      <TouchableOpacity style={styles.removeButton} onPress={onRemove}>
         <Text style={styles.removeText}>Verwijderen</Text>
       </TouchableOpacity>
     </View>
@@ -35,8 +34,7 @@ export default function CreateLeaderboardScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [name, setName] = useState('');
-  const [friends, setFriends] = useState<any[]>([]); // Standaard lege array
-  const [selectedFriends, setSelectedFriends] = useState<any[]>([]); // Geselecteerde vrienden
+  const [friends, setFriends] = useState<any[]>([]);
   const leaderboardId = params.leaderboardId;
 
   useEffect(() => {
@@ -62,19 +60,16 @@ export default function CreateLeaderboardScreen() {
 
   const fetchFriendsFromDatabase = async () => {
     try {
-      const response = await fetch('http://192.168.0.105:5000/leaderboard/friends?leaderboardId=' + leaderboardId);
+      const response = await fetch(`http://192.168.0.130:5000/leaderboard/friends?leaderboardId=${leaderboardId}`);
       const data = await response.json();
-
       if (response.ok) {
-        console.log('Vrienden opgehaald:', data);
-        setFriends(data); // Stel de vrienden in de state in
+        setFriends(data);
       } else {
-        console.error('Fout bij het ophalen van vrienden:', data.error);
-        alert(data.error || 'Er is iets misgegaan bij het ophalen van vrienden.');
+        alert(data.error || 'Fout bij ophalen van vrienden.');
       }
     } catch (error) {
-      console.error('Kan geen verbinding maken met de server:', error);
-      alert('Kan geen verbinding maken met de server.');
+      console.error(error);
+      alert('Verbindingsfout met de server.');
     }
   };
 
@@ -82,162 +77,25 @@ export default function CreateLeaderboardScreen() {
     setFriends(prev => prev.filter(f => f.username !== username));
   };
 
-  const removeFriendFromLeaderboard = async (friendId: number) => {
-    try {
-      const response = await fetch('http://192.168.0.105:5000/leaderboard/friends', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          leaderboardId,
-          friendId,
-        }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        alert(data.message);
-        // Verwijder de vriend uit de lokale state
-        setFriends(prevFriends => prevFriends.filter(friend => friend.id !== friendId));
-      } else {
-        alert(data.error || 'Er is iets misgegaan bij het verwijderen van de vriend.');
-      }
-    } catch (error) {
-      console.error('Fout bij het verwijderen van de vriend:', error);
-      alert('Kan geen verbinding maken met de server.');
-    }
-  };
-
-  const createLeaderboard = async () => {
-    try {
-      const userId = await getUserId();
-
-      if (!userId) {
-        alert('Kan de ingelogde gebruiker niet vinden.');
-        return;
-      }
-
-
-      if (!name.trim()) {
-        alert('Geef een naam op voor het leaderboard.');
-        return;
-      }
-
-      const response = await fetch('http://192.168.0.105:5000/leaderboard/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          userId,
-
-          friends: selectedFriends.map(friend => friend.id), // Stuur alleen de IDs van de vrienden
-
-
-        }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        alert(data.message);
-
-
-        // Navigeer naar het leaderboard-scherm en geef de nieuwe data door
-        router.push({
-          pathname: '/leaderboard',
-          params: { created: 'true' },
-        });
-
-        // Navigeer naar het leaderboard-scherm
-        router.push('/leaderboard');
-
-      } else {
-        alert(data.error || 'Er is iets misgegaan bij het aanmaken van het leaderboard.');
-      }
-    } catch (error) {
-      console.error('Fout bij het aanmaken van het leaderboard:', error);
-      alert('Kan geen verbinding maken met de server.');
-    }
-  };
-
-  const createLeaderboardWithFriends = async () => {
-    try {
-      const userId = await getUserId();
-
-      if (!userId) {
-        alert('Kan de ingelogde gebruiker niet vinden.');
-        return;
-      }
-
-      // Verzamel de uitgenodigde vrienden
-      const invitedFriends = friends.filter(friend => friend.invited).map(friend => friend.id);
-
-      if (invitedFriends.length === 0) {
-        alert('Selecteer minstens één vriend om een leaderboard aan te maken.');
-        return;
-      }
-
-      const response = await fetch('http://192.168.0.105:5000/leaderboard/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          friends: invitedFriends, // Stuur de uitgenodigde vrienden mee
-        }),
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        console.log('Leaderboard aangemaakt met ID:', data.leaderboardId);
-        router.replace({
-          pathname: '/leaderboard-create',
-          params: { leaderboardId: data.leaderboardId }, // Stuur het leaderboardId door
-        });
-      } else {
-        alert(data.error || 'Er is iets misgegaan bij het aanmaken van het leaderboard.');
-      }
-    } catch (error) {
-      console.error('Fout bij het aanmaken van het leaderboard:', error);
-      alert('Kan geen verbinding maken met de server.');
-    }
-  };
-
   const updateLeaderboardName = async () => {
     try {
-      const response = await fetch(`http://192.168.0.105:5000/leaderboard/update`, {
+      const response = await fetch(`http://192.168.0.130:5000/leaderboard/update`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          leaderboardId,
-          name,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leaderboardId, name }),
       });
 
       const data = await response.json();
       if (response.ok) {
-        alert('Leaderboard succesvol bijgewerkt!');
-        router.push(`/leaderboard/`); // Navigeer naar de leaderboard-pagina
+        alert('Leaderboard bijgewerkt!');
+        router.push(`/leaderboard`);
       } else {
-        alert(data.error || 'Er is iets misgegaan bij het bijwerken van het leaderboard.');
+        alert(data.error || 'Fout bij bijwerken leaderboard.');
       }
     } catch (error) {
-      console.error('Fout bij het bijwerken van het leaderboard:', error);
-      alert('Kan geen verbinding maken met de server.');
+      console.error(error);
+      alert('Verbindingsfout met de server.');
     }
-  };
-
-  const navigateToLeaderboardCreate = () => {
-    if (selectedFriends.length === 0) {
-      alert('Selecteer minstens één vriend om een leaderboard aan te maken.');
-      return;
-    }
-    createLeaderboard();
   };
 
   return (
@@ -247,7 +105,7 @@ export default function CreateLeaderboardScreen() {
           <FontAwesome name="arrow-left" size={24} color="#29A86E" />
         </TouchableOpacity>
         <Text style={styles.title}>Leaderboard aanmaken</Text>
-        <View style={{ width: 24 }} /> {/* voor centrering */}
+        <View style={{ width: 24 }} />
       </View>
 
       <Text style={styles.label}>Naam leaderboard</Text>
@@ -283,10 +141,6 @@ export default function CreateLeaderboardScreen() {
         )}
       </View>
 
-     
-
-   
-
       <TouchableOpacity onPress={updateLeaderboardName} style={styles.saveButton}>
         <Text style={styles.saveButtonText}>Leaderboard aanmaken</Text>
       </TouchableOpacity>
@@ -295,12 +149,10 @@ export default function CreateLeaderboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    backgroundColor: '#fff',
-  },
+  wrapper: { backgroundColor: '#fff' },
   container: {
     paddingTop: 64,
-    paddingHorizontal: 20,
+    paddingHorizontal: CONTENT_PADDING,
     paddingBottom: 40,
   },
   header: {
@@ -312,11 +164,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: '#252525',
   },
   label: {
     fontSize: 14,
     fontWeight: 'bold',
     marginBottom: 6,
+    color: '#252525',
   },
   inputWrapper: {
     flexDirection: 'row',
@@ -350,56 +204,7 @@ const styles = StyleSheet.create({
   inviteTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-  },
-  friendCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#F7F7F7',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 10,
-  },
-  friendInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  friendName: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  friendUsername: {
-    fontSize: 13,
-    color: '#515151',
-  },
-  createButton: {
-    backgroundColor: '#29A86E',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  createText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  saveButton: {
-    backgroundColor: '#29A86E',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#252525',
   },
   card: {
     flexDirection: 'row',
@@ -417,6 +222,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 14,
     fontWeight: '600',
+    color: '#252525',
   },
   username: {
     fontSize: 13,
@@ -438,5 +244,17 @@ const styles = StyleSheet.create({
     color: '#515151',
     textAlign: 'center',
     marginTop: 10,
+  },
+  saveButton: {
+    backgroundColor: '#29A86E',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

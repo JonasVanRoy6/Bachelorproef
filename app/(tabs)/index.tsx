@@ -7,11 +7,15 @@ import {
   Image,
   TouchableOpacity,
   StatusBar,
+  Dimensions,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
-import { FontAwesome5, MaterialIcons, Feather,MaterialCommunityIcons } from "@expo/vector-icons";
+import { FontAwesome5, MaterialIcons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const ICONS = {
   reizen: <FontAwesome5 name="suitcase-rolling" size={24} color="#29A86E" />,
@@ -46,14 +50,14 @@ const HomeScreen = () => {
           return;
         }
 
-        const response = await fetch(`http://192.168.0.105:5000/challenges?userId=${userId}`);
+        const response = await fetch(`http://192.168.0.130:5000/challenges?userId=${userId}`);
         const data = await response.json();
 
         if (response.ok) {
-          setActiveChallenge(data[0]); // Stel de eerste uitdaging in als actief
-          setChallenges(data); // Stel alle uitdagingen in
+          setActiveChallenge(data[0]);
+          setChallenges(data);
         } else {
-          alert(data.error || "Er is iets misgegaan bij het ophalen van uitdagingen.");
+          alert(data.error || "Fout bij het ophalen van uitdagingen.");
         }
       } catch (error) {
         console.error("Fout bij het ophalen van uitdagingen:", error);
@@ -73,14 +77,14 @@ const HomeScreen = () => {
           return;
         }
 
-        const response = await fetch(`http://192.168.0.105:5000/user-data?userId=${userId}`);
+        const response = await fetch(`http://192.168.0.130:5000/user-data?userId=${userId}`);
         const data = await response.json();
 
         if (response.ok) {
-          setUserName(data.firstName); // Stel de voornaam in
-          setTotalSaved(data.totalPuffs * 0.01); // Bereken het totale bespaarde bedrag
+          setUserName(data.firstName);
+          setTotalSaved(data.totalPuffs * 0.01);
         } else {
-          alert(data.error || "Er is iets misgegaan bij het ophalen van gebruikersgegevens.");
+          alert(data.error || "Fout bij het ophalen van gebruikersgegevens.");
         }
       } catch (error) {
         console.error("Fout bij het ophalen van gebruikersgegevens:", error);
@@ -96,9 +100,12 @@ const HomeScreen = () => {
   };
 
   return (
-    <View style={styles.wrapper}>
+    <SafeAreaView style={styles.wrapper}>
       <StatusBar backgroundColor="#29A86E" barStyle="light-content" />
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.curvedBackground} />
 
         <View style={styles.header}>
@@ -161,7 +168,14 @@ const HomeScreen = () => {
             <TouchableOpacity
               key={index}
               onPress={() => handleGoalPress(item.route)}
-              style={[styles.goalTab, { backgroundColor: item.color + "26", marginRight: index === 3 ? 0 : 16 }]}
+              style={[
+                styles.goalTab,
+                {
+                  backgroundColor: item.color + "26",
+                  marginRight: index === 3 ? 0 : 16,
+                  width: SCREEN_WIDTH * 0.32,
+                },
+              ]}
             >
               {item.icon}
               <Text style={[styles.goalText, { color: item.color }]}>{item.label}</Text>
@@ -204,7 +218,7 @@ const HomeScreen = () => {
                   style={[
                     styles.progressBarFg,
                     {
-                      width: `${(item.huidig / (item.bedrag * 100)) * 100}%`, // Correcte berekening
+                      width: `${(item.huidig / (item.bedrag * 100)) * 100}%`,
                       backgroundColor: kleuren[item.thema] || "#29A86E",
                     },
                   ]}
@@ -218,13 +232,12 @@ const HomeScreen = () => {
           ))}
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  wrapper: { flex: 1, backgroundColor: "#fff", position: "relative" },
-  container: { flex: 1, backgroundColor: "#fff" },
+  wrapper: { flex: 1, backgroundColor: "#fff" },
   curvedBackground: {
     height: 240,
     backgroundColor: "#29A86E",
@@ -253,7 +266,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 2,
-    marginHorizontal: 32,
+    marginHorizontal: 16,
   },
   streakHeader: {
     flexDirection: "row",
@@ -280,7 +293,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   goalTab: {
-    width: 128,
     height: 76,
     borderRadius: 8,
     justifyContent: "center",

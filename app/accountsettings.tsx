@@ -8,9 +8,13 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const AccountSettingsScreen = () => {
   const [firstName, setFirstName] = useState('Tester');
@@ -22,112 +26,105 @@ const AccountSettingsScreen = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/settings')} style={styles.backButton}>
-          <FontAwesome name="arrow-left" size={24} color="#29A86E" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Accountinstellingen</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView contentContainerStyle={styles.scroll}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.push('/settings')} style={styles.backButton}>
+              <FontAwesome name="arrow-left" size={24} color="#29A86E" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Accountinstellingen</Text>
+            <View style={{ width: 24 }} />
+          </View>
 
-        {/* Naamvelden */}
-        <View style={styles.row}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Voornaam</Text>
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.input}
-                value={firstName}
-                onChangeText={setFirstName}
-              />
+          {/* Naamvelden */}
+          <View style={styles.row}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Voornaam</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Achternaam</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput style={styles.input} value={lastName} onChangeText={setLastName} />
+              </View>
             </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Achternaam</Text>
+          {/* E-mailadres */}
+          <View style={styles.inputGroupFull}>
+            <Text style={styles.label}>E-mailadres</Text>
             <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.input}
-                value={lastName}
-                onChangeText={setLastName}
-              />
+              <TextInput style={styles.input} value={email} onChangeText={setEmail} />
             </View>
           </View>
-        </View>
 
-        {/* E-mailadres */}
-        <View style={styles.inputGroupFull}>
-          <Text style={styles.label}>E-mailadres</Text>
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-            />
+          {/* Geboortedatum */}
+          <View style={styles.inputGroupFull}>
+            <Text style={styles.label}>Geboortedatum</Text>
+            <View style={styles.inputWrapper}>
+              <TextInput style={styles.input} value={birthDate} onChangeText={setBirthDate} />
+            </View>
           </View>
-        </View>
 
-        {/* Geboortedatum */}
-        <View style={styles.inputGroupFull}>
-          <Text style={styles.label}>Geboortedatum</Text>
-          <View style={styles.inputWrapper}>
-            <TextInput
-              style={styles.input}
-              value={birthDate}
-              onChangeText={setBirthDate}
-            />
+          {/* Wachtwoord */}
+          <View style={styles.inputGroupFull}>
+            <Text style={styles.label}>Wachtwoord</Text>
+            <View style={styles.inputWithButton}>
+              <TextInput style={styles.input} value={password} secureTextEntry editable={false} />
+              <TouchableOpacity style={styles.showButton}>
+                <Text style={styles.toonText}>Toon</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
 
-        {/* Wachtwoord */}
-        <View style={styles.inputGroupFull}>
-          <Text style={styles.label}>Wachtwoord</Text>
-          <View style={styles.inputWithButton}>
-            <TextInput
-              style={styles.input}
-              value={password}
-              secureTextEntry
-              editable={false}
-            />
-            <TouchableOpacity style={styles.showButton}>
-              <Text style={styles.toonText}>Toon</Text>
-            </TouchableOpacity>
+          {/* Nieuw wachtwoord */}
+          <View style={styles.inputGroupFull}>
+            <Text style={styles.label}>Nieuw Wachtwoord</Text>
+            <View style={styles.inputWithButton}>
+              <TextInput
+                style={styles.input}
+                placeholder="Geef je nieuw wachtwoord in"
+                placeholderTextColor="#515151"
+                value={newPassword}
+                onChangeText={setNewPassword}
+                secureTextEntry={!showNewPassword}
+              />
+              <TouchableOpacity
+                onPress={() => setShowNewPassword(!showNewPassword)}
+                style={styles.showButton}
+              >
+                <Text style={styles.toonText}>Toon</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
 
-        {/* Nieuw wachtwoord */}
-        <View style={styles.inputGroupFull}>
-          <Text style={styles.label}>Nieuw Wachtwoord</Text>
-          <View style={styles.inputWithButton}>
-            <TextInput
-              style={styles.input}
-              placeholder="Geef je nieuw wachtwoord in"
-              placeholderTextColor="#515151"
-              value={newPassword}
-              onChangeText={setNewPassword}
-              secureTextEntry={!showNewPassword}
-            />
-            <TouchableOpacity onPress={() => setShowNewPassword(!showNewPassword)} style={styles.showButton}>
-              <Text style={styles.toonText}>Toon</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Opslaan knop */}
-        <TouchableOpacity onPress={() => router.push('/settings')} style={styles.button}>
-          <Text style={styles.buttonText}>Wijzigingen opslaan</Text>
-        </TouchableOpacity>
-    </KeyboardAvoidingView>
+          {/* Opslaan knop */}
+          <TouchableOpacity onPress={() => router.push('/settings')} style={styles.button}>
+            <Text style={styles.buttonText}>Wijzigingen opslaan</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingTop: 64, paddingHorizontal: 20 },
-  scrollContainer: { paddingBottom: 82 },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  scroll: {
+    paddingTop: 64,
+    paddingBottom: 80,
+    paddingHorizontal: SCREEN_WIDTH * 0.05,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -144,17 +141,24 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#252525',
-    fontFamily: 'Poppins',
     textAlign: 'center',
   },
-  row: { flexDirection: 'row', gap: 16, marginBottom: 24 },
-  inputGroup: { flex: 1 },
-  inputGroupFull: { marginBottom: 24 },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 24,
+  },
+  inputGroup: {
+    flex: 1,
+  },
+  inputGroupFull: {
+    marginBottom: 24,
+  },
   label: {
     fontSize: 14,
     fontWeight: 'bold',
     color: '#252525',
-    fontFamily: 'Poppins',
     marginBottom: 8,
   },
   inputWrapper: {
@@ -167,7 +171,6 @@ const styles = StyleSheet.create({
   },
   input: {
     fontSize: 14,
-    fontFamily: 'Poppins',
     padding: 0,
   },
   inputWithButton: {
@@ -179,12 +182,13 @@ const styles = StyleSheet.create({
     height: 56,
     paddingHorizontal: 12,
   },
-  showButton: { marginLeft: 'auto' },
+  showButton: {
+    marginLeft: 'auto',
+  },
   toonText: {
     fontSize: 14,
     color: '#29A86E',
     fontWeight: '500',
-    fontFamily: 'Poppins',
   },
   button: {
     backgroundColor: '#29A86E',
@@ -197,7 +201,6 @@ const styles = StyleSheet.create({
     color: '#F5F5F5',
     fontSize: 18,
     fontWeight: '600',
-    fontFamily: 'Poppins',
   },
 });
 

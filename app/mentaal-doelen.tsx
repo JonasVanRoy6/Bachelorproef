@@ -6,9 +6,14 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import { FontAwesome, FontAwesome5, Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
+
+const { width } = Dimensions.get('window');
+const CARD_PADDING = 24;
+const BAR_WIDTH = width - CARD_PADDING * 2;
 
 const doelen = [
   {
@@ -48,7 +53,6 @@ const doelen = [
   },
 ];
 
-
 const MentaalDoelen = () => {
   return (
     <View style={styles.container}>
@@ -73,7 +77,11 @@ const MentaalDoelen = () => {
         </View>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={{ paddingBottom: 24 }}
+        showsVerticalScrollIndicator={false}
+      >
         {doelen.map((doel, index) => (
           <View key={index} style={styles.doelCard}>
             <View style={styles.doelHeader}>
@@ -103,7 +111,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 36,
+    paddingHorizontal: 24,
     marginBottom: 24,
   },
   backButton: {
@@ -120,11 +128,8 @@ const styles = StyleSheet.create({
   progressCard: {
     backgroundColor: '#EAE8F5',
     borderRadius: 16,
-    marginHorizontal: 36,
-    height: 80,
-    paddingTop: 20,
-    paddingBottom: 20,
-    paddingHorizontal: 16,
+    marginHorizontal: 24,
+    padding: 16,
     marginBottom: 42,
   },
   progressHeader: {
@@ -140,7 +145,7 @@ const styles = StyleSheet.create({
   },
   progressPercentage: {
     backgroundColor: 'rgba(112, 97, 187, 0.15)',
-    width: 48,
+    paddingHorizontal: 12,
     height: 28,
     borderRadius: 24,
     justifyContent: 'center',
@@ -153,7 +158,7 @@ const styles = StyleSheet.create({
   },
   progressBarBackground: {
     height: 8,
-    width: 228,
+    width: '100%',
     backgroundColor: 'rgba(112, 97, 187, 0.15)',
     borderRadius: 4,
   },
@@ -170,7 +175,7 @@ const styles = StyleSheet.create({
     paddingTop: 42,
   },
   doelCard: {
-    paddingHorizontal: 36,
+    paddingHorizontal: 24,
     marginBottom: 16,
   },
   doelHeader: {
@@ -200,7 +205,7 @@ const styles = StyleSheet.create({
   },
   barBackground: {
     height: 8,
-    width: 330,
+    width: BAR_WIDTH,
     backgroundColor: '#F5F5F5',
     borderRadius: 4,
     marginBottom: 12,
@@ -216,7 +221,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   divider: {
-    height: 0.3,
+    height: 0.5,
     backgroundColor: '#E3E3E3',
   },
 });

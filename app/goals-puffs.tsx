@@ -19,7 +19,7 @@ export default function DoelenPuffsScreen() {
 
       console.log('Verstuurde gegevens:', { userId, currentUsage: current, goalsUsage: goal });
 
-      const response = await fetch('http://192.168.0.105:5000/user/update-puffs', {
+      const response = await fetch('http://192.168.0.130:5000/user/update-puffs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

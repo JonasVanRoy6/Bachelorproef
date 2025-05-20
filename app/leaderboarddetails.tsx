@@ -5,13 +5,15 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
-  ScrollView
+  ScrollView,
+  Alert,
+  Dimensions,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Alert } from 'react-native';
 
+const screenWidth = Dimensions.get('window').width;
 
 export default function LeaderboardDetailsScreen() {
   const router = useRouter();
@@ -26,30 +28,28 @@ export default function LeaderboardDetailsScreen() {
       setUserId(id);
       if (leaderboardId && id) {
         try {
-          const res = await fetch(`http://192.168.0.105:5000/leaderboard/details-with-rank?leaderboardId=${leaderboardId}&userId=${id}`);
+          const res = await fetch(`http://192.168.0.130:5000/leaderboard/details-with-rank?leaderboardId=${leaderboardId}&userId=${id}`);
           const data = await res.json();
-  
+
           const updatedList = data.leaderboard
             .sort((a, b) => a.total_puffs - b.total_puffs)
             .map((user, index) => ({
               ...user,
               name: user.user_id === id ? 'Jij' : user.name,
-              rank: index + 1
+              rank: index + 1,
             }));
-  
+
           setLeaderboardData(updatedList);
           setUserRank(updatedList.find(u => u.user_id === id)?.rank);
-  
         } catch (err) {
           console.error('Fout bij ophalen leaderboarddetails:', err);
           alert('Fout bij ophalen van leaderboardgegevens');
         }
       }
     };
-  
+
     fetchLeaderboardDetails();
   }, [leaderboardId]);
-  
 
   if (!leaderboardId) {
     return (
@@ -98,45 +98,44 @@ export default function LeaderboardDetailsScreen() {
           <Text style={styles.yourRankText}>Jouw positie: #{userRank}</Text>
         )}
       </ScrollView>
+
       <TouchableOpacity
-  style={styles.deleteButton}
-  onPress={() => {
-    Alert.alert(
-      'Bevestiging',
-      'Weet je zeker dat je dit leaderboard wilt verwijderen?',
-      [
-        { text: 'Annuleer', style: 'cancel' },
-        {
-          text: 'Verwijder',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const res = await fetch(`http://192.168.0.105:5000/leaderboard/delete?leaderboardId=${leaderboardId}`, {
-                method: 'DELETE'
-              });
+        style={styles.deleteButton}
+        onPress={() => {
+          Alert.alert(
+            'Bevestiging',
+            'Weet je zeker dat je dit leaderboard wilt verwijderen?',
+            [
+              { text: 'Annuleer', style: 'cancel' },
+              {
+                text: 'Verwijder',
+                style: 'destructive',
+                onPress: async () => {
+                  try {
+                    const res = await fetch(`http://192.168.0.130:5000/leaderboard/delete?leaderboardId=${leaderboardId}`, {
+                      method: 'DELETE',
+                    });
 
-              const data = await res.json();
+                    const data = await res.json();
 
-              if (res.ok) {
-                alert(data.message || 'Leaderboard verwijderd');
-                router.push('/leaderboard');
-              } else {
-                alert(data.error || 'Verwijderen mislukt');
-              }
-            } catch (err) {
-              console.error('Fout bij verwijderen:', err);
-              alert('Er is een fout opgetreden bij het verwijderen.');
-            }
-          }
-        }
-      ]
-    );
-  }}
->
-  <Text style={styles.deleteText}>Verwijder leaderboard</Text>
-</TouchableOpacity>
-
-
+                    if (res.ok) {
+                      alert(data.message || 'Leaderboard verwijderd');
+                      router.push('/leaderboard');
+                    } else {
+                      alert(data.error || 'Verwijderen mislukt');
+                    }
+                  } catch (err) {
+                    console.error('Fout bij verwijderen:', err);
+                    alert('Er is een fout opgetreden bij het verwijderen.');
+                  }
+                },
+              },
+            ]
+          );
+        }}
+      >
+        <Text style={styles.deleteText}>Verwijder leaderboard</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -196,6 +195,7 @@ const styles = StyleSheet.create({
     height: 80,
     marginBottom: 16,
     paddingHorizontal: 12,
+    width: '100%',
   },
   activeCard: {
     backgroundColor: '#DFF5E5',
@@ -223,9 +223,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#515151',
   },
-  badge: {
-    marginLeft: 10,
-  },
   errorText: {
     fontSize: 16,
     color: '#FF0000',
@@ -247,11 +244,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
-  
   deleteText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
-  }
-  
+  },
 });

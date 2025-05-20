@@ -6,11 +6,14 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  ScrollView
+  ScrollView,
+  Dimensions,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const screenWidth = Dimensions.get('window').width;
 
 const getUserId = async (): Promise<number | null> => {
   try {
@@ -30,7 +33,7 @@ const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[
       return;
     }
 
-    const response = await fetch(`http://192.168.0.105:5000/user/friends?userId=${userId}`);
+    const response = await fetch(`http://192.168.0.130:5000/user/friends?userId=${userId}`);
     const data = await response.json();
 
     if (response.ok) {
@@ -52,7 +55,6 @@ export default function InviteScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const [search, setSearch] = useState('');
-  const [selectedFriends, setSelectedFriends] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
 
   useEffect(() => {
@@ -95,7 +97,7 @@ export default function InviteScreen() {
         return;
       }
 
-      const response = await fetch('http://192.168.0.105:5000/leaderboard/create-with-friends', {
+      const response = await fetch('http://192.168.0.130:5000/leaderboard/create-with-friends', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -147,11 +149,7 @@ export default function InviteScreen() {
 
         <ScrollView contentContainerStyle={styles.list}>
           {filtered.map(user => (
-            <UserCard
-              key={user.id}
-              user={user}
-              onToggle={() => handleInvite(user.id)}
-            />
+            <UserCard key={user.id} user={user} onToggle={() => handleInvite(user.id)} />
           ))}
         </ScrollView>
 
@@ -167,7 +165,10 @@ function UserCard({ user, onToggle }: { user: any; onToggle: () => void }) {
   return (
     <View style={styles.card}>
       <View style={styles.userRow}>
-        <Image source={user.img} style={styles.avatar} />
+        <Image
+          source={user.img || { uri: 'https://via.placeholder.com/48' }}
+          style={styles.avatar}
+        />
         <View>
           <Text style={styles.name}>{user.name}</Text>
           <Text style={styles.username}>{user.username}</Text>
@@ -220,18 +221,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000',
   },
-  resultCount: {
-    fontSize: 14,
-    color: '#515151',
-    marginBottom: 16,
-  },
   list: {
     paddingBottom: 40,
-  },
-  section: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginVertical: 12,
   },
   card: {
     flexDirection: 'row',
@@ -289,10 +280,10 @@ const styles = StyleSheet.create({
   doneButton: {
     backgroundColor: '#29A86E',
     borderRadius: 20,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 12,
+    marginBottom: 24,
   },
   doneText: {
     fontSize: 16,

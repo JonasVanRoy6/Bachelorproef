@@ -5,8 +5,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const periods = ['Dag', 'Week', 'Maand'] as const;
 type Period = typeof periods[number];
@@ -37,7 +41,7 @@ const StatsScreen = () => {
   const scaleFactor = 140 / 80;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Statistieken</Text>
 
       <View style={styles.selectorWrapper}>
@@ -67,28 +71,26 @@ const StatsScreen = () => {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingTop: 0, paddingBottom: 16 }}
+        contentContainerStyle={{ paddingBottom: 16 }}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.inner}>
+          {/* Stats */}
           <View style={styles.widgetRow}>
-            <View style={styles.statBox}>
-              <MaterialCommunityIcons name="smoking" size={24} color="#29A86E" style={styles.icon} />
-              <Text style={styles.statLabel}>Puffs</Text>
-              <Text style={styles.statValue}>46</Text>
-            </View>
-            <View style={styles.statBox}>
-              <MaterialCommunityIcons name="timer-outline" size={24} color="#29A86E" style={styles.icon} />
-              <Text style={styles.statLabel}>Duur</Text>
-              <Text style={styles.statValue}>12m</Text>
-            </View>
-            <View style={styles.statBox}>
-              <MaterialCommunityIcons name="water-outline" size={24} color="#29A86E" style={styles.icon} />
-              <Text style={styles.statLabel}>Vloeistof</Text>
-              <Text style={styles.statValue}>2.1 ml</Text>
-            </View>
+            {[
+              { icon: 'smoking', label: 'Puffs', value: '46' },
+              { icon: 'timer-outline', label: 'Duur', value: '12m' },
+              { icon: 'water-outline', label: 'Vloeistof', value: '2.1 ml' },
+            ].map((item, index) => (
+              <View key={index} style={styles.statBox}>
+                <MaterialCommunityIcons name={item.icon} size={24} color="#29A86E" />
+                <Text style={styles.statLabel}>{item.label}</Text>
+                <Text style={styles.statValue}>{item.value}</Text>
+              </View>
+            ))}
           </View>
 
+          {/* Chart */}
           <View style={styles.chartWidget}>
             <View style={styles.widgetHeader}>
               <Text style={styles.widgetTitle}>
@@ -106,56 +108,41 @@ const StatsScreen = () => {
             </View>
           </View>
 
+          {/* Piektijden */}
           <View style={styles.peakWidget}>
             <Text style={[styles.widgetTitle, { marginBottom: 16 }]}>Piekgebruik</Text>
-            <View style={styles.peakBlock}>
-              <Text style={styles.peakLabel}>8:00 - 10:00</Text>
-              <View style={styles.peakBarBg}><View style={[styles.peakBarFill, { width: 214 }]} /></View>
-            </View>
-            <View style={styles.peakBlock}>
-              <Text style={styles.peakLabel}>14:00 - 16:00</Text>
-              <View style={styles.peakBarBg}><View style={[styles.peakBarFill, { width: 214 }]} /></View>
-            </View>
-            <View style={styles.peakBlock}>
-              <Text style={styles.peakLabel}>18:00 - 21:00</Text>
-              <View style={styles.peakBarBg}><View style={[styles.peakBarFill, { width: 214 }]} /></View>
-            </View>
+            {['8:00 - 10:00', '14:00 - 16:00', '18:00 - 21:00'].map((label, idx) => (
+              <View key={idx} style={styles.peakBlock}>
+                <Text style={styles.peakLabel}>{label}</Text>
+                <View style={styles.peakBarBg}>
+                  <View style={[styles.peakBarFill, { width: SCREEN_WIDTH * 0.5 }]} />
+                </View>
+              </View>
+            ))}
           </View>
 
-          <View style={styles.compareWidget}>
-            <View>
-              <Text style={styles.compareLabel}>{getAverageLabel()}</Text>
-              <Text style={styles.compareValue}>6.5</Text>
+          {/* Vergelijkingen */}
+          {[
+            { label: getAverageLabel(), value: '6.5', icon: '↓ 8%' },
+            { label: 'vs. gisteren', value: '+12%', icon: <Feather name="trending-up" size={20} color="#29A86E" /> },
+            { label: 'vs. vorige week', value: '-8%', icon: <Feather name="trending-down" size={20} color="#29A86E" /> },
+            { label: 'vs. vorige maand', value: '-15%', icon: <Feather name="trending-down" size={20} color="#29A86E" /> },
+          ].map((item, i) => (
+            <View key={i} style={styles.compareWidget}>
+              <View>
+                <Text style={styles.compareLabel}>{item.label}</Text>
+                <Text style={styles.compareValue}>{item.value}</Text>
+              </View>
+              {typeof item.icon === 'string' ? (
+                <Text style={styles.compareChange}>{item.icon}</Text>
+              ) : (
+                item.icon
+              )}
             </View>
-            <Text style={styles.compareChange}>↓ 8%</Text>
-          </View>
-
-          <View style={styles.compareWidget}>
-            <View>
-              <Text style={styles.compareLabel}>vs. gisteren</Text>
-              <Text style={styles.compareValue}>+12%</Text>
-            </View>
-            <Feather name="trending-up" size={20} color="#29A86E" />
-          </View>
-
-          <View style={styles.compareWidget}>
-            <View>
-              <Text style={styles.compareLabel}>vs. vorige week</Text>
-              <Text style={styles.compareValue}>-8%</Text>
-            </View>
-            <Feather name="trending-down" size={20} color="#29A86E" />
-          </View>
-
-          <View style={styles.compareWidget}>
-            <View>
-              <Text style={styles.compareLabel}>vs. vorige maand</Text>
-              <Text style={styles.compareValue}>-15%</Text>
-            </View>
-            <Feather name="trending-down" size={20} color="#29A86E" />
-          </View>
+          ))}
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -168,12 +155,10 @@ const styles = StyleSheet.create({
     color: '#252525',
     marginBottom: 24,
   },
-  inner: {
-    paddingHorizontal: 16,
-  },
+  inner: { paddingHorizontal: 16 },
   selectorWrapper: {
     flexDirection: 'row',
-    width: 370,
+    width: SCREEN_WIDTH * 0.9,
     height: 44,
     alignSelf: 'center',
     borderRadius: 16,
@@ -194,35 +179,32 @@ const styles = StyleSheet.create({
   widgetRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginHorizontal: 16,
     marginBottom: 24,
-    width: 370,
-    alignSelf: 'center',
   },
   statBox: {
-    width: 112,
+    flex: 1,
     height: 103,
     borderRadius: 16,
     backgroundColor: '#fff',
+    marginHorizontal: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
-    paddingTop: 12,
-    paddingBottom: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   icon: { marginBottom: 6 },
   statLabel: { fontSize: 14, color: '#515151' },
   statValue: { fontSize: 24, fontWeight: 'bold', color: '#252525' },
   chartWidget: {
-    width: 370,
+    width: '100%',
     height: 284,
     backgroundColor: '#fff',
     borderRadius: 16,
-    alignSelf: 'center',
     marginBottom: 24,
     padding: 16,
     shadowColor: '#000',
@@ -253,11 +235,9 @@ const styles = StyleSheet.create({
   },
   barLabel: { fontSize: 12, color: '#515151', marginTop: 4 },
   peakWidget: {
-    width: 370,
-    height: 180,
+    width: '100%',
     backgroundColor: '#fff',
     borderRadius: 16,
-    alignSelf: 'center',
     marginBottom: 24,
     padding: 16,
     shadowColor: '#000',
@@ -271,9 +251,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  peakLabel: { fontSize: 14, color: '#252525', width: 100, marginRight: 24 },
+  peakLabel: { fontSize: 14, color: '#252525', width: 100, marginRight: 16 },
   peakBarBg: {
-    width: 214,
+    flex: 1,
     height: 8,
     backgroundColor: '#DFF2E9',
     borderRadius: 4,
@@ -285,11 +265,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   compareWidget: {
-    width: 370,
+    width: '100%',
     height: 68,
     backgroundColor: '#fff',
     borderRadius: 16,
-    alignSelf: 'center',
     marginBottom: 16,
     padding: 16,
     flexDirection: 'row',
@@ -302,7 +281,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   compareLabel: { fontSize: 14, color: '#515151' },
-  compareValue: { fontSize: 20, fontWeight: '600', color: '#252525', marginTop: -2 },
+  compareValue: { fontSize: 20, fontWeight: '600', color: '#252525' },
   compareChange: { fontSize: 14, color: '#29A86E' },
 });
 

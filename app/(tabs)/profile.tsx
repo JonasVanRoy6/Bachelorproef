@@ -7,10 +7,14 @@ import {
   Image,
   ScrollView,
   Modal,
+  Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const profileImage = require('../../assets/images/spongebob.png');
 
@@ -54,24 +58,24 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [invited, setInvited] = useState<string[]>([]);
   const [selectedBadge, setSelectedBadge] = useState<any | null>(null);
-  const [userName, setUserName] = useState(''); // Houd de naam van de gebruiker bij
-  const [userEmail, setUserEmail] = useState(''); // Houd het e-mailadres van de gebruiker bij
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const userId = await AsyncStorage.getItem('userId'); // Haal de ingelogde gebruiker-ID op
+        const userId = await AsyncStorage.getItem('userId');
         if (!userId) {
           alert('Kan de ingelogde gebruiker niet vinden.');
           return;
         }
 
-        const response = await fetch(`http://192.168.0.105:5000/user-data?userId=${userId}`);
+        const response = await fetch(`http://192.168.0.130:5000/user-data?userId=${userId}`);
         const data = await response.json();
 
         if (response.ok) {
-          setUserName(data.firstName); // Stel de voornaam in
-          setUserEmail(data.email); // Stel het e-mailadres in
+          setUserName(data.firstName);
+          setUserEmail(data.email);
         } else {
           alert(data.error || 'Er is iets misgegaan bij het ophalen van gebruikersgegevens.');
         }
@@ -91,8 +95,8 @@ export default function ProfileScreen() {
   };
 
   return (
-    <>
-      <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
             <Image source={profileImage} style={styles.avatar} />
@@ -100,8 +104,8 @@ export default function ProfileScreen() {
               <FontAwesome name="camera" size={14} color="#fff" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.name}>{userName || 'Onbekende gebruiker'}</Text> {/* Toon de naam van de gebruiker */}
-          <Text style={styles.username}>{userEmail || 'Onbekend e-mailadres'}</Text> {/* Toon het e-mailadres van de gebruiker */}
+          <Text style={styles.name}>{userName || 'Onbekende gebruiker'}</Text>
+          <Text style={styles.username}>{userEmail || 'Onbekend e-mailadres'}</Text>
           <TouchableOpacity
             style={styles.settingsButton}
             onPress={() => router.push('/settings')}
@@ -111,7 +115,6 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.divider} />
-
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Mijn vrienden</Text>
@@ -119,14 +122,16 @@ export default function ProfileScreen() {
               <Text style={styles.viewAll}>Alles bekijken</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.horizontalList}>
-            {friends.map((friend, index) => (
-              <View key={index} style={styles.friendItem}>
-                <Image source={friend.img} style={styles.friendAvatar} />
-                <Text style={styles.friendName}>{friend.name}</Text>
-              </View>
-            ))}
-          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.horizontalList}>
+              {friends.map((friend, index) => (
+                <View key={index} style={styles.friendItem}>
+                  <Image source={friend.img} style={styles.friendAvatar} />
+                  <Text style={styles.friendName}>{friend.name}</Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
         </View>
 
         <View style={styles.divider} />
@@ -138,17 +143,19 @@ export default function ProfileScreen() {
               <Text style={styles.viewAll}>Alles bekijken</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.horizontalList}>
-            {badges.map((badge, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[styles.badge, { backgroundColor: badge.color }]}
-                onPress={() => setSelectedBadge(badgeDetails)}
-              >
-                <FontAwesome name={badge.icon} size={20} color="#29A86E" />
-              </TouchableOpacity>
-            ))}
-          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.horizontalList}>
+              {badges.map((badge, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.badge, { backgroundColor: badge.color }]}
+                  onPress={() => setSelectedBadge(badgeDetails)}
+                >
+                  <FontAwesome name={badge.icon} size={20} color="#29A86E" />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </ScrollView>
         </View>
 
         <View style={styles.divider} />
@@ -160,18 +167,27 @@ export default function ProfileScreen() {
             return (
               <View
                 key={index}
-                style={[styles.suggestionItem, { marginTop: index === 0 ? 16 : 0, marginBottom: 16 }]}
+                style={[
+                  styles.suggestionItem,
+                  { marginTop: index === 0 ? 16 : 0, marginBottom: 16 },
+                ]}
               >
                 <Image source={sugg.img} style={styles.suggestionAvatar} />
                 <View style={{ flex: 1 }}>
                   <Text style={styles.suggestionName}>{sugg.name}</Text>
-                  <Text style={styles.suggestionInfo}>{sugg.mutual} gezamenlijke vrienden</Text>
+                  <Text style={styles.suggestionInfo}>
+                    {sugg.mutual} gezamenlijke vrienden
+                  </Text>
                 </View>
                 <TouchableOpacity
                   style={isInvited ? styles.invitedButton : styles.inviteButton}
                   onPress={() => toggleInvite(sugg.name)}
                 >
-                  <FontAwesome name={isInvited ? 'check' : 'user-plus'} size={14} color="#29A86E" />
+                  <FontAwesome
+                    name={isInvited ? 'check' : 'user-plus'}
+                    size={14}
+                    color="#29A86E"
+                  />
                 </TouchableOpacity>
               </View>
             );
@@ -192,9 +208,16 @@ export default function ProfileScreen() {
 
             <View style={styles.popupContent}>
               <View
-                style={[styles.popupIconCircle, { backgroundColor: selectedBadge?.background }]}
+                style={[
+                  styles.popupIconCircle,
+                  { backgroundColor: selectedBadge?.background },
+                ]}
               >
-                <FontAwesome name={selectedBadge?.icon} size={36} color={selectedBadge?.color} />
+                <FontAwesome
+                  name={selectedBadge?.icon}
+                  size={36}
+                  color={selectedBadge?.color}
+                />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.popupDate}>Verdiend op {selectedBadge?.date}</Text>
@@ -206,7 +229,12 @@ export default function ProfileScreen() {
               <Text style={styles.detailsTitle}>Badge Details</Text>
               {selectedBadge?.checklist.map((item: string, index: number) => (
                 <View key={index} style={styles.checkItem}>
-                  <FontAwesome name="check" size={14} color="#29A86E" style={{ marginRight: 8 }} />
+                  <FontAwesome
+                    name="check"
+                    size={14}
+                    color="#29A86E"
+                    style={{ marginRight: 8 }}
+                  />
                   <Text style={styles.checkText}>{item}</Text>
                 </View>
               ))}
@@ -214,16 +242,23 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-    </>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: '#fff' },
-  content: { padding: 20, paddingTop: 64, paddingBottom: 40 },
+  content: {
+    paddingHorizontal: SCREEN_WIDTH * 0.05,
+    paddingTop: 64,
+    paddingBottom: 40,
+  },
   header: { alignItems: 'center', marginBottom: 20 },
   avatarContainer: { position: 'relative' },
-  avatar: { width: 96, height: 96, borderRadius: 48 },
+  avatar: {
+    width: SCREEN_WIDTH * 0.25,
+    height: SCREEN_WIDTH * 0.25,
+    borderRadius: SCREEN_WIDTH * 0.125,
+  },
   cameraButton: {
     position: 'absolute',
     right: 0,
@@ -235,22 +270,64 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  name: { fontSize: 20, fontWeight: 'bold', color: '#252525', marginTop: 12 },
-  username: { fontSize: 16, color: '#515151', marginTop: 4, marginBottom: 20 },
-  settingsButton: { position: 'absolute', right: 0, top: 0, padding: 10 },
-  divider: { height: 0.6, backgroundColor: '#E3E3E3', marginBottom: 24 },
+  name: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#252525',
+    marginTop: 12,
+  },
+  username: {
+    fontSize: 16,
+    color: '#515151',
+    marginTop: 4,
+    marginBottom: 20,
+  },
+  settingsButton: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    padding: 10,
+  },
+  divider: {
+    height: 0.6,
+    backgroundColor: '#E3E3E3',
+    marginBottom: 24,
+  },
   section: { marginBottom: 24 },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#252525' },
-  viewAll: { color: '#29A86E', fontSize: 12, fontWeight: '600' },
-  horizontalList: { flexDirection: 'row' },
-  friendItem: { alignItems: 'center', marginRight: 16 },
-  friendAvatar: { width: 64, height: 64, borderRadius: 32, marginBottom: 6 },
-  friendName: { fontSize: 12, color: '#252525' },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#252525',
+  },
+  viewAll: {
+    color: '#29A86E',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  horizontalList: {
+    flexDirection: 'row',
+    paddingRight: 8,
+  },
+  friendItem: {
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  friendAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginBottom: 6,
+  },
+  friendName: {
+    fontSize: 12,
+    color: '#252525',
+    textAlign: 'center',
+  },
   badge: {
     width: 48,
     height: 48,
@@ -259,10 +336,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  suggestionItem: { flexDirection: 'row', alignItems: 'center', padding: 12 },
-  suggestionAvatar: { width: 48, height: 48, borderRadius: 24, marginRight: 12 },
-  suggestionName: { fontSize: 16, fontWeight: '500', color: '#252525' },
-  suggestionInfo: { fontSize: 14, color: '#515151' },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#F9F9F9',
+  },
+  suggestionAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 12,
+  },
+  suggestionName: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#252525',
+  },
+  suggestionInfo: {
+    fontSize: 14,
+    color: '#515151',
+  },
   inviteButton: {
     width: 42,
     height: 32,
@@ -291,7 +386,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
+    paddingHorizontal: SCREEN_WIDTH * 0.05,
+    paddingTop: 20,
     paddingBottom: 40,
   },
   popupHeader: {

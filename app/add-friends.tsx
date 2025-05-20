@@ -7,10 +7,14 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 type User = {
   id: number;
@@ -40,22 +44,15 @@ const getUserId = async (): Promise<number | null> => {
 const addFriendToDatabase = async (friendId: number) => {
   try {
     const userId = await getUserId();
-    console.log('Ingelogde gebruiker-ID:', userId); // Debugging
-
     if (!userId) {
       alert('Kan de ingelogde gebruiker niet vinden.');
       return;
     }
 
-    const response = await fetch('http://192.168.0.105:5000/user/add-friend', {
+    const response = await fetch('http://192.168.0.130:5000/user/add-friend', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId,
-        friendId,
-      }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, friendId }),
     });
 
     const data = await response.json();
@@ -70,9 +67,14 @@ const addFriendToDatabase = async (friendId: number) => {
   }
 };
 
-const fetchUsers = async (searchTerm: string, setAllUsers: React.Dispatch<React.SetStateAction<User[]>>) => {
+const fetchUsers = async (
+  searchTerm: string,
+  setAllUsers: React.Dispatch<React.SetStateAction<User[]>>
+) => {
   try {
-    const response = await fetch(`http://192.168.0.105:5000/user/search?search=${searchTerm}`);
+    const response = await fetch(
+      `http://192.168.0.130:5000/user/search?search=${searchTerm}`
+    );
     const data = await response.json();
 
     if (response.ok) {
@@ -101,76 +103,81 @@ export default function AddFriendsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <FontAwesome name="arrow-left" size={24} color="#29A86E" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Zoek vrienden</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      {/* Search */}
-      <View style={styles.searchWrapper}>
-        <FontAwesome name="search" size={16} color="#515151" style={{ marginRight: 8 }} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Zoek op naam of e-mailadres"
-          placeholderTextColor="#515151"
-          value={search}
-          onChangeText={(text) => {
-            setSearch(text);
-            fetchUsers(text, setAllUsers); // Haal gebruikers op bij het wijzigen van de zoektekst
-          }}
-        />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')}>
-            <FontAwesome name="close" size={18} color="#29A86E" />
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <FontAwesome name="arrow-left" size={24} color="#29A86E" />
           </TouchableOpacity>
-        )}
-      </View>
+          <Text style={styles.title}>Zoek vrienden</Text>
+          <View style={{ width: 24 }} />
+        </View>
 
-      {/* Results */}
-      {allUsers.length > 0 && (
-        <>
-          <Text style={styles.resultCount}>{allUsers.length} resultaat{allUsers.length !== 1 ? 'en' : ''}</Text>
+        <View style={styles.searchWrapper}>
+          <FontAwesome name="search" size={16} color="#515151" style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Zoek op naam of e-mailadres"
+            placeholderTextColor="#515151"
+            value={search}
+            onChangeText={(text) => {
+              setSearch(text);
+              fetchUsers(text, setAllUsers);
+            }}
+          />
+          {search.length > 0 && (
+            <TouchableOpacity onPress={() => setSearch('')}>
+              <FontAwesome name="close" size={18} color="#29A86E" />
+            </TouchableOpacity>
+          )}
+        </View>
 
-          {allUsers.map((user) => (
-            <View key={user.id} style={styles.card}>
-              <Image source={{ uri: 'https://via.placeholder.com/48' }} style={styles.avatar} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.name}>{user.name} {user.last_name}</Text>
-                <Text style={styles.username}>{user.email}</Text>
-              </View>
-              <TouchableOpacity
-                style={[
-                  styles.actionButton,
-                  added.includes(user.id) && styles.checkedButton,
-                ]}
-                onPress={() => {
-                  toggleAdd(user.id);
-                  addFriendToDatabase(user.id);
-                }}
-              >
-                <FontAwesome
-                  name={added.includes(user.id) ? 'check' : 'user-plus'}
-                  size={16}
-                  color={added.includes(user.id) ? '#29A86E' : '#29A86E'}
+        {allUsers.length > 0 && (
+          <>
+            <Text style={styles.resultCount}>
+              {allUsers.length} resultaat{allUsers.length !== 1 ? 'en' : ''}
+            </Text>
+
+            {allUsers.map((user) => (
+              <View key={user.id} style={styles.card}>
+                <Image
+                  source={{ uri: 'https://via.placeholder.com/48' }}
+                  style={styles.avatar}
                 />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </>
-      )}
-    </ScrollView>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.name}>
+                    {user.name} {user.last_name}
+                  </Text>
+                  <Text style={styles.username}>{user.email}</Text>
+                </View>
+                <TouchableOpacity
+                  style={[
+                    styles.actionButton,
+                    added.includes(user.id) && styles.checkedButton,
+                  ]}
+                  onPress={() => {
+                    toggleAdd(user.id);
+                    addFriendToDatabase(user.id);
+                  }}
+                >
+                  <FontAwesome
+                    name={added.includes(user.id) ? 'check' : 'user-plus'}
+                    size={16}
+                    color="#29A86E"
+                  />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: '#fff' },
   content: {
-    paddingHorizontal: 20,
+    paddingHorizontal: SCREEN_WIDTH * 0.05,
     paddingTop: 64,
     paddingBottom: 40,
   },

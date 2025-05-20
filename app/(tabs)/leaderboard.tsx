@@ -6,11 +6,15 @@ import {
   TouchableOpacity,
   StyleSheet,
   Image,
-  ScrollView
+  ScrollView,
+  Dimensions
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const avatarMap = {
   'andres.png': require('../../assets/images/andres.png'),
@@ -56,17 +60,17 @@ const LeaderboardScreen = () => {
         return;
       }
 
-      const response = await fetch(`http://192.168.0.105:5000/leaderboards?userId=${userId}`);
+      const response = await fetch(`http://192.168.0.130:5000/leaderboards?userId=${userId}`);
       const data = await response.json();
 
       const detailedLeaderboards = await Promise.all(data.map(async lb => {
-        const res = await fetch(`http://192.168.0.105:5000/leaderboard/details-with-rank?leaderboardId=${lb.leaderboard_id}&userId=${userId}`);
+        const res = await fetch(`http://192.168.0.130:5000/leaderboard/details-with-rank?leaderboardId=${lb.leaderboard_id}&userId=${userId}`);
         const detail = await res.json();
 
         return {
           id: lb.leaderboard_id,
           name: lb.leaderboard_name,
-          participants: detail.leaderboard.length, // inclusief ingelogde gebruiker
+          participants: detail.leaderboard.length,
           rank: detail.userRank,
           joined: true,
         };
@@ -88,19 +92,14 @@ const LeaderboardScreen = () => {
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      <ScrollView contentContainerStyle={styles.container}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Leaderboards</Text>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Mijn leaderboards</Text>
-          <TouchableOpacity>
-            <Text
-              onPress={() => router.push('/leaderboard-create')}
-              style={styles.addLink}
-            >
-              + Toevoegen
-            </Text>
+          <TouchableOpacity onPress={() => router.push('/leaderboard-create')}>
+            <Text style={styles.addLink}>+ Toevoegen</Text>
           </TouchableOpacity>
         </View>
 
@@ -108,9 +107,7 @@ const LeaderboardScreen = () => {
           <TouchableOpacity
             key={index}
             style={styles.joinedCard}
-            onPress={() => {
-              router.push(`/leaderboarddetails?leaderboardId=${lb.id}`);
-            }}
+            onPress={() => router.push(`/leaderboarddetails?leaderboardId=${lb.id}`)}
           >
             <View style={styles.cardTop}>
               <Text style={styles.cardTitle}>{lb.name || 'Naam ontbreekt'}</Text>
@@ -118,7 +115,7 @@ const LeaderboardScreen = () => {
                 <Text style={styles.rankText}>#{lb.rank || '-'}</Text>
               </View>
             </View>
-            <Text style={{ marginTop: 4, color: '#777' }}>{lb.participants} deelnemers</Text>
+            <Text style={styles.cardSub}>{lb.participants} deelnemers</Text>
           </TouchableOpacity>
         ))}
 
@@ -141,7 +138,7 @@ const LeaderboardScreen = () => {
           )}
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -149,13 +146,13 @@ const styles = StyleSheet.create({
   container: {
     paddingTop: 64,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 32,
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -170,13 +167,13 @@ const styles = StyleSheet.create({
   },
   addLink: {
     color: '#29A86E',
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   joinedCard: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 15,
-    height: 107,
     borderWidth: 0.8,
     borderColor: '#E3E3E3',
     marginTop: 10,
@@ -189,7 +186,14 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#000'
+    color: '#000',
+    flex: 1,
+    flexWrap: 'wrap',
+  },
+  cardSub: {
+    marginTop: 4,
+    color: '#777',
+    fontSize: 13,
   },
   rankBadge: {
     backgroundColor: '#E3E8E5',
@@ -227,8 +231,8 @@ const styles = StyleSheet.create({
   },
   clearText: {
     fontWeight: 'bold',
-    color: '#29A86E'
-  }
+    color: '#29A86E',
+  },
 });
 
 export default LeaderboardScreen;

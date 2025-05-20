@@ -6,9 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import { FontAwesome, FontAwesome5, Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const PADDING = SCREEN_WIDTH * 0.06;
 
 const doelen = [
   {
@@ -102,7 +106,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 36,
+    paddingHorizontal: PADDING,
     marginBottom: 24,
   },
   backButton: {
@@ -119,10 +123,8 @@ const styles = StyleSheet.create({
   progressCard: {
     backgroundColor: '#E2FAFB',
     borderRadius: 16,
-    marginHorizontal: 36,
-    height: 80,
-    paddingTop: 20,
-    paddingBottom: 20,
+    marginHorizontal: PADDING,
+    paddingVertical: 20,
     paddingHorizontal: 16,
     marginBottom: 42,
   },
@@ -152,7 +154,7 @@ const styles = StyleSheet.create({
   },
   progressBarBackground: {
     height: 8,
-    width: 228,
+    width: '100%',
     backgroundColor: 'rgba(62, 217, 226, 0.15)',
     borderRadius: 4,
   },
@@ -169,7 +171,7 @@ const styles = StyleSheet.create({
     paddingTop: 42,
   },
   doelCard: {
-    paddingHorizontal: 36,
+    paddingHorizontal: PADDING,
     marginBottom: 16,
   },
   doelHeader: {
@@ -199,7 +201,7 @@ const styles = StyleSheet.create({
   },
   barBackground: {
     height: 8,
-    width: 330,
+    width: '100%',
     backgroundColor: '#F5F5F5',
     borderRadius: 4,
     marginBottom: 12,

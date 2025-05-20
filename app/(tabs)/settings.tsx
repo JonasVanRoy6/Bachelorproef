@@ -6,9 +6,13 @@ import {
   ScrollView,
   Switch,
   TouchableOpacity,
+  Dimensions,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const SettingsScreen = () => {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
@@ -16,7 +20,7 @@ const SettingsScreen = () => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.push('/')} style={styles.backButton}>
           <FontAwesome name="arrow-left" size={24} color="#29A86E" />
@@ -31,10 +35,7 @@ const SettingsScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.sectionSpacing} />
-        <TouchableOpacity
-          style={styles.item}
-          onPress={() => router.push('/accountsettings')}
-        >
+        <TouchableOpacity style={styles.item} onPress={() => router.push('/accountsettings')}>
           <FontAwesome name="user" size={18} color="#29A86E" />
           <Text style={styles.label}>Accountinstellingen</Text>
           <FontAwesome name="chevron-right" size={14} color="#ccc" />
@@ -101,8 +102,15 @@ const SettingsScreen = () => {
       {(showDeleteModal || showLogoutModal) && (
         <View style={styles.overlay}>
           <View style={styles.modal}>
-            <FontAwesome name="exclamation-triangle" size={28} color="#FF5A5F" style={{ marginBottom: 12 }} />
-            <Text style={styles.modalTitle}>{showDeleteModal ? 'Account Verwijderen' : 'Uitloggen'}</Text>
+            <FontAwesome
+              name="exclamation-triangle"
+              size={28}
+              color="#FF5A5F"
+              style={{ marginBottom: 12 }}
+            />
+            <Text style={styles.modalTitle}>
+              {showDeleteModal ? 'Account Verwijderen' : 'Uitloggen'}
+            </Text>
             <Text style={styles.modalText}>
               {showDeleteModal
                 ? 'Weet je zeker dat je je account wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt en al je voortgang zal verloren gaan.'
@@ -135,7 +143,7 @@ const SettingsScreen = () => {
           </View>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -144,7 +152,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     paddingTop: 64,
-    paddingHorizontal: 20,
+    paddingHorizontal: SCREEN_WIDTH * 0.05,
   },
   scrollView: { flex: 1 },
   scrollContainer: { paddingBottom: 64 },
@@ -164,7 +172,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#252525',
-    fontFamily: 'Poppins',
     textAlign: 'center',
   },
   sectionSpacing: { height: 24 },
@@ -174,7 +181,6 @@ const styles = StyleSheet.create({
     color: '#515151',
     marginTop: 24,
     marginBottom: 16,
-    fontFamily: 'Poppins',
   },
   item: {
     flexDirection: 'row',
@@ -192,7 +198,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
     fontSize: 14,
-    fontFamily: 'Poppins',
     color: '#252525',
   },
   deleteButton: {
@@ -209,7 +214,6 @@ const styles = StyleSheet.create({
   deleteLabel: {
     marginLeft: 10,
     fontSize: 14,
-    fontFamily: 'Poppins',
     color: '#EB5757',
     flex: 1,
   },
@@ -222,7 +226,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: SCREEN_WIDTH * 0.05,
     zIndex: 10,
   },
   modal: {

@@ -26,7 +26,7 @@ export default function PlanAanpassenScreen() {
           return;
         }
 
-        const response = await fetch(`http://192.168.0.105:5000/user/active-plan?userId=${userId}`);
+        const response = await fetch(`http://192.168.0.130:5000/user/active-plan?userId=${userId}`);
         const data = await response.json();
         setActivePlan(data.plan); // Stel het actieve plan in
         setSelectedPlan(data.plan); // Stel het geselecteerde plan in
@@ -49,7 +49,7 @@ export default function PlanAanpassenScreen() {
         return;
       }
 
-      const response = await fetch('http://192.168.0.105:5000/user/update-plan', {
+      const response = await fetch('http://192.168.0.130:5000/user/update-plan', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

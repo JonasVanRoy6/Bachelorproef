@@ -2,47 +2,48 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TextInput,
   TouchableOpacity,
   StatusBar,
+  StyleSheet,
+  Dimensions,
 } from 'react-native';
 import { FontAwesome5, FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ICON_OPTIONS = [
-  { key: 'reizen', icon: <FontAwesome5 name="suitcase-rolling" size={28} />, color: '#29A86E' },
-  { key: 'kleding', icon: <FontAwesome5 name="tshirt" size={28} />, color: '#3ED9E2' },
-  { key: 'elektronica', icon: <FontAwesome5 name="mobile-alt" size={28} />, color: '#7061BB' },
-  { key: 'cadeau', icon: <FontAwesome name="gift" size={28} />, color: '#FFCD0F' },
-  { key: 'voeding', icon: <MaterialCommunityIcons name="silverware-fork-knife" size={28} />, color: '#FF7373' },
+  { key: 'reizen', icon: <FontAwesome5 name="suitcase-rolling" size={24} />, color: '#29A86E' },
+  { key: 'kleding', icon: <FontAwesome5 name="tshirt" size={24} />, color: '#3ED9E2' },
+  { key: 'elektronica', icon: <FontAwesome5 name="mobile-alt" size={24} />, color: '#7061BB' },
+  { key: 'cadeau', icon: <FontAwesome name="gift" size={24} />, color: '#FFCD0F' },
+  { key: 'voeding', icon: <MaterialCommunityIcons name="silverware-fork-knife" size={24} />, color: '#FF7373' },
 ];
+
+const GAP = 8;
+const NUM_ICONS = 5;
 
 const ChallengesAdd = () => {
   const [selectedIcon, setSelectedIcon] = useState('reizen');
   const [titel, setTitel] = useState('');
   const [bedrag, setBedrag] = useState('');
+  const [containerWidth, setContainerWidth] = useState(0);
 
   const handleCreate = async () => {
     try {
-      const userId = await AsyncStorage.getItem('userId'); // Haal de ingelogde gebruiker-ID op
-  
+      const userId = await AsyncStorage.getItem('userId');
       if (!userId) {
         alert('Kan de ingelogde gebruiker niet vinden.');
         return;
       }
-  
       if (!titel.trim() || !bedrag.trim()) {
         alert('Vul alle velden in.');
         return;
       }
-  
-      const response = await fetch('http://192.168.0.105:5000/challenges/create', {
+
+      const response = await fetch('http://192.168.0.130:5000/challenges/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId,
           icon: selectedIcon,
@@ -50,12 +51,11 @@ const ChallengesAdd = () => {
           budget: parseFloat(bedrag),
         }),
       });
-  
+
       const data = await response.json();
-  
       if (response.ok) {
         alert(data.message);
-        router.back(); // Ga terug naar het vorige scherm
+        router.back();
       } else {
         alert(data.error || 'Er is iets misgegaan bij het aanmaken van de uitdaging.');
       }
@@ -70,6 +70,10 @@ const ChallengesAdd = () => {
     return hex + opacityHex;
   };
 
+  const iconSize = containerWidth
+    ? (containerWidth - (NUM_ICONS - 1) * GAP) / NUM_ICONS
+    : 50;
+
   return (
     <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <StatusBar barStyle="dark-content" />
@@ -82,23 +86,31 @@ const ChallengesAdd = () => {
       </View>
 
       <View style={styles.section}>
-        <View style={styles.iconBoxContainer}>
+        <View
+          style={styles.iconBoxContainer}
+          onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width - 32)} // remove internal padding
+        >
           <Text style={styles.label}>Selecteer Een Icoon</Text>
           <View style={styles.iconRow}>
-            {ICON_OPTIONS.map(({ key, icon, color }) => {
+            {ICON_OPTIONS.map(({ key, icon, color }, index) => {
               const isSelected = selectedIcon === key;
+              const isLast = index === ICON_OPTIONS.length - 1;
               return (
                 <TouchableOpacity
                   key={key}
                   onPress={() => setSelectedIcon(key)}
-                  style={[
-                    styles.iconChoice,
-                    {
-                      backgroundColor: getOpacityColor(color),
-                      borderColor: isSelected ? color : 'transparent',
-                      opacity: isSelected ? 1 : 0.6,
-                    },
-                  ]}
+                  style={{
+                    width: iconSize,
+                    height: iconSize,
+                    borderRadius: iconSize / 3,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginRight: isLast ? 0 : GAP,
+                    backgroundColor: getOpacityColor(color),
+                    borderWidth: 1.5,
+                    borderColor: isSelected ? color : 'transparent',
+                    opacity: isSelected ? 1 : 0.6,
+                  }}
                 >
                   {React.cloneElement(icon, { color })}
                 </TouchableOpacity>
@@ -166,11 +178,10 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   iconBoxContainer: {
-    width: 370,
-    height: 140,
+    width: '100%',
     borderRadius: 16,
     backgroundColor: '#fff',
-    paddingHorizontal: 32,
+    paddingHorizontal: 16,
     paddingVertical: 24,
     marginBottom: 24,
     shadowColor: '#000',
@@ -181,23 +192,13 @@ const styles = StyleSheet.create({
   },
   iconRow: {
     flexDirection: 'row',
-    gap: 12,
-  },
-  iconChoice: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
   },
   inputBox: {
-    width: 370,
-    height: 137,
+    width: '100%',
     backgroundColor: '#fff',
     borderRadius: 16,
     paddingHorizontal: 32,
-    paddingVertical: 16, // Gelijke top/bottom
+    paddingVertical: 16,
     marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -206,7 +207,6 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   input: {
-    width: 306,
     height: 53,
     borderRadius: 16,
     borderWidth: 1,

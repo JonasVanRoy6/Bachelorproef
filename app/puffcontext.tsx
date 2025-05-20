@@ -5,7 +5,7 @@ import axios from "axios";
 const PuffContext = createContext();
 
 // Geef het backend-adres op
-const API_URL = "192.168.0.105:5000"; 
+const API_URL = "192.168.0.130:5000"; 
 
 export const PuffProvider = ({ children }) => {
   const [puffs, setPuffs] = useState(0);

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -23,25 +24,24 @@ const getUserId = async (): Promise<number | null> => {
 
 const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[]>>) => {
   try {
-    const userId = await getUserId(); // Haal de ingelogde gebruiker-ID op
+    const userId = await getUserId();
 
     if (!userId) {
       alert('Kan de ingelogde gebruiker niet vinden.');
       return;
     }
 
-    const response = await fetch(`http://192.168.0.105:5000/user/friends?userId=${userId}`);
+    const response = await fetch(`http://192.168.0.130:5000/user/friends?userId=${userId}`);
     const data = await response.json();
 
     if (response.ok) {
-      // Voeg de `added`-eigenschap toe aan elke vriend
       const friendsWithAdded = data.map((friend: any) => ({
         ...friend,
-        added: false, // Standaard op false
+        added: false,
       }));
       setFriends(friendsWithAdded);
     } else {
-      alert(data.error || 'Er is iets misgegaan bij het ophalen van vrienden.');
+      alert(data.error || 'Fout bij het ophalen van vrienden.');
     }
   } catch (error) {
     console.error('Fout bij het ophalen van vrienden:', error);
@@ -51,33 +51,30 @@ const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[
 
 const removeFriendFromDatabase = async (friendId: number) => {
   try {
-    const userId = await getUserId(); // Haal de ingelogde gebruiker-ID op
+    const userId = await getUserId();
 
     if (!userId) {
       alert('Kan de ingelogde gebruiker niet vinden.');
       return;
     }
 
-    const response = await fetch('http://192.168.0.105:5000/user/remove-friend', {
+    const response = await fetch('http://192.168.0.130:5000/user/remove-friend', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        userId,
-        friendId,
-      }),
+      body: JSON.stringify({ userId, friendId }),
     });
 
     const data = await response.json();
     if (response.ok) {
-      alert(data.message); // Laat een melding zien als het succesvol is
+      alert(data.message);
     } else {
-      alert(data.error || 'Er is iets misgegaan bij het verwijderen van de vriend.');
+      alert(data.error || 'Fout bij het verwijderen van de vriend.');
     }
   } catch (error) {
-    console.error('Fout bij het verwijderen van de vriend:', error);
-    alert('Kan geen verbinding maken met de server.');
+    console.error('Fout bij verwijderen:', error);
+    alert('Serverfout bij verwijderen van vriend.');
   }
 };
 
@@ -86,24 +83,20 @@ export default function FriendsListScreen() {
   const [friends, setFriends] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchFriends(setFriends); // Haal vrienden op bij het laden van de pagina
+    fetchFriends(setFriends);
   }, []);
 
   const removeFriend = async (index: number) => {
     const friend = friends[index];
-
-    // Verwijder vriend uit de database
     await removeFriendFromDatabase(friend.id);
 
-    // Verwijder vriend uit de lijst
     const updated = [...friends];
-    updated.splice(index, 1); // Verwijder de vriend uit de array
+    updated.splice(index, 1);
     setFriends(updated);
   };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <FontAwesome name="arrow-left" size={24} color="#29A86E" />
@@ -112,7 +105,6 @@ export default function FriendsListScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      {/* Friend Cards */}
       <View style={styles.friendList}>
         {friends.map((friend, index) => (
           <View key={index} style={styles.friendCard}>
@@ -122,26 +114,23 @@ export default function FriendsListScreen() {
               <Text style={styles.username}>{friend.email}</Text>
             </View>
             <TouchableOpacity
-              style={styles.actionButton}
-              onPress={() => removeFriend(index)} // Verwijder vriend bij klikken
+              style={styles.removeButton}
+              onPress={() => removeFriend(index)}
             >
-              <FontAwesome
-                name="check" // Toon standaard het check-icoon
-                size={16}
-                color="#29A86E"
-              />
+              <FontAwesome name="trash" size={16} color="#EB5757" />
             </TouchableOpacity>
           </View>
         ))}
       </View>
 
-      {/* Toevoegen link */}
       <TouchableOpacity style={styles.addLink} onPress={() => router.push('/add-friends')}>
         <Text style={styles.addText}>VRIENDEN TOEVOEGEN</Text>
       </TouchableOpacity>
     </ScrollView>
   );
 }
+
+const screenWidth = Dimensions.get('window').width;
 
 const styles = StyleSheet.create({
   container: {
@@ -174,10 +163,11 @@ const styles = StyleSheet.create({
     borderColor: '#E3E3E3',
     borderRadius: 12,
     padding: 12,
+    width: '100%',
   },
   avatar: {
-    width: 44,
-    height: 44,
+    width: screenWidth < 360 ? 36 : 44,
+    height: screenWidth < 360 ? 36 : 44,
     borderRadius: 22,
     marginRight: 12,
   },
@@ -193,7 +183,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#515151',
   },
-  actionButton: {
+  removeButton: {
     width: 42,
     height: 32,
     borderRadius: 8,
@@ -201,10 +191,7 @@ const styles = StyleSheet.create({
     borderColor: '#E3E3E3',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  checkedButton: {
-    backgroundColor: '#29A86E26',
-    borderColor: '#29A86E',
+    backgroundColor: '#EB575715',
   },
   addLink: {
     alignItems: 'center',
