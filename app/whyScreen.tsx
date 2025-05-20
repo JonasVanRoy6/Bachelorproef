@@ -1,26 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Dimensions,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import { FontAwesome } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
 
 export default function WhyScreen() {
   const router = useRouter();
   const [selectedReason, setSelectedReason] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Haal het userId op uit AsyncStorage
   useEffect(() => {
     const fetchUserId = async () => {
       const storedUserId = await AsyncStorage.getItem('userId');
-      console.log("Ophalen userId uit AsyncStorage:", storedUserId); // Debugging
       if (storedUserId) {
         setUserId(storedUserId);
       } else {
         Alert.alert('Fout', 'Gebruiker niet gevonden. Log opnieuw in.');
-        router.push('/login'); // Stuur de gebruiker terug naar het inlogscherm
+        router.push('/login');
       }
     };
-
     fetchUserId();
   }, []);
 
@@ -30,112 +37,111 @@ export default function WhyScreen() {
       return;
     }
 
-    const payload = { userId, reason: selectedReason }; // Stuur alleen de reason
-    console.log("Verstuurde gegevens:", payload); // Debugging
-
     try {
       const response = await fetch('http://192.168.0.130:5000/saveGoal', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ userId, reason: selectedReason }),
       });
 
-      const responseData = await response.json();
-      console.log("Response van backend:", responseData); // Debugging
+      if (!response.ok) throw new Error();
 
-      if (!response.ok) {
-        console.error("Fout van server:", responseData); // Debugging
-        throw new Error(responseData.error || 'Er is een fout opgetreden bij het opslaan van de reden.');
-      }
-
-      Alert.alert('Succes', `Je reden is opgeslagen: ${selectedReason}`);
-      router.push('/usageScreen'); // Navigeer naar het volgende scherm
+      router.push('/usageScreen');
     } catch (error) {
-      console.error("Fout bij het opslaan:", error); // Debugging
       Alert.alert('Fout', 'Er is een fout opgetreden bij het opslaan van de reden.');
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.wrapper}>
+      {/* Terugknop naar goalsScreen */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.push('/goalsScreen')}
+      >
+        <FontAwesome name="arrow-left" size={24} color="#fff" />
+      </TouchableOpacity>
+
       <Text style={styles.title}>Waarom wil je dit doen?</Text>
 
-      <TouchableOpacity
-        style={[styles.reasonButton, selectedReason === 'Voor mijn gezondheid' && styles.reasonButtonSelected]}
-        onPress={() => setSelectedReason('Voor mijn gezondheid')}
-      >
-        <Text style={styles.reasonButtonText}>Voor mijn gezondheid</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.reasonButton, selectedReason === 'Om geld te besparen' && styles.reasonButtonSelected]}
-        onPress={() => setSelectedReason('Om geld te besparen')}
-      >
-        <Text style={styles.reasonButtonText}>Om geld te besparen</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.reasonButton, selectedReason === 'Voor mijn familie of vrienden' && styles.reasonButtonSelected]}
-        onPress={() => setSelectedReason('Voor mijn familie of vrienden')}
-      >
-        <Text style={styles.reasonButtonText}>Voor mijn familie of vrienden</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.reasonButton, selectedReason === 'Voor mijn welzijn' && styles.reasonButtonSelected]}
-        onPress={() => setSelectedReason('Voor mijn welzijn')}
-      >
-        <Text style={styles.reasonButtonText}>Voor mijn welzijn</Text>
-      </TouchableOpacity>
+      {[
+        'Voor mijn gezondheid',
+        'Om geld te besparen',
+        'Voor mijn familie of vrienden',
+        'Voor mijn welzijn',
+      ].map((reason, index) => (
+        <TouchableOpacity
+          key={index}
+          style={[
+            styles.optionButton,
+            selectedReason === reason && styles.optionSelected,
+          ]}
+          onPress={() => setSelectedReason(reason)}
+        >
+          <Text style={styles.optionText}>{reason}</Text>
+        </TouchableOpacity>
+      ))}
 
       <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-        <Text style={styles.nextButtonText}>Volgende</Text>
+        <Text style={styles.nextText}>Volgende</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
+    paddingHorizontal: 36,
+    paddingTop: 48,
+  },
+  backButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: '#252525',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 32,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#333333',
+    color: '#252525',
+    marginBottom: 32,
+    fontFamily: 'Poppins', // Zorg dat dit font beschikbaar is
   },
-  reasonButton: {
+  optionButton: {
+    height: 56,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    backgroundColor: '#F9F9F9',
+    borderColor: '#E3E3E3',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
-  reasonButtonSelected: {
-    borderColor: '#00A86B',
+  optionSelected: {
+    borderColor: '#29A86E',
     backgroundColor: '#E6F4EA',
   },
-  reasonButtonText: {
+  optionText: {
     fontSize: 16,
-    color: '#333333',
+    color: '#252525',
   },
   nextButton: {
-    backgroundColor: '#00A86B',
-    paddingVertical: 15,
-    borderRadius: 25,
+    marginTop: 32,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: '#29A86E',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
   },
-  nextButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  nextText: {
+    color: '#F5F5F5',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });

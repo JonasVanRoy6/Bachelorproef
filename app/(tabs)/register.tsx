@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Dimensions,
+} from 'react-native';
 import { Link } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FontAwesome } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
 
 export default function RegisterScreen() {
   const [firstName, setFirstName] = useState('');
@@ -10,40 +21,24 @@ export default function RegisterScreen() {
   const [birthDate, setBirthDate] = useState('');
 
   const handleRegister = async () => {
-    const data = {
-      firstName,
-      lastName,
-      email,
-      birthDate,
-    };
-
-    console.log("Verzonden gegevens:", data); // Controleer de gegevens die worden verzonden
+    const data = { firstName, lastName, email, birthDate };
 
     try {
       const response = await fetch('http://192.168.0.130:5000/register', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
 
-      console.log("Response status:", response.status);
-
       if (response.ok) {
         const responseData = await response.json();
-        console.log("Response data:", responseData);
-
-        // Sla het userId, de naam en het e-mailadres op in AsyncStorage
         await AsyncStorage.setItem('userId', responseData.userId.toString());
-        await AsyncStorage.setItem('userName', `${data.firstName} ${data.lastName}`); // Sla de volledige naam op
-        await AsyncStorage.setItem('userEmail', data.email); // Sla het e-mailadres op
-
+        await AsyncStorage.setItem('userName', `${data.firstName} ${data.lastName}`);
+        await AsyncStorage.setItem('userEmail', data.email);
         Alert.alert('Succes', 'Gebruiker succesvol geregistreerd!');
-        // Navigeer naar het volgende scherm (bijvoorbeeld het profielscherm)
       } else {
         const errorData = await response.json();
-        console.error("Foutmelding van server:", errorData);
+        console.error(errorData);
         Alert.alert('Fout', 'Er is een probleem opgetreden bij het registreren.');
       }
     } catch (error) {
@@ -54,56 +49,87 @@ export default function RegisterScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welkom bij Naam, registreer je.</Text>
+      {/* Back button */}
+      <View style={styles.backButton}>
+        <FontAwesome name="arrow-left" size={24} color="#fff" />
+      </View>
 
+      {/* Title */}
+      <Text style={styles.title}>Welkom bij Breezd,{"\n"}registreer je.</Text>
+
+      {/* Social buttons */}
       <View style={styles.socialButtons}>
         <TouchableOpacity style={styles.socialButton}>
-          <Text style={styles.socialButtonText}>F</Text>
+          <FontAwesome name="facebook" size={24} color="#1877F2" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.socialButton}>
-          <Text style={styles.socialButtonText}>G</Text>
+          <FontAwesome name="google" size={24} color="#EA4335" />
         </TouchableOpacity>
       </View>
 
       <Text style={styles.orText}>Of, registreren met email...</Text>
 
+      {/* Input row */}
       <View style={styles.inputRow}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Voornaam</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Voornaam"
+            placeholderTextColor="#515151"
+            value={firstName}
+            onChangeText={setFirstName}
+          />
+        </View>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Achternaam</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Achternaam"
+            placeholderTextColor="#515151"
+            value={lastName}
+            onChangeText={setLastName}
+          />
+        </View>
+      </View>
+
+      <View style={styles.inputGroupFull}>
+        <Text style={styles.label}>E-mailadres</Text>
         <TextInput
-          style={[styles.input, styles.inputHalf]}
-          placeholder="Voornaam"
-          value={firstName}
-          onChangeText={setFirstName}
-        />
-        <TextInput
-          style={[styles.input, styles.inputHalf]}
-          placeholder="Achternaam"
-          value={lastName}
-          onChangeText={setLastName}
+          style={styles.input}
+          placeholder="E-mailadres"
+          keyboardType="email-address"
+          placeholderTextColor="#515151"
+          value={email}
+          onChangeText={setEmail}
         />
       </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="E-mailadres"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Geboortedatum (DD / MM / JJJJ)"
-        value={birthDate}
-        onChangeText={setBirthDate}
-      />
+      <View style={styles.inputGroupFull}>
+        <Text style={styles.label}>Geboortedatum</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="DD / MM / JJJJ"
+          placeholderTextColor="#515151"
+          value={birthDate}
+          onChangeText={setBirthDate}
+        />
+      </View>
+
+      {/* Volgende knop */}
       <Link href="/password" asChild>
-      <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-        <Text style={styles.registerButtonText}>Volgende</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+          <Text style={styles.registerButtonText}>Volgende</Text>
+        </TouchableOpacity>
       </Link>
+
+      {/* Log in */}
       <Text style={styles.loginText}>
-        Al een account? 
-        <Link href="/login" asChild><Text style={styles.loginLink}>Log in</Text>
-      </Link></Text>
+        Al een account?{' '}
+        <Link href="/login" asChild>
+          <Text style={styles.loginLink}>Log in</Text>
+        </Link>
+      </Text>
     </View>
   );
 }
@@ -111,74 +137,95 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#FFFFFF',
+    paddingTop: 48,
+    paddingHorizontal: 36,
+    backgroundColor: '#fff',
+    justifyContent: 'flex-start',
+  },
+  backButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#252525',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   title: {
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: 'bold',
+    color: '#252525',
+    lineHeight: 34,
     marginBottom: 20,
-    textAlign: 'center',
-    color: '#333333',
   },
   socialButtons: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    gap: 16,
     marginBottom: 20,
   },
   socialButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#E0E0E0',
+    flex: 1,
+    height: 52,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E3E3E3',
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 10,
-  },
-  socialButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#555555',
   },
   orText: {
     textAlign: 'center',
-    color: '#888888',
-    marginBottom: 20,
+    fontSize: 16,
+    color: '#515151',
+    marginBottom: 16,
   },
   inputRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15,
+    gap: 16,
+    marginBottom: 12,
+  },
+  inputGroup: {
+    flex: 1,
+  },
+  inputGroupFull: {
+    marginBottom: 12,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#252525',
+    marginBottom: 6,
   },
   input: {
+    height: 50,
     borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    backgroundColor: '#F9F9F9',
-  },
-  inputHalf: {
-    width: '48%',
+    borderColor: '#E3E3E3',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    backgroundColor: '#fff',
+    color: '#252525',
   },
   registerButton: {
-    backgroundColor: '#00A86B',
-    paddingVertical: 15,
-    borderRadius: 25,
+    marginTop: 24,
+    backgroundColor: '#29A86E',
+    paddingVertical: 14,
+    borderRadius: 16,
     alignItems: 'center',
-    marginBottom: 20,
   },
   registerButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#F5F5F5',
   },
   loginText: {
+    fontSize: 16,
+    color: '#252525',
     textAlign: 'center',
-    color: '#555555',
+    marginTop: 20,
   },
   loginLink: {
-    color: '#00A86B',
     fontWeight: 'bold',
+    color: '#29A86E',
   },
 });

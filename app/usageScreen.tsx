@@ -1,7 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { Link, router } from 'expo-router';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Dimensions,
+} from 'react-native';
+import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FontAwesome } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
 
 export default function UsageScreen() {
   const [currentUsage, setCurrentUsage] = useState('');
@@ -14,7 +25,7 @@ export default function UsageScreen() {
     }
 
     try {
-      const userId = await AsyncStorage.getItem('userId'); // Haal het userId op uit AsyncStorage
+      const userId = await AsyncStorage.getItem('userId');
       if (!userId) {
         Alert.alert('Fout', 'Gebruiker niet gevonden. Log opnieuw in.');
         return;
@@ -26,8 +37,6 @@ export default function UsageScreen() {
         goalUsage: parseInt(goalUsage, 10),
       };
 
-      console.log("Verstuurde gegevens:", payload); // Debugging
-
       const response = await fetch('http://192.168.0.130:5000/saveGoal', {
         method: 'POST',
         headers: {
@@ -36,106 +45,112 @@ export default function UsageScreen() {
         body: JSON.stringify(payload),
       });
 
-      const responseData = await response.json();
-      console.log("Response van backend:", responseData); // Debugging
+      if (!response.ok) throw new Error();
 
-      if (!response.ok) {
-        console.error("Fout van server:", responseData); // Debugging
-        throw new Error(responseData.error || 'Er is een fout opgetreden bij het opslaan van de gegevens.');
-      }
-
-      Alert.alert('Succes', 'Je gegevens zijn opgeslagen.');
-      router.push('/planScreen'); // Navigeer naar het volgende scherm
+      router.push('/planScreen');
     } catch (error) {
-      console.error("Fout bij het opslaan:", error); // Debugging
       Alert.alert('Fout', 'Er is een fout opgetreden bij het opslaan van de gegevens.');
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Link href="/whyScreen" style={styles.backButton}>
-        <Text style={styles.backButtonText}>←</Text>
-      </Link>
+    <View style={styles.wrapper}>
+      {/* Terugknop naar whyScreen */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.push('/whyScreen')}
+      >
+        <FontAwesome name="arrow-left" size={24} color="#fff" />
+      </TouchableOpacity>
 
       <Text style={styles.title}>Stel je huidige gebruik en je doel in.</Text>
       <Text style={styles.subtitle}>Geen zorgen, je kan dit later altijd aanpassen.</Text>
 
-      <Text style={styles.label}>Hoeveel puffs neem je gemiddeld per dag?</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Bijvoorbeeld: 80"
-        keyboardType="numeric"
-        value={currentUsage}
-        onChangeText={setCurrentUsage}
-      />
+      <View style={{ marginTop: 24 }}>
+        <Text style={styles.label}>Hoeveel puffs neem je gemiddeld per dag?</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="80"
+          placeholderTextColor="#515151"
+          keyboardType="numeric"
+          value={currentUsage}
+          onChangeText={setCurrentUsage}
+        />
+      </View>
 
-      <Text style={styles.label}>Wat is je doel? Hoeveel puffs wil je per dag nemen?</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Bijvoorbeeld: 30"
-        keyboardType="numeric"
-        value={goalUsage}
-        onChangeText={setGoalUsage}
-      />
-<Link href="/planScreen" asChild>
+      <View style={{ marginTop: 24 }}>
+        <Text style={styles.label}>Wat is je doel? Hoeveel puffs wil je per dag nemen?</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="30"
+          placeholderTextColor="#515151"
+          keyboardType="numeric"
+          value={goalUsage}
+          onChangeText={setGoalUsage}
+        />
+      </View>
+
       <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-        <Text style={styles.nextButtonText}>Volgende</Text>
-      </TouchableOpacity></Link>
+        <Text style={styles.nextText}>Volgende</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
+    paddingHorizontal: 36,
+    paddingTop: 48,
   },
   backButton: {
-    marginBottom: 20,
-  },
-  backButtonText: {
-    fontSize: 18,
-    color: '#333333',
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: '#252525',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 32,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-    color: '#333333',
+    color: '#252525',
+    marginBottom: 12,
+    lineHeight: 39,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#666666',
-    textAlign: 'center',
-    marginBottom: 20,
+    fontSize: 16,
+    color: '#515151',
+    marginBottom: 24,
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#333333',
+    color: '#252525',
+    marginBottom: 8,
   },
   input: {
+    height: 56,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 20,
-    backgroundColor: '#F9F9F9',
+    borderColor: '#E3E3E3',
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#252525',
   },
   nextButton: {
-    backgroundColor: '#00A86B',
-    paddingVertical: 15,
-    borderRadius: 25,
+    marginTop: 66,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: '#29A86E',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
   },
-  nextButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  nextText: {
+    color: '#F5F5F5',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });

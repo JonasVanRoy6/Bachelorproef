@@ -1,26 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Dimensions,
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FontAwesome } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
 
 export default function GoalsScreen() {
   const router = useRouter();
   const [selectedGoal, setSelectedGoal] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Haal het userId op uit AsyncStorage
   useEffect(() => {
     const fetchUserId = async () => {
       const storedUserId = await AsyncStorage.getItem('userId');
-      console.log("Ophalen userId uit AsyncStorage:", storedUserId); // Debugging
       if (storedUserId) {
         setUserId(storedUserId);
       } else {
         Alert.alert('Fout', 'Gebruiker niet gevonden. Log opnieuw in.');
-        router.push('/login'); // Stuur de gebruiker terug naar het inlogscherm
+        router.push('/login');
       }
     };
-
     fetchUserId();
   }, []);
 
@@ -39,96 +46,102 @@ export default function GoalsScreen() {
         body: JSON.stringify({ userId, goal: selectedGoal }),
       });
 
-      if (!response.ok) {
-        throw new Error('Er is een fout opgetreden bij het opslaan van het doel.');
-      }
+      if (!response.ok) throw new Error();
 
-      Alert.alert('Succes', `Je doel is ingesteld: ${selectedGoal}`);
-      router.push('/whyScreen'); // Navigeer naar het "Waarom"-scherm
+      router.push('/whyScreen');
     } catch (error) {
-      console.error(error);
       Alert.alert('Fout', 'Er is een fout opgetreden bij het opslaan van het doel.');
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.wrapper}>
+      {/* Terugknop die naar /password gaat */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.push('/password')}
+      >
+        <FontAwesome name="arrow-left" size={24} color="#fff" />
+      </TouchableOpacity>
+
       <Text style={styles.title}>Wat is je doel?</Text>
 
-      <TouchableOpacity
-        style={[styles.goalButton, selectedGoal === 'Stoppen met vapen' && styles.goalButtonSelected]}
-        onPress={() => setSelectedGoal('Stoppen met vapen')}
-      >
-        <Text style={styles.goalButtonText}>Stoppen met vapen</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.goalButton, selectedGoal === 'Minder puffs nemen' && styles.goalButtonSelected]}
-        onPress={() => setSelectedGoal('Minder puffs nemen')}
-      >
-        <Text style={styles.goalButtonText}>Minder puffs nemen</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.goalButton, selectedGoal === 'Bewuster worden van mijn gebruik' && styles.goalButtonSelected]}
-        onPress={() => setSelectedGoal('Bewuster worden van mijn gebruik')}
-      >
-        <Text style={styles.goalButtonText}>Bewuster worden van mijn gebruik</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.goalButton, selectedGoal === 'Ik weet het nog niet' && styles.goalButtonSelected]}
-        onPress={() => setSelectedGoal('Ik weet het nog niet')}
-      >
-        <Text style={styles.goalButtonText}>Ik weet het nog niet</Text>
-      </TouchableOpacity>
+      {[
+        'Stoppen met vapen',
+        'Minder puffs nemen',
+        'Bewuster worden van mijn gebruik',
+        'Ik weet het nog niet',
+      ].map((goal, index) => (
+        <TouchableOpacity
+          key={index}
+          style={[
+            styles.optionButton,
+            selectedGoal === goal && styles.optionSelected,
+          ]}
+          onPress={() => setSelectedGoal(goal)}
+        >
+          <Text style={styles.optionText}>{goal}</Text>
+        </TouchableOpacity>
+      ))}
 
       <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-        <Text style={styles.nextButtonText}>Volgende</Text>
+        <Text style={styles.nextText}>Volgende</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
+    paddingHorizontal: 36,
+    paddingTop: 48,
+  },
+  backButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: '#252525',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 32,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-    color: '#333333',
+    color: '#252525',
+    marginBottom: 32,
+    fontFamily: 'Poppins', // Zorg dat dit font correct is ingesteld of installeer het via expo-font
   },
-  goalButton: {
+  optionButton: {
+    height: 56,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    backgroundColor: '#F9F9F9',
+    borderColor: '#E3E3E3',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
-  goalButtonSelected: {
-    borderColor: '#00A86B',
+  optionSelected: {
+    borderColor: '#29A86E',
     backgroundColor: '#E6F4EA',
   },
-  goalButtonText: {
+  optionText: {
     fontSize: 16,
-    color: '#333333',
+    color: '#252525',
   },
   nextButton: {
-    backgroundColor: '#00A86B',
-    paddingVertical: 15,
-    borderRadius: 25,
+    marginTop: 32,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: '#29A86E',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
   },
-  nextButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  nextText: {
+    color: '#F5F5F5',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });
