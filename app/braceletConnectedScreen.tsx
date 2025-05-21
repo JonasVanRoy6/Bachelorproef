@@ -1,138 +1,189 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Dimensions,
+  SafeAreaView,
+} from 'react-native';
 import { useRouter } from 'expo-router';
+import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
 
 export default function BraceletConnectedScreen() {
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
-      {/* Icon */}
-      <View style={styles.iconContainer}>
-        <View style={styles.iconBackground}>
-          <Text style={styles.checkmark}>✔</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.contentWrapper}>
+          {/* Checkmark Icon */}
+          <View style={styles.iconCircle}>
+            <MaterialIcons name="check" size={40} color="#29A86E" />
+          </View>
+
+          {/* Titel */}
+          <Text style={styles.title}>Armband Verbonden!</Text>
+          <Text style={styles.subtitle}>
+            Je armband is succesvol gekoppeld met je apparaat.
+          </Text>
+
+          {/* Info Cards */}
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons name="information" size={20} color="#29A86E" />
+              <Text style={styles.cardTitle}>Belangrijke Mededeling</Text>
+            </View>
+            <View style={{ height: 12 }} />
+            <Text style={styles.cardText}>
+              Het verwijderen van de armband beëindigt direct je vape-vrije reeks. Zorg ervoor dat je deze draagt om je voortgang te behouden.
+            </Text>
+          </View>
+
+          <View style={{ height: 20 }} />
+
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <MaterialCommunityIcons name="hand-front-right" size={20} color="#29A86E" />
+              <Text style={styles.cardTitle}>Juiste Plaatsing</Text>
+            </View>
+            <View style={{ height: 12 }} />
+            <Text style={styles.cardText}>
+              Draag de armband op de arm die je meestal gebruikt tijdens het vapen. Dit zorgt voor optimale tracking en effectiviteit.
+            </Text>
+          </View>
+
+          <View style={{ height: 24 }} />
+          <View style={styles.divider} />
+
+          {/* Status */}
+          <View style={{ height: 12 }} />
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Apparaatstatus</Text>
+            <Text style={styles.statusValue}>Verbonden</Text>
+          </View>
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>Batterijniveau</Text>
+            <View style={styles.batteryWrapper}>
+              <MaterialIcons name="battery-full" size={18} color="#29A86E" />
+              <Text style={styles.statusValue}> 85%</Text>
+            </View>
+          </View>
+
+          {/* Knop */}
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push('/startJourneyScreen')}
+          >
+            <Text style={styles.buttonText}>Ga verder</Text>
+          </TouchableOpacity>
         </View>
-      </View>
-
-      {/* Title */}
-      <Text style={styles.title}>Armband Verbonden!</Text>
-
-      {/* Subtitle */}
-      <Text style={styles.subtitle}>
-        Je armband is succesvol gekoppeld met je apparaat.
-      </Text>
-
-      {/* Important Notice */}
-      <View style={styles.infoCard}>
-        <Text style={styles.infoTitle}>Belangrijke Mededeling</Text>
-        <Text style={styles.infoText}>
-          Het verwijderen van de armband beëindigt direct je vape-vrije reeks. Zorg ervoor dat je deze draagt om je voortgang te behouden.
-        </Text>
-      </View>
-
-      {/* Placement Notice */}
-      <View style={styles.infoCard}>
-        <Text style={styles.infoTitle}>Juiste Plaatsing</Text>
-        <Text style={styles.infoText}>
-          Draag de armband op de arm die je meestal gebruikt tijdens het vapen. Dit zorgt voor optimale tracking en effectiviteit.
-        </Text>
-      </View>
-
-      {/* Status */}
-      <View style={styles.statusContainer}>
-        <Text style={styles.statusLabel}>Apparaatstatus</Text>
-        <Text style={styles.statusValue}>Verbonden</Text>
-      </View>
-      <View style={styles.statusContainer}>
-        <Text style={styles.statusLabel}>Batterijniveau</Text>
-        <Text style={styles.statusValue}>85%</Text>
-      </View>
-
-      {/* Ga verder knop */}
-      <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/startJourneyScreen')}>
-        <Text style={styles.primaryButtonText}>Ga verder</Text>
-      </TouchableOpacity>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#FFFFFF',
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 32,
   },
-  iconContainer: {
-    alignItems: 'center',
-    marginBottom: 20,
+  contentWrapper: {
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
   },
-  iconBackground: {
+  iconCircle: {
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#E6F4EA',
+    backgroundColor: 'rgba(41, 168, 110, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  checkmark: {
-    fontSize: 40,
-    color: '#00A86B',
-    fontWeight: 'bold',
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
-    color: '#333333',
+    color: '#252525',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666666',
+    fontSize: 14,
+    color: '#515151',
     textAlign: 'center',
-    marginBottom: 30,
+    lineHeight: 20,
+    marginBottom: 20,
   },
-  infoCard: {
+  card: {
     backgroundColor: '#F9F9F9',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
+    borderRadius: 12,
+    padding: 24,
   },
-  infoTitle: {
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cardTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 5,
+    color: '#252525',
+    marginLeft: 8,
   },
-  infoText: {
+  cardText: {
     fontSize: 14,
-    color: '#666666',
+    color: '#515151',
+    lineHeight: 20,
   },
-  statusContainer: {
+  divider: {
+    height: 0.8,
+    backgroundColor: '#E3E3E3',
+  },
+  statusRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
   },
   statusLabel: {
     fontSize: 14,
-    color: '#333333',
+    color: '#515151',
   },
   statusValue: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#00A86B',
+    color: '#252525',
   },
-  primaryButton: {
-    backgroundColor: '#00A86B',
-    paddingVertical: 15,
-    borderRadius: 25,
+  batteryWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  button: {
+    backgroundColor: '#29A86E',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 330,
+    height: 53,
+    justifyContent: 'center',
     alignItems: 'center',
     marginTop: 20,
+    alignSelf: 'center',
   },
-  primaryButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  buttonText: {
+    color: '#F5F5F5',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });

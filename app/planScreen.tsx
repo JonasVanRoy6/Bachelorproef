@@ -1,115 +1,177 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Alert,
+  Modal,
+} from 'react-native';
+import { FontAwesome, Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+
+const { width } = Dimensions.get('window');
 
 export default function PlanScreen() {
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [modalVisible, setModalVisible] = useState(false);
   const router = useRouter();
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handlePlanSelection = async (plan: string) => {
-    setSelectedPlan(plan);
-    setModalVisible(true); // Toon de overlay
-
-    try {
-      const userId = await AsyncStorage.getItem('userId'); // Haal het userId op uit AsyncStorage
-      if (!userId) {
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const id = await AsyncStorage.getItem('userId');
+      if (!id) {
         Alert.alert('Fout', 'Gebruiker niet gevonden. Log opnieuw in.');
+        router.push('/login');
         return;
       }
+      setUserId(id);
+    };
+    fetchUserId();
+  }, []);
 
-      const payload = {
-        userId,
-        plan,
-      };
+  const openModal = (plan: string) => {
+    setSelectedPlan(plan);
+    setShowModal(true);
+  };
 
-      console.log("Verstuurde gegevens:", payload); // Debugging
+  const handleSaveAndContinue = async () => {
+    if (!userId || !selectedPlan) return;
 
+    try {
       const response = await fetch('http://192.168.0.105:5000/saveGoal', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          plan: selectedPlan,
+        }),
       });
 
-      const responseData = await response.json();
-      console.log("Response van backend:", responseData); // Debugging
+      if (!response.ok) throw new Error();
 
-      if (!response.ok) {
-        console.error("Fout van server:", responseData); // Debugging
-        throw new Error(responseData.error || 'Er is een fout opgetreden bij het opslaan van het plan.');
-      }
-
-      console.log('Plan succesvol opgeslagen.');
+      setShowModal(false);
+      router.push('/successScreen');
     } catch (error) {
-      console.error("Fout bij het opslaan van het plan:", error); // Debugging
-      Alert.alert('Fout', 'Er is een fout opgetreden bij het opslaan van het plan.');
+      console.error(error);
+      Alert.alert('Fout', 'Er is een fout opgetreden bij het opslaan van je plan.');
     }
   };
 
-  const closeModalAndNavigate = () => {
-    setModalVisible(false); // Verberg de overlay
-    router.push('/successScreen'); // Navigeer naar de "Proficiat"-pagina
+  const handleLater = () => {
+    router.push('/home');
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.wrapper}>
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.push('/usageScreen')}
+      >
+        <FontAwesome name="arrow-left" size={24} color="#fff" />
+      </TouchableOpacity>
+
       <Text style={styles.title}>Kies jouw traject.</Text>
       <Text style={styles.subtitle}>
         Selecteer een plan dat het beste bij jou past om geleidelijk te stoppen met vapen.
       </Text>
 
-      {/* Geleidelijke Reductie Plan */}
-      <View style={[styles.planCard, selectedPlan === 'Geleidelijke Reductie' && styles.planCardSelected]}>
-        <Text style={styles.planLabel}>Aanbevolen</Text>
+      {/* Geleidelijke reductie */}
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.recommendedBadge}>Aanbevolen</Text>
+          <FontAwesome name="star" size={20} color="#29A86E" />
+        </View>
         <Text style={styles.planTitle}>Geleidelijke Reductie</Text>
-        <Text style={styles.planDescription}>Verminder met 10 puffs per week</Text>
-        <Text style={styles.planFeature}>✔ Beheersbare afname</Text>
-        <Text style={styles.planFeature}>✔ Grotere kans op slagen</Text>
-        <TouchableOpacity style={styles.planButton} onPress={() => handlePlanSelection('Geleidelijke Reductie')}>
-          <Text style={styles.planButtonText}>Kies dit plan</Text>
+        <Text style={styles.planDesc}>Verminder met 10 puffs per week</Text>
+        <View style={styles.benefitRow}>
+          <FontAwesome name="check" size={16} color="#29A86E" />
+          <Text style={styles.benefitText}>Beheersbare afname</Text>
+        </View>
+        <View style={styles.benefitRow}>
+          <FontAwesome name="check" size={16} color="#29A86E" />
+          <Text style={styles.benefitText}>Grotere kans op slagen</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.blackButton}
+          onPress={() => openModal('geleidelijk')}
+        >
+          <Text style={styles.blackButtonText}>Kies dit plan</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Agressieve Reductie Plan */}
-      <View style={[styles.planCard, selectedPlan === 'Agressieve Reductie' && styles.planCardSelected]}>
+      {/* Agressieve reductie */}
+      <View style={styles.card}>
         <Text style={styles.planTitle}>Agressieve Reductie</Text>
-        <Text style={styles.planDescription}>Verminder met 50 puffs per week</Text>
-        <Text style={styles.planFeature}>⚡ Snellere resultaten</Text>
-        <Text style={styles.planFeature}>⚠ Meer uitdagend</Text>
-        <TouchableOpacity style={styles.planButton} onPress={() => handlePlanSelection('Agressieve Reductie')}>
-          <Text style={styles.planButtonText}>Kies dit plan</Text>
+        <Text style={styles.planDesc}>Verminder met 50 puffs per week</Text>
+        <View style={styles.benefitRow}>
+          <Feather name="zap" size={16} color="#29A86E" />
+          <Text style={styles.benefitText}>Snellere resultaten</Text>
+        </View>
+        <View style={styles.benefitRow}>
+          <FontAwesome name="exclamation-triangle" size={16} color="#29A86E" />
+          <Text style={styles.benefitText}>Meer uitdagend</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.whiteButton}
+          onPress={() => openModal('agressief')}
+        >
+          <Text style={styles.whiteButtonText}>Kies dit plan</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Overlay Modal */}
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
+      <TouchableOpacity onPress={handleLater}>
+        <Text style={styles.laterText}>Later beslissen</Text>
+      </TouchableOpacity>
+
+      {/* MODAL */}
+      <Modal animationType="slide" transparent={true} visible={showModal}>
+        <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>{selectedPlan}</Text>
-            <Text style={styles.modalSubtitle}>Plan Details</Text>
-            {selectedPlan === 'Geleidelijke Reductie' && (
-              <>
-                <Text style={styles.modalFeature}>✔ Verminder met 10 puffs per week</Text>
-                <Text style={styles.modalFeature}>✔ Beheersbare afname</Text>
-                <Text style={styles.modalFeature}>✔ Grotere kans op slagen</Text>
-              </>
-            )}
-            {selectedPlan === 'Agressieve Reductie' && (
-              <>
-                <Text style={styles.modalFeature}>⚡ Verminder met 50 puffs per week</Text>
-                <Text style={styles.modalFeature}>⚡ Snellere resultaten</Text>
-                <Text style={styles.modalFeature}>⚠ Meer uitdagend</Text>
-              </>
-            )}
-            <TouchableOpacity style={styles.modalButton} onPress={closeModalAndNavigate}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {selectedPlan === 'geleidelijk'
+                  ? 'Geleidelijke Reductie'
+                  : 'Agressieve Reductie'}
+              </Text>
+              <TouchableOpacity onPress={() => setShowModal(false)}>
+                <FontAwesome name="close" size={24} color="#252525" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBox}>
+              <Text style={styles.planDesc}>
+                {selectedPlan === 'geleidelijk'
+                  ? 'Verminder met 10 puffs per week'
+                  : 'Verminder met 50 puffs per week'}
+              </Text>
+
+              <View style={styles.benefitRow}>
+                <FontAwesome name="check" size={16} color="#29A86E" />
+                <Text style={styles.benefitText}>
+                  {selectedPlan === 'geleidelijk'
+                    ? 'Beheersbare afname'
+                    : 'Snellere resultaten'}
+                </Text>
+              </View>
+
+              <View style={styles.benefitRow}>
+                <FontAwesome name="check" size={16} color="#29A86E" />
+                <Text style={styles.benefitText}>
+                  {selectedPlan === 'geleidelijk'
+                    ? 'Grotere kans op slagen'
+                    : 'Meer uitdagend'}
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={handleSaveAndContinue}
+            >
               <Text style={styles.modalButtonText}>Ga verder</Text>
             </TouchableOpacity>
           </View>
@@ -120,109 +182,146 @@ export default function PlanScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#fff',
+    paddingHorizontal: 24,
+    paddingTop: 48,
+  },
+  backButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: '#252525',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-    color: '#333333',
+    color: '#252525',
+    marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#666666',
-    textAlign: 'center',
+    fontSize: 16,
+    color: '#515151',
+    marginBottom: 24,
+  },
+  card: {
+    borderWidth: 1,
+    borderColor: '#E3E3E3',
+    borderRadius: 16,
+    padding: 20,
     marginBottom: 20,
   },
-  planCard: {
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    backgroundColor: '#F9F9F9',
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
   },
-  planCardSelected: {
-    borderColor: '#00A86B',
+  recommendedBadge: {
     backgroundColor: '#E6F4EA',
-  },
-  planLabel: {
-    fontSize: 12,
-    color: '#00A86B',
+    color: '#29A86E',
     fontWeight: 'bold',
-    marginBottom: 5,
+    fontSize: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   planTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 5,
-    color: '#333333',
+    color: '#252525',
+    marginBottom: 4,
   },
-  planDescription: {
+  planDesc: {
     fontSize: 14,
-    color: '#666666',
-    marginBottom: 10,
+    color: '#515151',
+    marginBottom: 12,
   },
-  planFeature: {
-    fontSize: 14,
-    color: '#333333',
-    marginBottom: 5,
-  },
-  planButton: {
-    backgroundColor: '#333333',
-    paddingVertical: 10,
-    borderRadius: 5,
+  benefitRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    marginBottom: 8,
   },
-  planButtonText: {
-    color: '#FFFFFF',
+  benefitText: {
     fontSize: 14,
-    fontWeight: 'bold',
+    marginLeft: 8,
+    color: '#252525',
   },
-  modalContainer: {
+  blackButton: {
+    marginTop: 12,
+    backgroundColor: '#252525',
+    borderRadius: 12,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  blackButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  whiteButton: {
+    marginTop: 12,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E3E3E3',
+    borderRadius: 12,
+    height: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  whiteButtonText: {
+    color: '#252525',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  laterText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#29A86E',
+    marginTop: 12,
+    textDecorationLine: 'underline',
+  },
+  modalOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    alignItems: 'center',
+    backgroundColor: '#fff',
+    padding: 24,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333333',
+    color: '#252525',
   },
-  modalSubtitle: {
-    fontSize: 16,
-    color: '#666666',
-    marginBottom: 20,
-  },
-  modalFeature: {
-    fontSize: 14,
-    color: '#333333',
-    marginBottom: 5,
+  modalBox: {
+    backgroundColor: '#F6F6F6',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
   },
   modalButton: {
-    backgroundColor: '#00A86B',
-    paddingVertical: 15,
-    borderRadius: 25,
+    backgroundColor: '#29A86E',
+    borderRadius: 12,
+    height: 48,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 20,
-    width: '100%',
   },
   modalButtonText: {
-    color: '#FFFFFF',
+    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });

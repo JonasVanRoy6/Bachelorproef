@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Alert, TouchableOpacity } from "react-native";
-import Slider from '@react-native-community/slider';
-import { router } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  Dimensions,
+} from "react-native";
+import Slider from "@react-native-community/slider";
+import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
+
+const { width } = Dimensions.get("window");
+const CARD_WIDTH = width - 32;
 
 const AddPuffsScreen = () => {
   const [duration, setDuration] = useState(120);
-  const [intensity, setIntensity] = useState('Gemiddeld');
-  const [timeOfDay, setTimeOfDay] = useState('');
+  const [intensity, setIntensity] = useState("Gemiddeld");
+  const [timeOfDay, setTimeOfDay] = useState("");
   const [estimatedPuffs, setEstimatedPuffs] = useState(0);
 
   useEffect(() => {
@@ -16,113 +28,261 @@ const AddPuffsScreen = () => {
 
   const calculatePuffs = () => {
     let basePuffs = duration / 2;
-    if (intensity === 'Weinig') basePuffs *= 0.5;
-    if (intensity === 'Veel') basePuffs *= 1.5;
+    if (intensity === "Weinig") basePuffs *= 0.5;
+    if (intensity === "Veel") basePuffs *= 1.5;
     setEstimatedPuffs(Math.round(basePuffs));
   };
 
   const handleSave = async () => {
     if (estimatedPuffs > 0 && timeOfDay) {
       try {
-        const userId = await AsyncStorage.getItem('userId'); // Haal de userId op uit AsyncStorage
+        const userId = await AsyncStorage.getItem("userId");
         if (!userId) {
           Alert.alert("Fout", "Gebruiker niet gevonden. Log opnieuw in.");
           return;
         }
 
-        const payload = {
-          userId,
-          puffs: estimatedPuffs,
-          timeOfDay,
-        };
-
-        console.log("Verstuurde gegevens:", payload); // Debugging
+        const payload = { userId, puffs: estimatedPuffs, timeOfDay };
 
         const response = await fetch("http://192.168.0.105:5000/puffs", {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
 
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
+        if (!response.ok) throw new Error("Fout bij het verzenden");
 
         Alert.alert("Succes", "Puffs en tijd van de dag opgeslagen!");
-        router.push('/'); // Navigeer terug naar de homepagina
+        router.push("/(tabs)/tracker");
       } catch (error) {
         console.error("Fout bij opslaan puffs:", error);
-        Alert.alert("Fout", "Er is een fout opgetreden bij het opslaan van de gegevens.");
+        Alert.alert("Fout", "Er is iets misgegaan bij het opslaan.");
       }
     } else {
-      Alert.alert("Ongeldige invoer", "Voer geldige gegevens in en selecteer een tijd van de dag.");
+      Alert.alert("Ongeldig", "Vul alles correct in.");
     }
   };
 
+  const timeOptions = [
+    { label: "Ochtend (6:00 - 12:00)", icon: "weather-sunset" },
+    { label: "Middag (12:00 - 18:00)", icon: "white-balance-sunny" },
+    { label: "Avond (18:00 - 00:00)", icon: "weather-night-partly-cloudy" },
+    { label: "Nacht (00:00 - 6:00)", icon: "weather-night" },
+  ];
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Hoe lang heb je gevaped?</Text>
-      <Slider
-        style={styles.slider}
-        minimumValue={0}
-        maximumValue={240}
-        step={1}
-        value={duration}
-        onSlidingComplete={setDuration}
-      />
-      <Text>{duration} min</Text>
-
-      <Text style={styles.title}>Vape-intensiteit</Text>
-      <View style={styles.intensityContainer}>
-        {['Weinig', 'Gemiddeld', 'Veel'].map(level => (
-          <TouchableOpacity
-            key={level}
-            style={[styles.intensityButton, intensity === level && styles.selectedButton]}
-            onPress={() => setIntensity(level)}
-          >
-            <Text style={styles.intensityText}>{level}</Text>
-          </TouchableOpacity>
-        ))}
+    <SafeAreaView style={[styles.container, { paddingTop: 64 }]}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/tracker")} style={styles.backButton}>
+          <FontAwesome name="arrow-left" size={24} color="#29A86E" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Puffs Toevoegen</Text>
+        <View style={{ width: 24 }} />
       </View>
+      <View style={{ flex: 1 }}>
+        <View style={{ height: 12 }} />
 
-      <Text style={styles.title}>Wanneer heb je het meest gevaped?</Text>
-      <View style={styles.timeContainer}>
-        {['Ochtend (6:00 - 12:00)', 'Middag (12:00 - 18:00)', 'Avond (18:00 - 00:00)', 'Nacht (00:00 - 6:00)'].map(time => (
-          <TouchableOpacity
-            key={time}
-            style={[styles.timeButton, timeOfDay === time && styles.selectedButton]}
-            onPress={() => setTimeOfDay(time)}
-          >
-            <Text style={styles.timeText}>{time}</Text>
-          </TouchableOpacity>
-        ))}
+        <View style={styles.card}>
+          <Text style={[styles.cardTitle, { marginBottom: 2 }]}>Hoe lang heb je gevaped?</Text>
+          <Slider
+            style={styles.slider}
+            minimumValue={1}
+            maximumValue={240}
+            step={1}
+            value={duration}
+            onSlidingComplete={setDuration}
+            minimumTrackTintColor="#29A86E"
+            maximumTrackTintColor="rgba(41, 168, 110, 0.30)"
+            thumbTintColor="#29A86E"
+          />
+          <View style={[styles.sliderLabels, { marginTop: 2 }]}>
+            <Text style={styles.sliderLabel}>1 min</Text>
+            <Text style={styles.sliderLabel}>120 min</Text>
+            <Text style={styles.sliderLabel}>240 min</Text>
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Vape-intensiteit</Text>
+          <View style={styles.intensityRow}>
+            {["Weinig", "Gemiddeld", "Veel"].map((level) => (
+              <TouchableOpacity
+                key={level}
+                style={[styles.intensityButton, intensity === level && styles.selected]}
+                onPress={() => setIntensity(level)}
+              >
+                <Text style={[styles.intensityText, intensity === level && styles.selectedText]}>
+                  {level}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Wanneer heb je het meest gevaped?</Text>
+          <View style={styles.timeGrid}>
+            {timeOptions.map(({ label, icon }) => (
+              <TouchableOpacity
+                key={label}
+                style={[styles.timeCard, timeOfDay === label && styles.selected]}
+                onPress={() => setTimeOfDay(label)}
+              >
+                <MaterialCommunityIcons
+                  name={icon}
+                  size={24}
+                  color={timeOfDay === label ? "#29A86E" : "#515151"}
+                  style={{ marginBottom: 4 }}
+                />
+                <Text style={[styles.timeText, timeOfDay === label && styles.selectedText]}>
+                  {label.split(" ")[0]}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.cardSmall}>
+          <Text style={[styles.cardTitle, { marginBottom: 0 }]}>Geschatte aantal puffs:</Text>
+          <Text style={styles.estimatedValue}>{estimatedPuffs}</Text>
+        </View>
+
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <Text style={styles.saveButtonText}>Opslaan</Text>
+        </TouchableOpacity>
       </View>
-
-      <Text style={styles.estimatedPuffs}>Geschatte aantal puffs: {estimatedPuffs}</Text>
-
-      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-        <Text style={styles.saveButtonText}>Opslaan</Text>
-      </TouchableOpacity>
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#f8f8f8' },
-  title: { fontSize: 18, marginBottom: 10 },
-  slider: { width: '100%', height: 40 },
-  intensityContainer: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 20 },
-  intensityButton: { padding: 10, borderWidth: 1, borderRadius: 5 },
-  selectedButton: { backgroundColor: '#4caf50', borderColor: '#4caf50' },
-  intensityText: { fontSize: 16 },
-  timeContainer: { marginBottom: 20 },
-  timeButton: { padding: 10, borderWidth: 1, borderRadius: 5, marginBottom: 10 },
-  timeText: { fontSize: 16 },
-  estimatedPuffs: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 20 },
-  saveButton: { backgroundColor: 'black', padding: 15, borderRadius: 10, alignItems: 'center' },
-  saveButtonText: { color: 'white', fontWeight: 'bold' },
+  container: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingBottom: 8,
+    backgroundColor: "#fff",
+  },
+  backButton: {
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#252525",
+    textAlign: "center",
+  },
+  card: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderWidth: 0.8,
+    borderColor: "#E3E3E3",
+  },
+  cardSmall: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    alignItems: "center",
+    borderWidth: 0.8,
+    borderColor: "#E3E3E3",
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#252525",
+    marginBottom: 12,
+  },
+  slider: {
+    width: CARD_WIDTH - 32,
+    height: 36,
+  },
+  sliderLabels: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  sliderLabel: {
+    fontSize: 14,
+    color: "#515151",
+  },
+  intensityRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  intensityButton: {
+    width: (CARD_WIDTH - 32 - 18) / 3,
+    height: 50,
+    borderRadius: 8,
+    borderWidth: 0.8,
+    borderColor: "#E3E3E3",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  intensityText: {
+    fontSize: 14,
+    color: "#515151",
+  },
+  selected: {
+    backgroundColor: "rgba(41, 168, 110, 0.15)",
+    borderColor: "#29A86E",
+  },
+  selectedText: {
+    color: "#29A86E",
+    fontWeight: "600",
+  },
+  timeGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  timeCard: {
+    width: (CARD_WIDTH - 32 - 4) / 2,
+    height: 80,
+    borderRadius: 8,
+    borderWidth: 0.8,
+    borderColor: "#E3E3E3",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  timeText: {
+    fontSize: 14,
+    color: "#515151",
+  },
+  estimatedValue: {
+    fontSize: 30,
+    fontWeight: "bold",
+    color: "#29A86E",
+    textAlign: "center",
+  },
+  saveButton: {
+    backgroundColor: "#29A86E",
+    borderRadius: 16,
+    height: 53,
+    justifyContent: "center",
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginTop: 8,
+  },
+  saveButtonText: {
+    color: "#F5F5F5",
+    fontSize: 18,
+    fontWeight: "600",
+  },
 });
 
 export default AddPuffsScreen;

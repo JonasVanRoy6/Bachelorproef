@@ -1,25 +1,43 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { Link } from 'expo-router';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { FontAwesome } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
 
 export default function SuccessScreen() {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
-      {/* Succesvolle registratie */}
-      <View style={styles.iconContainer}>
-        <View style={styles.iconBackground}>
-          <Text style={styles.checkmark}>✔</Text>
+      <View style={styles.contentWrapper}>
+        {/* Cirkel + Check */}
+        <View style={styles.iconCircle}>
+          <FontAwesome name="check" size={68} color="#29A86E" />
         </View>
-      </View>
-      <Text style={styles.title}>Proficiat!</Text>
-      <Text style={styles.subtitle}>
-        Je account is aangemaakt. Je hebt de eerste stap gezet naar een vape-vrije toekomst. We zijn trots op je!
-      </Text>
 
-      {/* Volgende knop */}
-      <Link href="/connectBraceletScreen" style={styles.nextButton}>
-        <Text style={styles.nextButtonText}>Volgende</Text>
-      </Link>
+        {/* Titel */}
+        <Text style={styles.title}>Proficiat!</Text>
+
+        {/* Subtekst */}
+        <Text style={styles.subtitle}>
+          Je account is aangemaakt. Je hebt de eerste stap gezet naar een vape-vrije toekomst. We zijn trots op je!
+        </Text>
+
+        {/* Knop */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => router.push('/connectBraceletScreen')}
+        >
+          <Text style={styles.buttonText}>Volgende</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -27,50 +45,52 @@ export default function SuccessScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
     backgroundColor: '#FFFFFF',
-  },
-  iconContainer: {
-    marginBottom: 20,
-  },
-  iconBackground: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#E6F4EA',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 24,
   },
-  checkmark: {
-    fontSize: 40,
-    color: '#00A86B',
-    fontWeight: 'bold',
+  contentWrapper: {
+    width: '100%',
+    maxWidth: 400,
+    alignItems: 'center',
+  },
+  iconCircle: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(41, 168, 110, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
-    color: '#333333',
-    marginBottom: 10,
+    color: '#252525',
     textAlign: 'center',
+    marginBottom: 12,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666666',
+    fontSize: 14,
+    color: '#515151',
     textAlign: 'center',
-    marginBottom: 30,
+    lineHeight: 20,
+    marginBottom: 24,
+    paddingHorizontal: 36,
   },
-  nextButton: {
-    backgroundColor: '#00A86B',
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 25,
+  button: {
+    backgroundColor: '#29A86E',
+    borderRadius: 16,
+    width: '100%',
+    maxWidth: 330,
+    height: 53,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  nextButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+  buttonText: {
+    color: '#F5F5F5',
+    fontSize: 18,
+    fontWeight: '600',
   },
 });

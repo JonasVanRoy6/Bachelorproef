@@ -1,31 +1,83 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, { useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  FlatList,
+  StatusBar,
+} from 'react-native';
 import { useRouter } from 'expo-router';
+import Slide1 from '../components/slides/slide1';
+import Slide2 from '../components/slides/slide2';
+import Slide3 from '../components/slides/slide3';
+
+const { width } = Dimensions.get('window');
+
+const slides = [<Slide1 />, <Slide2 />, <Slide3 />];
 
 export default function StartJourneyScreen() {
   const router = useRouter();
+  const flatListRef = useRef<FlatList>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const handleNext = () => {
+    if (currentIndex < slides.length - 1) {
+      flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
+    } else {
+      router.push('/'); // Pas dit aan als je naar een ander scherm wil
+    }
+  };
+
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      setCurrentIndex(viewableItems[0].index);
+    }
+  }).current;
 
   return (
     <View style={styles.container}>
-      {/* Afbeelding */}
-      <Image
-        source={require('../assets/images/journey.png')} // Zorg ervoor dat je afbeelding in de juiste map staat
-        style={styles.image}
-        resizeMode="contain"
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+
+      <FlatList
+        ref={flatListRef}
+        data={slides}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(_, index) => index.toString()}
+        renderItem={({ item }) => <View style={{ width }}>{item}</View>}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={{ viewAreaCoveragePercentThreshold: 50 }}
       />
 
-      {/* Titel */}
-      <Text style={styles.title}>Start je journey</Text>
+      {/* Indicator + Button */}
+      <View style={styles.bottomRow}>
+        <View style={styles.indicators}>
+          {slides.map((_, i) => (
+            <View
+              key={i}
+              style={[
+                styles.dot,
+                currentIndex === i && styles.activeDot,
+              ]}
+            />
+          ))}
+        </View>
 
-      {/* Ondertekst */}
-      <Text style={styles.subtitle}>
-        Track je dagelijkse puffs, stel persoonlijke doelen in en begin met het opbouwen van jouw vape-vrije streak. Elke stap telt!
-      </Text>
-
-      {/* Volgende knop */}
-      <TouchableOpacity style={styles.nextButton} onPress={() => router.push('/startJourneyScreen2')}>
-        <Text style={styles.nextButtonText}>Volgende</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.button,
+            currentIndex === slides.length - 1 && styles.blackButton,
+          ]}
+          onPress={handleNext}
+        >
+          <Text style={styles.buttonText}>
+            {currentIndex === slides.length - 1 ? 'Starten' : 'Volgende'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -33,39 +85,48 @@ export default function StartJourneyScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
     backgroundColor: '#FFFFFF',
   },
-  image: {
-    width: '100%',
-    height: 300,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333333',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666666',
-    textAlign: 'center',
-    marginBottom: 30,
-  },
-  nextButton: {
-    backgroundColor: '#00A86B',
-    paddingVertical: 15,
-    paddingHorizontal: 40,
-    borderRadius: 25,
+  bottomRow: {
+    position: 'absolute',
+    bottom: 60,
+    left: 36,
+    right: 36,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  nextButtonText: {
-    color: '#FFFFFF',
+  indicators: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(81, 81, 81, 0.45)',
+    marginRight: 8,
+  },
+  activeDot: {
+    width: 30,
+    height: 8,
+    borderRadius: 50,
+    backgroundColor: '#252525',
+  },
+  button: {
+    width: 148,
+    height: 44,
+    borderRadius: 16,
+    backgroundColor: '#29A86E',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  blackButton: {
+    backgroundColor: '#252525',
+  },
+  buttonText: {
+    color: '#F5F5F5',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '400',
   },
 });
