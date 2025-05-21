@@ -35,6 +35,16 @@ export default function TrackerScreen() {
   const remaining = Math.max(0, maxPuffs - totalPuffsToday);
   const progressWidth = Math.min((totalPuffsToday / maxPuffs) * 100, 100);
 
+  const getProgressBarColor = () => {
+    if (totalPuffsToday > maxPuffs) {
+      return '#FF5A5F'; // Rood als het aantal puffs groter is dan maxPuffs
+    } else if (totalPuffsToday >= maxPuffs * 0.8) {
+      return '#FFA500'; // Oranje als het aantal puffs 80% of meer van maxPuffs is
+    } else {
+      return '#29A86E'; // Groen als het aantal puffs onder 80% van maxPuffs is
+    }
+  };
+
   useEffect(() => {
     const fetchRecentPuffs = async () => {
       try {
@@ -102,7 +112,12 @@ export default function TrackerScreen() {
           </Text>
           <Text style={styles.puffsLeft}>{remaining} puffs over</Text>
           <View style={styles.progressBar}>
-            <View style={[styles.progressFill, { width: `${progressWidth}%` }]} />
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${progressWidth}%`, backgroundColor: getProgressBarColor() },
+              ]}
+            />
           </View>
         </View>
 

@@ -331,12 +331,65 @@ app.post('/user/add-friend', (req, res) => {
     return res.status(400).json({ error: 'Gebruiker ID en vriend ID zijn verplicht.' });
   }
 
+  const checkQuery = `
+    SELECT * FROM friends WHERE user_id = ? AND friend_id = ?
+  `;
+
+  db.query(checkQuery, [userId, friendId], (err, results) => {
+    if (err) {
+      console.error('Fout bij het controleren van bestaande vriendschap:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het controleren van bestaande vriendschap.' });
+    }
+
+    if (results.length > 0) {
+      return res.status(400).json({ error: 'Deze gebruiker is al een vriend.' });
+    }
+
+    const userExistsQuery = `
+      SELECT id FROM users WHERE id = ?
+    `;
+
+    db.query(userExistsQuery, [friendId], (err, results) => {
+      if (err) {
+        console.error('Fout bij het controleren van gebruiker:', err);
+        return res.status(500).json({ error: 'Er is een fout opgetreden bij het controleren van de gebruiker.' });
+      }
+
+      if (results.length === 0) {
+        return res.status(404).json({ error: 'De opgegeven vriend bestaat niet.' });
+      }
+
+      // Voeg de vriend toe
+      const insertQuery = `
+        INSERT INTO friends (user_id, friend_id)
+        VALUES (?, ?)
+      `;
+
+      db.query(insertQuery, [userId, friendId], (err, result) => {
+        if (err) {
+          console.error('Fout bij het toevoegen van de vriend:', err);
+          return res.status(500).json({ error: 'Er is een fout opgetreden bij het toevoegen van de vriend.' });
+        }
+
+        res.status(201).json({ message: 'Vriend succesvol toegevoegd.' });
+      });
+    });
+  });
+});
+
+app.post('/add-friend', async (req, res) => {
+  const { userId, friendId } = req.body;
+
+  if (!userId || !friendId) {
+    return res.status(400).json({ error: 'Gebruiker ID en vriend ID zijn verplicht.' });
+  }
+
   const query = `
     INSERT INTO friends (user_id, friend_id)
     VALUES (?, ?)
   `;
 
-  db.query(query, [userId, friendId], (err, result) => {
+  db.query(query, [userId, friendId], (err, results) => {
     if (err) {
       console.error('Fout bij het toevoegen van de vriend:', err);
       return res.status(500).json({ error: 'Er is een fout opgetreden bij het toevoegen van de vriend.' });
@@ -1009,6 +1062,33 @@ app.get('/user-goals', async (req, res) => {
     }
 
     res.status(200).json({ goal_usage: results[0].goal_usage });
+  });
+});
+
+app.get('/suggested-friends', async (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
+  const query = `
+    SELECT id, first_name AS name, email
+    FROM users
+    WHERE id != ? AND id NOT IN (
+      SELECT friend_id FROM friends WHERE user_id = ?
+    )
+    ORDER BY RAND()
+    LIMIT 5
+  `;
+
+  db.query(query, [userId, userId], (err, results) => {
+    if (err) {
+      console.error('Fout bij het ophalen van voorgestelde vrienden:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van voorgestelde vrienden.' });
+    }
+
+    res.status(200).json(results);
   });
 });
 

@@ -60,6 +60,7 @@ export default function ProfileScreen() {
   const [selectedBadge, setSelectedBadge] = useState<any | null>(null);
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
+  const [suggestedFriends, setSuggestedFriends] = useState([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -88,10 +89,66 @@ export default function ProfileScreen() {
     fetchUserData();
   }, []);
 
+  useEffect(() => {
+    const fetchSuggestedFriends = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) {
+          alert('Kan de ingelogde gebruiker niet vinden.');
+          return;
+        }
+
+        const response = await fetch(`http://192.168.0.105:5000/suggested-friends?userId=${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setSuggestedFriends(data);
+        } else {
+          alert(data.error || 'Fout bij het ophalen van voorgestelde vrienden.');
+        }
+      } catch (error) {
+        console.error('Fout bij het ophalen van voorgestelde vrienden:', error);
+        alert('Kan geen verbinding maken met de server.');
+      }
+    };
+
+    fetchSuggestedFriends();
+  }, []);
+
   const toggleInvite = (name: string) => {
     setInvited((prev) =>
       prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]
     );
+  };
+
+  const addFriend = async (friendId) => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        alert('Kan de ingelogde gebruiker niet vinden.');
+        return;
+      }
+  
+      const response = await fetch(`http://192.168.0.105:5000/add-friend`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, friendId }),
+      });
+  
+      const data = await response.json();
+  
+      if (response.ok) {
+        alert('Vriend succesvol toegevoegd.');
+        setSuggestedFriends((prev) => prev.filter((friend) => friend.id !== friendId)); // Verwijder de toegevoegde vriend uit de lijst
+      } else {
+        alert(data.error || 'Fout bij het toevoegen van een vriend.');
+      }
+    } catch (error) {
+      console.error('Fout bij het toevoegen van een vriend:', error);
+      alert('Kan geen verbinding maken met de server.');
+    }
   };
 
   return (
@@ -162,36 +219,29 @@ export default function ProfileScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Voorgestelde vrienden</Text>
-          {suggestions.map((sugg, index) => {
-            const isInvited = invited.includes(sugg.name);
-            return (
-              <View
-                key={index}
-                style={[
-                  styles.suggestionItem,
-                  { marginTop: index === 0 ? 16 : 0, marginBottom: 16 },
-                ]}
-              >
-                <Image source={sugg.img} style={styles.suggestionAvatar} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.suggestionName}>{sugg.name}</Text>
-                  <Text style={styles.suggestionInfo}>
-                    {sugg.mutual} gezamenlijke vrienden
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={isInvited ? styles.invitedButton : styles.inviteButton}
-                  onPress={() => toggleInvite(sugg.name)}
-                >
-                  <FontAwesome
-                    name={isInvited ? 'check' : 'user-plus'}
-                    size={14}
-                    color="#29A86E"
-                  />
-                </TouchableOpacity>
+          {suggestedFriends.map((sugg, index) => (
+            <View
+              key={sugg.id}
+              style={[
+                styles.suggestionItem,
+                { marginTop: index === 0 ? 16 : 0, marginBottom: 16 },
+              ]}
+            >
+              <Image source={{ uri: sugg.img || 'https://via.placeholder.com/48' }} style={styles.suggestionAvatar} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.suggestionName}>{sugg.name}</Text>
+                <Text style={styles.suggestionInfo}>
+                  {sugg.email}
+                </Text>
               </View>
-            );
-          })}
+              <TouchableOpacity
+                style={styles.inviteButton}
+                onPress={() => addFriend(sugg.id)}
+              >
+                <FontAwesome name="user-plus" size={14} color="#29A86E" />
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
       </ScrollView>
 
