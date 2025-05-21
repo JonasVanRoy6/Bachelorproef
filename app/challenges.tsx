@@ -56,6 +56,7 @@ type Challenge = {
 const Challenges = () => {
   const [actieve, setActieve] = useState<Challenge | null>(null);
   const [overige, setOverige] = useState<Challenge[]>([]);
+  const [totalSaved, setTotalSaved] = useState(0);
 
   useEffect(() => {
     const fetchChallenges = async () => {
@@ -66,6 +67,7 @@ const Challenges = () => {
           return;
         }
 
+        // Haal de uitdagingen op
         const response = await fetch(`http://192.168.0.105:5000/challenges?userId=${userId}`);
         const data = await response.json();
 
@@ -80,8 +82,18 @@ const Challenges = () => {
         } else {
           alert(data.error || 'Fout bij het ophalen van uitdagingen.');
         }
+
+        // Haal de bespaarde waarde op
+        const savingsResponse = await fetch(`http://192.168.0.105:5000/calculate-savings?userId=${userId}`);
+        const savingsData = await savingsResponse.json();
+
+        if (savingsResponse.ok) {
+          setTotalSaved(savingsData.totalSavings); // Stel de bespaarde waarde in
+        } else {
+          alert(savingsData.error || 'Fout bij het berekenen van besparingen.');
+        }
       } catch (error) {
-        console.error('Fout bij het ophalen van uitdagingen:', error);
+        console.error('Fout bij het ophalen van uitdagingen of besparingen:', error);
         alert('Kan geen verbinding maken met de server.');
       }
     };
@@ -156,10 +168,11 @@ const Challenges = () => {
                   <Text style={[styles.actiefTagText, { color: kleuren[actieve.thema] }]}>Actief</Text>
                 </View>
               </View>
-              <View style={[styles.cardBottom, { marginBottom: 8 }]}>
+              
+              <View style={styles.cardBottom}>
                 <Text style={styles.progressLabel}>Progressie</Text>
                 <Text style={[styles.progressValue, { color: kleuren[actieve.thema], fontWeight: '600' }]}>
-                  €{(actieve.huidig / 100).toFixed(2)} / €{actieve.bedrag}
+                  €{totalSaved} / €{actieve.bedrag}
                 </Text>
               </View>
               <View style={[styles.progressBarBg, { backgroundColor: getOpacityColor(kleuren[actieve.thema]) }]}>
@@ -209,7 +222,7 @@ const Challenges = () => {
                   <View style={[styles.cardBottom, { marginBottom: 8 }]}>
                     <Text style={styles.progressLabel}>Progressie</Text>
                     <Text style={[styles.progressValue, { color: kleuren[item.thema], fontWeight: '600' }]}>
-                      €{(item.huidig / 100).toFixed(2)} / €{item.bedrag}
+                      €{totalSaved} / €{item.bedrag}
                     </Text>
                   </View>
                   <View style={[styles.progressBarBg, { backgroundColor: '#F5F5F5' }]}>

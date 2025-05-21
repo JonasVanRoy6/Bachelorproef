@@ -130,6 +130,7 @@ const SettingsScreen = () => {
               </Text>
             </TouchableOpacity>
 
+            {/* Behoud alleen de onderste knop */}
             <TouchableOpacity
               style={styles.deleteConfirmButton}
               onPress={async () => {
@@ -162,6 +163,16 @@ const SettingsScreen = () => {
                   } catch (error) {
                     console.error('Fout bij het verwijderen van het account:', error);
                     alert('Kan geen verbinding maken met de server.');
+                  }
+                } else if (showLogoutModal) {
+                  try {
+                    // Verwijder de opgeslagen gebruikersgegevens
+                    await AsyncStorage.removeItem('userId');
+                    // Navigeer naar het register-scherm
+                    router.replace('/register');
+                  } catch (error) {
+                    console.error('Fout bij het uitloggen:', error);
+                    alert('Er is iets misgegaan bij het uitloggen.');
                   }
                 }
               }}

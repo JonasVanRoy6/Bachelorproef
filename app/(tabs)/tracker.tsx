@@ -19,6 +19,7 @@ export default function TrackerScreen() {
   const context = usePuffs();
   const [recentPuffs, setRecentPuffs] = useState([]);
   const [totalPuffsToday, setTotalPuffsToday] = useState(0);
+  const [maxPuffs, setMaxPuffs] = useState(80);
 
   if (!context) {
     return (
@@ -31,7 +32,6 @@ export default function TrackerScreen() {
   }
 
   const { puffs } = context;
-  const maxPuffs = 80;
   const remaining = Math.max(0, maxPuffs - totalPuffsToday);
   const progressWidth = Math.min((totalPuffsToday / maxPuffs) * 100, 100);
 
@@ -67,6 +67,28 @@ export default function TrackerScreen() {
     };
 
     fetchTotalPuffsToday();
+  }, []);
+
+  useEffect(() => {
+    const fetchGoalUsage = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) return;
+
+        const response = await fetch(`http://192.168.0.105:5000/user-goals?userId=${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setMaxPuffs(data.goal_usage || 80); // Stel de waarde van maxPuffs in
+        } else {
+          console.error('Fout bij het ophalen van goal_usage:', data.error);
+        }
+      } catch (error) {
+        console.error('Fout bij het ophalen van goal_usage:', error);
+      }
+    };
+
+    fetchGoalUsage();
   }, []);
 
   return (

@@ -922,3 +922,93 @@ app.post('/delete-account', (req, res) => {
   });
 });
 
+app.get('/calculate-savings', async (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
+  // Query om de huidige gebruiksdoelen op te halen
+  const userGoalsQuery = `
+    SELECT current_usage
+    FROM user_goals
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+
+  // Query om het totaal aantal ingevoerde puffs op te halen
+  const totalPuffsQuery = `
+    SELECT SUM(amount) AS total_puffs
+    FROM puffs
+    WHERE user_id = ?
+  `;
+
+  try {
+    // Haal de huidige gebruiksdoelen op
+    db.query(userGoalsQuery, [userId], (err, goalsResults) => {
+      if (err) {
+        console.error('Fout bij het ophalen van gebruikersdoelen:', err);
+        return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van gebruikersdoelen.' });
+      }
+
+      if (goalsResults.length === 0) {
+        return res.status(404).json({ error: 'Geen doelen gevonden voor deze gebruiker.' });
+      }
+
+      const { current_usage } = goalsResults[0];
+
+      // Haal het totaal aantal ingevoerde puffs op
+      db.query(totalPuffsQuery, [userId], (err, puffsResults) => {
+        if (err) {
+          console.error('Fout bij het ophalen van puffs:', err);
+          return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van puffs.' });
+        }
+
+        const totalPuffs = puffsResults[0]?.total_puffs || 0;
+
+        // Bereken het verschil tussen current_usage en ingevoerde puffs
+        const puffsAvoided = Math.max(0, current_usage - totalPuffs);
+
+        res.status(200).json({
+          puffsAvoided,
+          totalSavings: (puffsAvoided * 0.01).toFixed(2), // Bespaarde geldwaarde
+        });
+      });
+    });
+  } catch (error) {
+    console.error('Fout bij het berekenen van besparingen:', error);
+    res.status(500).json({ error: 'Er is een fout opgetreden bij het berekenen van besparingen.' });
+  }
+});
+
+app.get('/user-goals', async (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
+  const query = `
+    SELECT goal_usage
+    FROM user_goals
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+
+  db.query(query, [userId], (err, results) => {
+    if (err) {
+      console.error('Fout bij het ophalen van gebruikersdoelen:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van gebruikersdoelen.' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Geen doelen gevonden voor deze gebruiker.' });
+    }
+
+    res.status(200).json({ goal_usage: results[0].goal_usage });
+  });
+});
+

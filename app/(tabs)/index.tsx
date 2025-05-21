@@ -40,6 +40,7 @@ const HomeScreen = () => {
   const [challenges, setChallenges] = useState([]);
   const [userName, setUserName] = useState("");
   const [totalSaved, setTotalSaved] = useState(0);
+  const [puffsAvoided, setPuffsAvoided] = useState(0);
 
   useEffect(() => {
     const fetchChallenges = async () => {
@@ -95,6 +96,34 @@ const HomeScreen = () => {
     fetchUserData();
   }, []);
 
+  useEffect(() => {
+    const fetchSavings = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) {
+          alert('Kan de ingelogde gebruiker niet vinden.');
+          return;
+        }
+
+        const response = await fetch(`http://192.168.0.105:5000/calculate-savings?userId=${userId}`);
+        if (!response.ok) {
+          console.error('Fout bij het ophalen van besparingen:', response.statusText);
+          alert('Fout bij het berekenen van besparingen.');
+          return;
+        }
+
+        const data = await response.json();
+        setTotalSaved(data.totalSavings); // Stel de bespaarde waarde in
+        setPuffsAvoided(data.puffsAvoided); // Stel het verschil in
+      } catch (error) {
+        console.error('Fout bij het ophalen van besparingen:', error);
+        alert('Kan geen verbinding maken met de server.');
+      }
+    };
+
+    fetchSavings();
+  }, []); // Voeg hier dependencies toe als nodig
+
   const handleGoalPress = (route) => {
     router.push(`/${route}`);
   };
@@ -138,7 +167,7 @@ const HomeScreen = () => {
                 Geld{"\n"}Bespaard
               </Text>
               <Text style={[styles.statValue, { color: "#29A86E", textAlign: "center" }]}>
-                €{totalSaved.toFixed(2)}
+                €{totalSaved}
               </Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: "rgba(112, 97, 187, 0.15)" }]}>
@@ -146,7 +175,7 @@ const HomeScreen = () => {
                 Puffs{"\n"}Vermeden
               </Text>
               <Text style={[styles.statValue, { color: "#7061BB", textAlign: "center" }]}>
-                97
+                {puffsAvoided}
               </Text>
             </View>
           </View>
@@ -225,7 +254,8 @@ const HomeScreen = () => {
                 />
               </View>
               <View style={styles.goalRow}>
-                <Text style={styles.goalLabel}>€{(item.huidig / 100).toFixed(2)} gespaard</Text>
+                {/* Gebruik hier totalSaved */}
+                <Text style={styles.goalLabel}>€{totalSaved} gespaard</Text>
                 <Text style={styles.goalLabel}>Doel: €{item.bedrag}</Text>
               </View>
             </View>
