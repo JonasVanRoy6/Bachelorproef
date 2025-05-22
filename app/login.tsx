@@ -1,13 +1,23 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { Link } from 'expo-router'; // Gebruik de router voor navigatie
-import { useRouter } from 'expo-router';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  Dimensions,
+} from 'react-native';
+import { Link, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { FontAwesome } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const router = useRouter(); // Initialiseer de router
+  const router = useRouter();
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -18,17 +28,15 @@ export default function LoginScreen() {
     try {
       const response = await fetch('http://192.168.0.105:5000/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
       if (response.ok) {
         const data = await response.json();
-        await AsyncStorage.setItem('userId', data.userId.toString()); // Sla de user_id op
+        await AsyncStorage.setItem('userId', data.userId.toString());
         Alert.alert('Succes', `Welkom terug, ${data.firstName}!`);
-        router.push('/'); // Navigeer naar de index.tsx-pagina
+        router.push('/'); // ⬅️ navigeert naar index.tsx
       } else {
         const errorData = await response.json();
         Alert.alert('Fout', errorData.error || 'Inloggen mislukt.');
@@ -41,42 +49,69 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welkom terug, Tester!</Text>
+      {/* Back button */}
+      <TouchableOpacity
+        style={styles.backButton}
+        onPress={() => router.push('/(tabs)/register')} // ⬅️ navigeer naar register
+      >
+        <FontAwesome name="arrow-left" size={24} color="#fff" />
+      </TouchableOpacity>
 
-      <TextInput
-        style={styles.input}
-        placeholder="E-mailadres"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Wachtwoord"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      {/* Titel */}
+      <Text style={styles.title}>Welkom terug!</Text>
 
+      {/* Inputvelden */}
+      <View style={styles.inputGroupFull}>
+        <Text style={styles.label}>E-mailadres</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="E-mailadres"
+          keyboardType="email-address"
+          placeholderTextColor="#515151"
+          value={email}
+          onChangeText={setEmail}
+        />
+      </View>
+
+      <View style={styles.inputGroupFull}>
+        <Text style={styles.label}>Wachtwoord</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Geef je wachtwoord in"
+          secureTextEntry
+          placeholderTextColor="#515151"
+          value={password}
+          onChangeText={setPassword}
+        />
+      </View>
+
+      {/* Inlogknop */}
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Inloggen</Text>
       </TouchableOpacity>
 
       <Text style={styles.orText}>Of, inloggen met...</Text>
 
+      {/* Social login */}
       <View style={styles.socialButtons}>
         <TouchableOpacity style={styles.socialButton}>
-          <Text style={styles.socialButtonText}>F</Text>
+          <FontAwesome name="facebook" size={24} color="#1877F2" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.socialButton}>
-          <Text style={styles.socialButtonText}>G</Text>
+          <FontAwesome name="google" size={24} color="#EA4335" />
         </TouchableOpacity>
       </View>
 
+      {/* Registratielink */}
       <Text style={styles.registerText}>
-        Nieuw bij Breezd?  
-        <Link href="/(tabs)/register" asChild><Text style={styles.registerLink}>Registreer</Text>
-      </Link></Text>
+        Nieuw bij Breezd?{' '}
+        <Text
+          style={styles.registerLink}
+          onPress={() => router.push('/(tabs)/register')} // ⬅️ navigeer naar register
+        >
+          Registreer
+        </Text>
+      </Text>
     </View>
   );
 }
@@ -84,66 +119,86 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#FFFFFF',
+    paddingTop: 48,
+    paddingHorizontal: 36,
+    backgroundColor: '#fff',
+    justifyContent: 'flex-start',
+  },
+  backButton: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#252525',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   title: {
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: 'bold',
+    color: '#252525',
+    lineHeight: 34,
     marginBottom: 20,
-    textAlign: 'center',
-    color: '#333333',
+  },
+  inputGroupFull: {
+    marginBottom: 12,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#252525',
+    marginBottom: 6,
   },
   input: {
+    height: 50,
     borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    backgroundColor: '#F9F9F9',
+    borderColor: '#E3E3E3',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    fontSize: 16,
+    backgroundColor: '#fff',
+    color: '#252525',
   },
   loginButton: {
-    backgroundColor: '#00A86B',
-    paddingVertical: 15,
-    borderRadius: 25,
+    marginTop: 24,
+    backgroundColor: '#29A86E',
+    paddingVertical: 14,
+    borderRadius: 16,
     alignItems: 'center',
-    marginBottom: 20,
   },
   loginButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#F5F5F5',
   },
   orText: {
     textAlign: 'center',
-    color: '#888888',
-    marginBottom: 20,
+    fontSize: 16,
+    color: '#515151',
+    marginVertical: 20,
   },
   socialButtons: {
     flexDirection: 'row',
+    gap: 16,
     justifyContent: 'center',
     marginBottom: 20,
   },
   socialButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#E0E0E0',
+    flex: 1,
+    height: 52,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E3E3E3',
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 10,
-  },
-  socialButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#555555',
   },
   registerText: {
+    fontSize: 16,
+    color: '#252525',
     textAlign: 'center',
-    color: '#555555',
   },
   registerLink: {
-    color: '#00A86B',
     fontWeight: 'bold',
+    color: '#29A86E',
   },
 });

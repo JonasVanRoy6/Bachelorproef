@@ -5,15 +5,13 @@ import {
   Image,
   StyleSheet,
   Dimensions,
-  Platform,
 } from 'react-native';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 export default function Slide3() {
   return (
     <View style={styles.container}>
-      {/* Verberg statusbar-achtergrond zodat image tot aan rand komt */}
       <Image
         source={require('../../assets/images/journey3.png')}
         style={styles.image}
@@ -32,16 +30,19 @@ export default function Slide3() {
 
 const styles = StyleSheet.create({
   container: {
+    width: width,
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
   image: {
-    width: width,
-    height: 494,
+    width: '100%',
+    height: height * 0.5,
   },
   textWrapper: {
+    flex: 1,
     paddingHorizontal: 36,
-    marginTop: 56,
+    paddingTop: 40,
+    justifyContent: 'flex-start',
   },
   title: {
     fontSize: 24,
