@@ -12,6 +12,7 @@ import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import { SafeAreaView } from "react-native-safe-area-context";
+import API_BASE_URL from '../../server/config';
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width - 32;
@@ -44,7 +45,7 @@ const AddPuffsScreen = () => {
 
         const payload = { userId, puffs: estimatedPuffs, timeOfDay };
 
-        const response = await fetch("http://192.168.0.105:5000/puffs", {
+        const response = await fetch(`${API_BASE_URL}/puffs`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),

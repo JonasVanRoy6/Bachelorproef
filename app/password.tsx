@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
+import API_BASE_URL from '../server/config';
 
 const { width } = Dimensions.get('window');
 const horizontalPadding = 36;
@@ -25,7 +26,7 @@ export default function PasswordScreen() {
     }
 
     try {
-      const response = await fetch('http://192.168.0.105:5000/register-password', {
+      const response = await fetch(`${API_BASE_URL}/register-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),

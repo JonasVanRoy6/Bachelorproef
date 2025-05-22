@@ -11,6 +11,7 @@ import {
 import { Link, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
+import API_BASE_URL from '../server/config';
 
 const { width } = Dimensions.get('window');
 
@@ -26,7 +27,7 @@ export default function LoginScreen() {
     }
 
     try {
-      const response = await fetch('http://192.168.0.105:5000/login', {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),

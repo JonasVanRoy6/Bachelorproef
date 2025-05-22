@@ -14,6 +14,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_BASE_URL from '../server/config';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -52,7 +53,7 @@ const AccountSettingsScreen = () => {
           return;
         }
 
-        const response = await fetch(`http://192.168.0.105:5000/user-data?userId=${userId}`);
+        const response = await fetch(`${API_BASE_URL}/user-data?userId=${userId}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -85,7 +86,7 @@ const AccountSettingsScreen = () => {
       // Converteer de geboortedatum naar ISO-formaat
       const formattedBirthDate = formatDateToISO(birthDateInput);
 
-      const response = await fetch('http://192.168.0.105:5000/update-user-data', {
+      const response = await fetch(`${API_BASE_URL}/update-user-data`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

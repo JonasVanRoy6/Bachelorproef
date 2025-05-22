@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingVi
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_BASE_URL from '../server/config';
 
 export default function DoelenPuffsScreen() {
   const [current, setCurrent] = useState('');
@@ -19,7 +20,7 @@ export default function DoelenPuffsScreen() {
 
       console.log('Verstuurde gegevens:', { userId, currentUsage: current, goalsUsage: goal });
 
-      const response = await fetch('http://192.168.0.105:5000/user/update-puffs', {
+      const response = await fetch(`${API_BASE_URL}/user/update-puffs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

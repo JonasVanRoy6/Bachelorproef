@@ -12,6 +12,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_BASE_URL from '../server/config';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -33,7 +34,7 @@ const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[
       return;
     }
 
-    const response = await fetch(`http://192.168.0.105:5000/user/friends?userId=${userId}`);
+    const response = await fetch(`${API_BASE_URL}/user/friends?userId=${userId}`);
     const data = await response.json();
 
     if (response.ok) {
@@ -97,7 +98,7 @@ export default function InviteScreen() {
         return;
       }
 
-      const response = await fetch('http://192.168.0.105:5000/leaderboard/create-with-friends', {
+      const response = await fetch(`${API_BASE_URL}/leaderboard/create-with-friends`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

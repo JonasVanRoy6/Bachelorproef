@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import axios from "axios";
+import API_BASE_URL from '../server/config';
 
 // Maak een context aan
 const PuffContext = createContext();
 
 // Geef het backend-adres op
-const API_URL = "192.168.0.105:5000"; 
+const API_URL = `${API_BASE_URL}`; 
 
 export const PuffProvider = ({ children }) => {
   const [puffs, setPuffs] = useState(0);

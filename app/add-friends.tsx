@@ -13,6 +13,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import API_BASE_URL from '../server/config';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -49,7 +50,7 @@ const addFriendToDatabase = async (friendId: number) => {
       return;
     }
 
-    const response = await fetch('http://192.168.0.105:5000/user/add-friend', {
+    const response = await fetch(`${API_BASE_URL}/user/add-friend`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, friendId }),
@@ -73,7 +74,7 @@ const fetchUsers = async (
 ) => {
   try {
     const response = await fetch(
-      `http://192.168.0.105:5000/user/search?search=${searchTerm}`
+      `${API_BASE_URL}/user/search?search=${searchTerm}`
     );
     const data = await response.json();
 

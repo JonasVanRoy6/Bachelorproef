@@ -10,6 +10,7 @@ import {
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
+import API_BASE_URL from '../server/config';
 
 const { width } = Dimensions.get('window');
 
@@ -38,7 +39,7 @@ export default function GoalsScreen() {
     }
 
     try {
-      const response = await fetch('http://192.168.0.105:5000/saveGoal', {
+      const response = await fetch(`${API_BASE_URL}/saveGoal`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

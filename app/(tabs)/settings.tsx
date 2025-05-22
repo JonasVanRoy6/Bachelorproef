@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_BASE_URL from '../../server/config';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -143,7 +144,7 @@ const SettingsScreen = () => {
                     }
 
                     // Roep het backend-endpoint aan om het account te verwijderen
-                    const response = await fetch('http://192.168.0.105:5000/delete-account', {
+                    const response = await fetch(`${API_BASE_URL}/delete-account`, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',

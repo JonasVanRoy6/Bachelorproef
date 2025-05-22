@@ -14,6 +14,7 @@ import { router } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
 import { FontAwesome5, MaterialIcons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import API_BASE_URL from '../../server/config';
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -51,7 +52,7 @@ const HomeScreen = () => {
           return;
         }
 
-        const response = await fetch(`http://192.168.0.105:5000/challenges?userId=${userId}`);
+        const response = await fetch(`${API_BASE_URL}/challenges?userId=${userId}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -78,7 +79,7 @@ const HomeScreen = () => {
           return;
         }
 
-        const response = await fetch(`http://192.168.0.105:5000/user-data?userId=${userId}`);
+        const response = await fetch(`${API_BASE_URL}/user-data?userId=${userId}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -105,7 +106,7 @@ const HomeScreen = () => {
           return;
         }
 
-        const response = await fetch(`http://192.168.0.105:5000/calculate-savings?userId=${userId}`);
+        const response = await fetch(`${API_BASE_URL}/calculate-savings?userId=${userId}`);
         if (!response.ok) {
           console.error('Fout bij het ophalen van besparingen:', response.statusText);
           alert('Fout bij het berekenen van besparingen.');

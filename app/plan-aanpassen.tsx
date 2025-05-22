@@ -10,6 +10,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_BASE_URL from '../server/config';
 
 export default function PlanAanpassenScreen() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function PlanAanpassenScreen() {
           return;
         }
 
-        const response = await fetch(`http://192.168.0.105:5000/user/active-plan?userId=${userId}`);
+        const response = await fetch(`${API_BASE_URL}/user/active-plan?userId=${userId}`);
         const data = await response.json();
         setActivePlan(data.plan); // Stel het actieve plan in
         setSelectedPlan(data.plan); // Stel het geselecteerde plan in
@@ -49,7 +50,7 @@ export default function PlanAanpassenScreen() {
         return;
       }
 
-      const response = await fetch('http://192.168.0.105:5000/user/update-plan', {
+      const response = await fetch(`${API_BASE_URL}/user/update-plan`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

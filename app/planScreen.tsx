@@ -11,6 +11,7 @@ import {
 import { FontAwesome, Feather } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import API_BASE_URL from '../server/config';
 
 const { width } = Dimensions.get('window');
 
@@ -42,7 +43,7 @@ export default function PlanScreen() {
     if (!userId || !selectedPlan) return;
 
     try {
-      const response = await fetch('http://192.168.0.105:5000/saveGoal', {
+      const response = await fetch(`${API_BASE_URL}/saveGoal`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_BASE_URL from '../../server/config';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -71,7 +72,7 @@ export default function ProfileScreen() {
           return;
         }
 
-        const response = await fetch(`http://192.168.0.105:5000/user-data?userId=${userId}`);
+        const response = await fetch(`${API_BASE_URL}/user-data?userId=${userId}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -98,7 +99,7 @@ export default function ProfileScreen() {
           return;
         }
 
-        const response = await fetch(`http://192.168.0.105:5000/suggested-friends?userId=${userId}`);
+        const response = await fetch(`${API_BASE_URL}/suggested-friends?userId=${userId}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -129,7 +130,7 @@ export default function ProfileScreen() {
         return;
       }
   
-      const response = await fetch(`http://192.168.0.105:5000/add-friend`, {
+      const response = await fetch(`${API_BASE_URL}/add-friend`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

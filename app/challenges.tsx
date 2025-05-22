@@ -16,6 +16,7 @@ import {
 } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_BASE_URL from '../server/config';
 
 const ICONS = {
   reizen: <FontAwesome5 name="suitcase-rolling" size={24} color="#29A86E" />,
@@ -68,7 +69,7 @@ const Challenges = () => {
         }
 
         // Haal de uitdagingen op
-        const response = await fetch(`http://192.168.0.105:5000/challenges?userId=${userId}`);
+        const response = await fetch(`${API_BASE_URL}/challenges?userId=${userId}`);
         const data = await response.json();
 
         if (response.ok) {
@@ -84,7 +85,7 @@ const Challenges = () => {
         }
 
         // Haal de bespaarde waarde op
-        const savingsResponse = await fetch(`http://192.168.0.105:5000/calculate-savings?userId=${userId}`);
+        const savingsResponse = await fetch(`${API_BASE_URL}/calculate-savings?userId=${userId}`);
         const savingsData = await savingsResponse.json();
 
         if (savingsResponse.ok) {
@@ -109,7 +110,7 @@ const Challenges = () => {
         return;
       }
 
-      const response = await fetch('http://192.168.0.105:5000/challenges/set-active', {
+      const response = await fetch(`${API_BASE_URL}/challenges/set-active`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

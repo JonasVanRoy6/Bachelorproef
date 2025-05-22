@@ -11,6 +11,7 @@ import {
 import { FontAwesome, FontAwesome5, Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
+
 const { width } = Dimensions.get('window');
 const CARD_PADDING = 24;
 const BAR_WIDTH = width - CARD_PADDING * 2;

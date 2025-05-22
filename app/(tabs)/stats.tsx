@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
+import API_BASE_URL from '../../server/config';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 

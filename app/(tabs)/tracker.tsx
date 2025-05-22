@@ -12,6 +12,7 @@ import { Link } from 'expo-router';
 import { usePuffs } from '../puffcontext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import API_BASE_URL from '../../server/config';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -50,7 +51,7 @@ export default function TrackerScreen() {
       try {
         const userId = await AsyncStorage.getItem('userId');
         if (!userId) return;
-        const response = await fetch(`http://192.168.0.105:5000/puffs?userId=${userId}`);
+        const response = await fetch(`${API_BASE_URL}/puffs?userId=${userId}`);
         const data = await response.json();
         setRecentPuffs(Array.isArray(data) ? data : []);
       } catch (error) {
@@ -67,7 +68,7 @@ export default function TrackerScreen() {
       try {
         const userId = await AsyncStorage.getItem('userId');
         if (!userId) return;
-        const response = await fetch(`http://192.168.0.105:5000/puffs/today?userId=${userId}`);
+        const response = await fetch(`${API_BASE_URL}/puffs/today?userId=${userId}`);
         const data = await response.json();
         setTotalPuffsToday(data.total_puffs || 0);
       } catch (error) {
@@ -85,7 +86,7 @@ export default function TrackerScreen() {
         const userId = await AsyncStorage.getItem('userId');
         if (!userId) return;
 
-        const response = await fetch(`http://192.168.0.105:5000/user-goals?userId=${userId}`);
+        const response = await fetch(`${API_BASE_URL}/user-goals?userId=${userId}`);
         const data = await response.json();
 
         if (response.ok) {

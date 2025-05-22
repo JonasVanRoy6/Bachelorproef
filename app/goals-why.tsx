@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'rea
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_BASE_URL from '../server/config';
 
 const reasons = [
   'Voor mijn gezondheid',
@@ -23,7 +24,7 @@ export default function GoalsWhyScreen() {
         return;
       }
 
-      const response = await fetch('http://192.168.0.105:5000/user/update-reason', {
+      const response = await fetch(`${API_BASE_URL}/user/update-reason`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

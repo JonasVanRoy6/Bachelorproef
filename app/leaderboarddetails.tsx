@@ -12,6 +12,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_BASE_URL from '../server/config';
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -28,7 +29,7 @@ export default function LeaderboardDetailsScreen() {
       setUserId(id);
       if (leaderboardId && id) {
         try {
-          const res = await fetch(`http://192.168.0.105:5000/leaderboard/details-with-rank?leaderboardId=${leaderboardId}&userId=${id}`);
+          const res = await fetch(`${API_BASE_URL}/leaderboard/details-with-rank?leaderboardId=${leaderboardId}&userId=${id}`);
           const data = await res.json();
 
           const updatedList = data.leaderboard
@@ -112,7 +113,7 @@ export default function LeaderboardDetailsScreen() {
                 style: 'destructive',
                 onPress: async () => {
                   try {
-                    const res = await fetch(`http://192.168.0.105:5000/leaderboard/delete?leaderboardId=${leaderboardId}`, {
+                    const res = await fetch(`${API_BASE_URL}/leaderboard/delete?leaderboardId=${leaderboardId}`, {
                       method: 'DELETE',
                     });
 
