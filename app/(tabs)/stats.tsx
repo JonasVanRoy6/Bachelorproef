@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons, Feather } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../../server/config';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -18,11 +19,87 @@ type Period = typeof periods[number];
 
 const StatsScreen = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('Dag');
+  const [stats, setStats] = useState({ totalPuffs: 0, duration: 0, liquid: '0.00' });
+  const [chartData, setChartData] = useState([
+    { label: 'Ochtend', value: 0 },
+    { label: 'Middag', value: 0 },
+    { label: 'Avond', value: 0 },
+    { label: 'Nacht', value: 0 },
+  ]);
 
-  const chartData = {
-    Dag: [15, 20, 35, 70, 90, 80, 40, 30],
-    Week: [46, 60, 35, 50, 30, 65, 55],
-    Maand: [60, 90, 40, 20],
+  const fetchStats = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        console.error('Geen userId gevonden');
+        return;
+      }
+
+      console.log('Verstuurde parameters:', { userId, selectedPeriod });
+
+      const response = await fetch(
+        `${API_BASE_URL}/stats?userId=${userId}&period=${selectedPeriod}`
+      );
+      const data = await response.json();
+
+      console.log('Ophalen van statistieken:', data);
+
+      if (response.ok) {
+        const ochtend = parseInt(data.ochtend || '0', 10);
+        const middag = parseInt(data.middag || '0', 10);
+        const avond = parseInt(data.avond || '0', 10);
+        const nacht = parseInt(data.nacht || '0', 10);
+
+        // Update de stats-state
+        setStats({
+          totalPuffs: ochtend + middag + avond + nacht,
+          duration: (ochtend + middag + avond + nacht) * 3,
+          liquid: ((ochtend + middag + avond + nacht) * 0.02).toFixed(2),
+        });
+
+        console.log('Stats bijgewerkt:', {
+          totalPuffs: ochtend + middag + avond + nacht,
+          duration: (ochtend + middag + avond + nacht) * 3,
+          liquid: ((ochtend + middag + avond + nacht) * 0.02).toFixed(2),
+        });
+
+        // Update de chartData-state
+        setChartData([
+          { label: 'Ochtend', value: ochtend },
+          { label: 'Middag', value: middag },
+          { label: 'Avond', value: avond },
+          { label: 'Nacht', value: nacht },
+        ]);
+
+        console.log('ChartData bijgewerkt:', [
+          { label: 'Ochtend', value: ochtend },
+          { label: 'Middag', value: middag },
+          { label: 'Avond', value: avond },
+          { label: 'Nacht', value: nacht },
+        ]);
+      } else {
+        console.error('Fout bij het ophalen van statistieken:', data.error);
+      }
+    } catch (error) {
+      console.error('Fout bij het ophalen van statistieken:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, [selectedPeriod]);
+
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return minutes > 0
+      ? `${minutes}m ${remainingSeconds}s`
+      : `${remainingSeconds}s`;
+  };
+
+  const formatDate = (date: Date) => {
+    const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'long', year: 'numeric' };
+    return date.toLocaleDateString('nl-NL', options);
   };
 
   const xLabels = {
@@ -36,6 +113,19 @@ const StatsScreen = () => {
       case 'Dag': return 'Gemiddeld per uur';
       case 'Week': return 'Gemiddeld per dag';
       case 'Maand': return 'Gemiddeld per week';
+    }
+  };
+
+  const calculateAverage = () => {
+    switch (selectedPeriod) {
+      case 'Dag':
+        return (stats.totalPuffs / 24).toFixed(1); // Gemiddeld per uur (24 uur in een dag)
+      case 'Week':
+        return (stats.totalPuffs / 7).toFixed(1); // Gemiddeld per dag (7 dagen in een week)
+      case 'Maand':
+        return (stats.totalPuffs / 4).toFixed(1); // Gemiddeld per week (4 weken in een maand)
+      default:
+        return '0.0';
     }
   };
 
@@ -79,9 +169,9 @@ const StatsScreen = () => {
           {/* Stats */}
           <View style={styles.widgetRow}>
             {[
-              { icon: 'smoking', label: 'Puffs', value: '46' },
-              { icon: 'timer-outline', label: 'Duur', value: '12m' },
-              { icon: 'water-outline', label: 'Vloeistof', value: '2.1 ml' },
+              { icon: 'smoking', label: 'Puffs', value: stats.totalPuffs.toString() },
+              { icon: 'timer-outline', label: 'Duur', value: formatDuration(stats.duration) },
+              { icon: 'water-outline', label: 'Vloeistof', value: `${stats.liquid} ml` },
             ].map((item, index) => (
               <View key={index} style={styles.statBox}>
                 <MaterialCommunityIcons name={item.icon} size={24} color="#29A86E" />
@@ -97,13 +187,13 @@ const StatsScreen = () => {
               <Text style={styles.widgetTitle}>
                 Gebruik {selectedPeriod === 'Dag' ? 'Vandaag' : selectedPeriod === 'Week' ? 'Deze Week' : 'Deze Maand'}
               </Text>
-              <Text style={styles.widgetSub}>24 mar. 2025</Text>
+              <Text style={styles.widgetSub}>{formatDate(new Date())}</Text>
             </View>
             <View style={styles.chartContainer}>
-              {chartData[selectedPeriod].map((value, i) => (
+              {chartData.map((item, i) => (
                 <View key={i} style={styles.barWrapper}>
-                  <View style={[styles.bar, { height: value * scaleFactor }]} />
-                  <Text style={styles.barLabel}>{xLabels[selectedPeriod][i]}</Text>
+                  <View style={[styles.bar, { height: item.value * scaleFactor }]} />
+                  <Text style={styles.barLabel}>{item.label}</Text>
                 </View>
               ))}
             </View>
@@ -124,7 +214,7 @@ const StatsScreen = () => {
 
           {/* Vergelijkingen */}
           {[
-            { label: getAverageLabel(), value: '6.5', icon: '↓ 8%' },
+            { label: getAverageLabel(), value: `${calculateAverage()}`, icon: '' },
             { label: 'vs. gisteren', value: '+12%', icon: <Feather name="trending-up" size={20} color="#29A86E" /> },
             { label: 'vs. vorige week', value: '-8%', icon: <Feather name="trending-down" size={20} color="#29A86E" /> },
             { label: 'vs. vorige maand', value: '-15%', icon: <Feather name="trending-down" size={20} color="#29A86E" /> },

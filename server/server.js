@@ -1092,3 +1092,52 @@ app.get('/suggested-friends', async (req, res) => {
   });
 });
 
+app.get('/stats', async (req, res) => {
+  const { userId, period } = req.query;
+
+  console.log('Ontvangen parameters:', { userId, period });
+
+  if (!userId || !period) {
+    console.error('Ontbrekende parameters:', { userId, period });
+    return res.status(400).json({ error: 'Gebruiker ID en periode zijn verplicht.' });
+  }
+
+  let dateCondition = '';
+  if (period === 'Dag') {
+    dateCondition = 'DATE(created_at) = CURDATE()';
+  } else if (period === 'Week') {
+    dateCondition = 'YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)';
+  } else if (period === 'Maand') {
+    dateCondition = 'MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())';
+  } else {
+    console.error('Ongeldige period-waarde:', period);
+    return res.status(400).json({ error: 'Ongeldige periode opgegeven.' });
+  }
+
+  console.log('Query wordt uitgevoerd met conditie:', dateCondition);
+
+  const query = `
+    SELECT 
+      SUM(CASE WHEN time_of_day = 'Ochtend (6:00 - 12:00)' THEN amount ELSE 0 END) AS ochtend,
+      SUM(CASE WHEN time_of_day = 'Middag (12:00 - 18:00)' THEN amount ELSE 0 END) AS middag,
+      SUM(CASE WHEN time_of_day = 'Avond (18:00 - 00:00)' THEN amount ELSE 0 END) AS avond,
+      SUM(CASE WHEN time_of_day = 'Nacht (00:00 - 6:00)' THEN amount ELSE 0 END) AS nacht
+    FROM puffs
+    WHERE user_id = ? AND ${dateCondition}
+  `;
+
+  console.log('Query:', query);
+
+  db.query(query, [userId], (err, results) => {
+    if (err) {
+      console.error('Fout bij het uitvoeren van de query:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van statistieken.' });
+    }
+
+    console.log('Queryresultaten:', results);
+
+    const data = results[0] || { ochtend: 0, middag: 0, avond: 0, nacht: 0 };
+    res.status(200).json(data);
+  });
+});
+
