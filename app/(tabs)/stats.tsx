@@ -20,68 +20,53 @@ type Period = typeof periods[number];
 const StatsScreen = () => {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('Dag');
   const [stats, setStats] = useState({ totalPuffs: 0, duration: 0, liquid: '0.00' });
-  const [chartData, setChartData] = useState([
-    { label: 'Ochtend', value: 0 },
-    { label: 'Middag', value: 0 },
-    { label: 'Avond', value: 0 },
-    { label: 'Nacht', value: 0 },
-  ]);
+  const [chartData, setChartData] = useState([]);
+  const [previousPuffs, setPreviousPuffs] = useState(0);
+  const [weekComparison, setWeekComparison] = useState(0);
+  const [monthComparison, setMonthComparison] = useState(0);
 
   const fetchStats = async () => {
     try {
       const userId = await AsyncStorage.getItem('userId');
-      if (!userId) {
-        console.error('Geen userId gevonden');
-        return;
-      }
+      if (!userId) return;
 
-      console.log('Verstuurde parameters:', { userId, selectedPeriod });
-
-      const response = await fetch(
-        `${API_BASE_URL}/stats?userId=${userId}&period=${selectedPeriod}`
-      );
+      const response = await fetch(`${API_BASE_URL}/stats?userId=${userId}&period=${selectedPeriod}`);
       const data = await response.json();
+      if (!response.ok) return;
 
-      console.log('Ophalen van statistieken:', data);
-
-      if (response.ok) {
+      let chart = [];
+      if (selectedPeriod === 'Dag') {
         const ochtend = parseInt(data.ochtend || '0', 10);
         const middag = parseInt(data.middag || '0', 10);
         const avond = parseInt(data.avond || '0', 10);
         const nacht = parseInt(data.nacht || '0', 10);
-
-        // Update de stats-state
-        setStats({
-          totalPuffs: ochtend + middag + avond + nacht,
-          duration: (ochtend + middag + avond + nacht) * 3,
-          liquid: ((ochtend + middag + avond + nacht) * 0.02).toFixed(2),
-        });
-
-        console.log('Stats bijgewerkt:', {
-          totalPuffs: ochtend + middag + avond + nacht,
-          duration: (ochtend + middag + avond + nacht) * 3,
-          liquid: ((ochtend + middag + avond + nacht) * 0.02).toFixed(2),
-        });
-
-        // Update de chartData-state
-        setChartData([
+        chart = [
           { label: 'Ochtend', value: ochtend },
           { label: 'Middag', value: middag },
           { label: 'Avond', value: avond },
           { label: 'Nacht', value: nacht },
-        ]);
-
-        console.log('ChartData bijgewerkt:', [
-          { label: 'Ochtend', value: ochtend },
-          { label: 'Middag', value: middag },
-          { label: 'Avond', value: avond },
-          { label: 'Nacht', value: nacht },
-        ]);
-      } else {
-        console.error('Fout bij het ophalen van statistieken:', data.error);
+        ];
+      } else if (selectedPeriod === 'Week' && data.data) {
+        const dagen = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'];
+        chart = dagen.map((label, i) => ({ label, value: parseInt(data.data[i] || '0', 10) }));
+      } else if (selectedPeriod === 'Maand' && data.data) {
+        const weken = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+        chart = weken.map((label, i) => ({ label, value: parseInt(data.data[i] || '0', 10) }));
       }
+
+      const totaal = chart.reduce((sum, d) => sum + d.value, 0);
+      setStats({
+        totalPuffs: totaal,
+        duration: totaal * 3,
+        liquid: (totaal * 0.02).toFixed(2),
+      });
+
+      setChartData(chart);
+      setPreviousPuffs(data.previousTotal || 0);
+      setWeekComparison(data.previousWeek || 0);
+      setMonthComparison(data.previousMonth || 0);
     } catch (error) {
-      console.error('Fout bij het ophalen van statistieken:', error);
+      console.error('Fout bij ophalen statistieken:', error);
     }
   };
 
@@ -91,21 +76,15 @@ const StatsScreen = () => {
 
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return minutes > 0
-      ? `${minutes}m ${remainingSeconds}s`
-      : `${remainingSeconds}s`;
+    if (minutes > 0) {
+      return `${minutes}m`; // Alleen minuten weergeven
+    }
+    return `${seconds}s`; // Alleen seconden weergeven als het minder dan 60 is
   };
 
   const formatDate = (date: Date) => {
     const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'long', year: 'numeric' };
     return date.toLocaleDateString('nl-NL', options);
-  };
-
-  const xLabels = {
-    Dag: ['0:00', '3:00', '6:00', '9:00', '12:00', '15:00', '18:00', '21:00'],
-    Week: ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'],
-    Maand: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
   };
 
   const getAverageLabel = () => {
@@ -118,18 +97,21 @@ const StatsScreen = () => {
 
   const calculateAverage = () => {
     switch (selectedPeriod) {
-      case 'Dag':
-        return (stats.totalPuffs / 24).toFixed(1); // Gemiddeld per uur (24 uur in een dag)
-      case 'Week':
-        return (stats.totalPuffs / 7).toFixed(1); // Gemiddeld per dag (7 dagen in een week)
-      case 'Maand':
-        return (stats.totalPuffs / 4).toFixed(1); // Gemiddeld per week (4 weken in een maand)
-      default:
-        return '0.0';
+      case 'Dag': return (stats.totalPuffs / 24).toFixed(1);
+      case 'Week': return (stats.totalPuffs / 7).toFixed(1);
+      case 'Maand': return (stats.totalPuffs / 4).toFixed(1);
+      default: return '0.0';
     }
   };
 
-  const scaleFactor = 140 / 80;
+  const calculateDiff = (current: number, previous: number) => {
+    const diff = current - previous;
+    if (previous === 0) return '+0%';
+    const percentage = ((diff / previous) * 100).toFixed(0);
+    return `${diff >= 0 ? '+' : ''}${percentage}%`;
+  };
+
+  const MAX_BAR_HEIGHT = 140;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -142,18 +124,8 @@ const StatsScreen = () => {
             onPress={() => setSelectedPeriod(period)}
             style={styles.selectorButtonWrapper}
           >
-            <View
-              style={[
-                styles.selectorButton,
-                selectedPeriod === period && styles.selectorButtonActive,
-              ]}
-            >
-              <Text
-                style={[
-                  styles.selectorText,
-                  selectedPeriod === period && styles.selectorTextActive,
-                ]}
-              >
+            <View style={[styles.selectorButton, selectedPeriod === period && styles.selectorButtonActive]}>
+              <Text style={[styles.selectorText, selectedPeriod === period && styles.selectorTextActive]}>
                 {period}
               </Text>
             </View>
@@ -161,12 +133,8 @@ const StatsScreen = () => {
         ))}
       </View>
 
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 16 }}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={{ paddingBottom: 16 }} showsVerticalScrollIndicator={false}>
         <View style={styles.inner}>
-          {/* Stats */}
           <View style={styles.widgetRow}>
             {[
               { icon: 'smoking', label: 'Puffs', value: stats.totalPuffs.toString() },
@@ -181,7 +149,6 @@ const StatsScreen = () => {
             ))}
           </View>
 
-          {/* Chart */}
           <View style={styles.chartWidget}>
             <View style={styles.widgetHeader}>
               <Text style={styles.widgetTitle}>
@@ -190,16 +157,21 @@ const StatsScreen = () => {
               <Text style={styles.widgetSub}>{formatDate(new Date())}</Text>
             </View>
             <View style={styles.chartContainer}>
-              {chartData.map((item, i) => (
-                <View key={i} style={styles.barWrapper}>
-                  <View style={[styles.bar, { height: item.value * scaleFactor }]} />
-                  <Text style={styles.barLabel}>{item.label}</Text>
-                </View>
-              ))}
+              {(() => {
+                const maxValue = Math.max(...chartData.map(d => d.value), 1);
+                return chartData.map((item, i) => {
+                  const height = (item.value / maxValue) * MAX_BAR_HEIGHT;
+                  return (
+                    <View key={i} style={styles.barWrapper}>
+                      <View style={[styles.bar, { height }]} />
+                      <Text style={styles.barLabel}>{item.label}</Text>
+                    </View>
+                  );
+                });
+              })()}
             </View>
           </View>
 
-          {/* Piektijden */}
           <View style={styles.peakWidget}>
             <Text style={[styles.widgetTitle, { marginBottom: 16 }]}>Piekgebruik</Text>
             {['8:00 - 10:00', '14:00 - 16:00', '18:00 - 21:00'].map((label, idx) => (
@@ -212,13 +184,32 @@ const StatsScreen = () => {
             ))}
           </View>
 
-          {/* Vergelijkingen */}
-          {[
-            { label: getAverageLabel(), value: `${calculateAverage()}`, icon: '' },
-            { label: 'vs. gisteren', value: '+12%', icon: <Feather name="trending-up" size={20} color="#29A86E" /> },
-            { label: 'vs. vorige week', value: '-8%', icon: <Feather name="trending-down" size={20} color="#29A86E" /> },
-            { label: 'vs. vorige maand', value: '-15%', icon: <Feather name="trending-down" size={20} color="#29A86E" /> },
-          ].map((item, i) => (
+          {[{
+            label: getAverageLabel(),
+            value: `${calculateAverage()}`,
+            icon: '',
+          },
+          {
+            label: 'vs. gisteren',
+            value: calculateDiff(stats.totalPuffs, previousPuffs),
+            icon: stats.totalPuffs >= previousPuffs
+              ? <Feather name="trending-up" size={20} color="#29A86E" />
+              : <Feather name="trending-down" size={20} color="#29A86E" />,
+          },
+          {
+            label: 'vs. vorige week',
+            value: calculateDiff(stats.totalPuffs, weekComparison),
+            icon: stats.totalPuffs >= weekComparison
+              ? <Feather name="trending-up" size={20} color="#29A86E" />
+              : <Feather name="trending-down" size={20} color="#29A86E" />,
+          },
+          {
+            label: 'vs. vorige maand',
+            value: calculateDiff(stats.totalPuffs, monthComparison),
+            icon: stats.totalPuffs >= monthComparison
+              ? <Feather name="trending-up" size={20} color="#29A86E" />
+              : <Feather name="trending-down" size={20} color="#29A86E" />,
+          }].map((item, i) => (
             <View key={i} style={styles.compareWidget}>
               <View>
                 <Text style={styles.compareLabel}>{item.label}</Text>

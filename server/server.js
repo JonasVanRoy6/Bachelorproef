@@ -1095,49 +1095,163 @@ app.get('/suggested-friends', async (req, res) => {
 app.get('/stats', async (req, res) => {
   const { userId, period } = req.query;
 
-  console.log('Ontvangen parameters:', { userId, period });
-
   if (!userId || !period) {
-    console.error('Ontbrekende parameters:', { userId, period });
     return res.status(400).json({ error: 'Gebruiker ID en periode zijn verplicht.' });
   }
 
-  let dateCondition = '';
-  if (period === 'Dag') {
-    dateCondition = 'DATE(created_at) = CURDATE()';
-  } else if (period === 'Week') {
-    dateCondition = 'YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)';
-  } else if (period === 'Maand') {
-    dateCondition = 'MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())';
-  } else {
-    console.error('Ongeldige period-waarde:', period);
-    return res.status(400).json({ error: 'Ongeldige periode opgegeven.' });
-  }
+  try {
+    if (period === 'Dag') {
+      const query = `
+        SELECT 
+          SUM(CASE WHEN time_of_day = 'Ochtend (6:00 - 12:00)' THEN amount ELSE 0 END) AS ochtend,
+          SUM(CASE WHEN time_of_day = 'Middag (12:00 - 18:00)' THEN amount ELSE 0 END) AS middag,
+          SUM(CASE WHEN time_of_day = 'Avond (18:00 - 00:00)' THEN amount ELSE 0 END) AS avond,
+          SUM(CASE WHEN time_of_day = 'Nacht (00:00 - 6:00)' THEN amount ELSE 0 END) AS nacht
+        FROM puffs
+        WHERE user_id = ? AND DATE(created_at) = CURDATE()
+      `;
+      const previousQuery = `
+        SELECT SUM(amount) AS total
+        FROM puffs
+        WHERE user_id = ? AND DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)
+      `;
 
-  console.log('Query wordt uitgevoerd met conditie:', dateCondition);
+      const [currentData] = await new Promise((resolve, reject) => {
+        db.query(query, [userId], (err, results) => {
+          if (err) return reject(err);
+          resolve(results);
+        });
+      });
 
-  const query = `
-    SELECT 
-      SUM(CASE WHEN time_of_day = 'Ochtend (6:00 - 12:00)' THEN amount ELSE 0 END) AS ochtend,
-      SUM(CASE WHEN time_of_day = 'Middag (12:00 - 18:00)' THEN amount ELSE 0 END) AS middag,
-      SUM(CASE WHEN time_of_day = 'Avond (18:00 - 00:00)' THEN amount ELSE 0 END) AS avond,
-      SUM(CASE WHEN time_of_day = 'Nacht (00:00 - 6:00)' THEN amount ELSE 0 END) AS nacht
-    FROM puffs
-    WHERE user_id = ? AND ${dateCondition}
-  `;
+      const previousTotal = await new Promise((resolve, reject) => {
+        db.query(previousQuery, [userId], (err, results) => {
+          if (err) return reject(err);
+          resolve(results[0].total || 0);
+        });
+      });
 
-  console.log('Query:', query);
-
-  db.query(query, [userId], (err, results) => {
-    if (err) {
-      console.error('Fout bij het uitvoeren van de query:', err);
-      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van statistieken.' });
+      res.status(200).json({
+        ...currentData,
+        previousTotal
+      });
     }
 
-    console.log('Queryresultaten:', results);
+    else if (period === 'Week') {
+      const dataQuery = `
+        SELECT 
+          DAYOFWEEK(created_at) AS dag,
+          SUM(amount) AS totaal
+        FROM puffs
+        WHERE user_id = ? AND YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)
+        GROUP BY dag
+      `;
+      const totalQuery = `
+        SELECT SUM(amount) AS total
+        FROM puffs
+        WHERE user_id = ? AND YEARWEEK(created_at, 1) = YEARWEEK(CURDATE(), 1)
+      `;
+      const previousQuery = `
+        SELECT SUM(amount) AS total
+        FROM puffs
+        WHERE user_id = ? AND YEARWEEK(created_at, 1) = YEARWEEK(CURDATE() - INTERVAL 7 DAY, 1)
+      `;
 
-    const data = results[0] || { ochtend: 0, middag: 0, avond: 0, nacht: 0 };
-    res.status(200).json(data);
-  });
+      const [dataResult, currentTotalResult, previousTotalResult] = await Promise.all([
+        new Promise((resolve, reject) => {
+          db.query(dataQuery, [userId], (err, results) => {
+            if (err) return reject(err);
+            resolve(results);
+          });
+        }),
+        new Promise((resolve, reject) => {
+          db.query(totalQuery, [userId], (err, results) => {
+            if (err) return reject(err);
+            resolve(results[0].total || 0);
+          });
+        }),
+        new Promise((resolve, reject) => {
+          db.query(previousQuery, [userId], (err, results) => {
+            if (err) return reject(err);
+            resolve(results[0].total || 0);
+          });
+        })
+      ]);
+
+      const data = Array(7).fill(0);
+      dataResult.forEach(({ dag, totaal }) => {
+        data[(dag + 5) % 7] = totaal;
+      });
+
+      res.status(200).json({
+        data,
+        currentTotal: currentTotalResult,
+        previousTotal: previousTotalResult,
+        previousWeek: previousTotalResult
+      });
+    }
+
+    else if (period === 'Maand') {
+      const dataQuery = `
+        SELECT 
+          WEEK(created_at, 1) - WEEK(DATE_SUB(CURDATE(), INTERVAL DAY(CURDATE()) - 1 DAY), 1) + 1 AS weeknummer,
+          SUM(amount) AS totaal
+        FROM puffs
+        WHERE user_id = ? AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())
+        GROUP BY weeknummer
+      `;
+      const totalQuery = `
+        SELECT SUM(amount) AS total
+        FROM puffs
+        WHERE user_id = ? AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())
+      `;
+      const previousQuery = `
+        SELECT SUM(amount) AS total
+        FROM puffs
+        WHERE user_id = ? AND MONTH(created_at) = MONTH(CURDATE() - INTERVAL 1 MONTH)
+          AND YEAR(created_at) = YEAR(CURDATE() - INTERVAL 1 MONTH)
+      `;
+
+      const [dataResult, currentTotalResult, previousTotalResult] = await Promise.all([
+        new Promise((resolve, reject) => {
+          db.query(dataQuery, [userId], (err, results) => {
+            if (err) return reject(err);
+            resolve(results);
+          });
+        }),
+        new Promise((resolve, reject) => {
+          db.query(totalQuery, [userId], (err, results) => {
+            if (err) return reject(err);
+            resolve(results[0].total || 0);
+          });
+        }),
+        new Promise((resolve, reject) => {
+          db.query(previousQuery, [userId], (err, results) => {
+            if (err) return reject(err);
+            resolve(results[0].total || 0);
+          });
+        })
+      ]);
+
+      const data = Array(4).fill(0);
+      dataResult.forEach(({ weeknummer, totaal }) => {
+        if (weeknummer >= 1 && weeknummer <= 4) {
+          data[weeknummer - 1] = totaal;
+        }
+      });
+
+      res.status(200).json({
+        data,
+        currentTotal: currentTotalResult,
+        previousTotal: previousTotalResult,
+        previousMonth: previousTotalResult
+      });
+    }
+
+    else {
+      res.status(400).json({ error: 'Ongeldige periode opgegeven.' });
+    }
+  } catch (error) {
+    console.error('Fout in /stats route:', error);
+    res.status(500).json({ error: 'Interne serverfout' });
+  }
 });
-
