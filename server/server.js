@@ -27,7 +27,7 @@ db.connect((err) => {
   }
   console.log("✅ Verbonden met MySQL-database");
 });
-const API_BASE_URL = 'http://192.168.0.105:5000'; // Vervang dit door je eigen IP-adres of domein
+const API_BASE_URL = 'http://192.168.0.130:5000'; // Vervang dit door je eigen IP-adres of domein
 // Kies een willekeurige profielfoto
 const profilePictures = [
   `${API_BASE_URL}/images/profile1.png`,

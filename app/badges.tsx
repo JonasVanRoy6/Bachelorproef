@@ -2,43 +2,21 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Modal,
   Dimensions,
+  StyleSheet,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import API_BASE_URL from '../server/config';
+import initialBadges, { Badge } from '../components/badgesData';
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 60) / 3;
-const MODAL_WIDTH = SCREEN_WIDTH * 0.9;
-
-type Badge = {
-  name: string;
-  icon: string;
-  achieved: boolean;
-  color?: string;
-};
-
-const initialBadges: Badge[] = [
-  { name: 'First Step Hero', icon: 'rocket', achieved: false },
-  { name: 'Groene Dag', icon: 'leaf', achieved: false },
-  { name: 'Perfecte Week', icon: 'calendar', achieved: false },
-  { name: 'Maand Meester', icon: 'trophy', achieved: false },
-  { name: 'Doel Starter', icon: 'bullseye', achieved: false },
-  { name: 'Doel Verpletteraar', icon: 'hand-rock-o', achieved: false },
-  { name: 'Uitdaging Behaald', icon: 'flag-checkered', achieved: false },
-  { name: 'Dagen Gewonnen', icon: 'clock-o', achieved: false },
-  { name: 'Adem Vrijheid', icon: 'cut', achieved: false },
-  { name: 'Gezonde Gewoonten', icon: 'heart', achieved: false },
-  { name: 'Sociale Kampioen', icon: 'users', achieved: false },
-  { name: 'Vape Buddy', icon: 'fingerprint', achieved: false },
-];
 
 export default function BadgesScreen() {
   const router = useRouter();
@@ -48,19 +26,16 @@ export default function BadgesScreen() {
   useEffect(() => {
     const fetchBadges = async () => {
       try {
-        // Haal de userId op vanuit AsyncStorage
         const userId = await AsyncStorage.getItem('userId');
         if (!userId) {
           console.error('Geen userId gevonden');
           return;
         }
 
-        // Doe de API-aanroep met de opgehaalde userId
         const response = await fetch(`${API_BASE_URL}/badges?userId=${userId}`);
         const data = await response.json();
         const achievedBadges = data.badges;
 
-        // Update de badgeList met de behaalde badges
         const updated = initialBadges.map((badge) => ({
           ...badge,
           achieved: achievedBadges.includes(badge.name),
@@ -75,7 +50,7 @@ export default function BadgesScreen() {
 
     fetchBadges();
   }, []);
-  
+
   const earned = badgeList.filter((b) => b.achieved).length;
   const total = badgeList.length;
   const progress = Math.round((earned / total) * 100);
@@ -105,24 +80,19 @@ export default function BadgesScreen() {
 
         <View style={styles.grid}>
           {badgeList.map((badge, index) => {
-            const achieved = badge.achieved;
-            const fullOpacity = achieved ? 1 : 0.65;
-            const iconColor = achieved ? badge.color : '#515151';
-            const circleBg =
-              achieved && iconColor ? `${iconColor}4D` : '#5151514D';
+            const iconColor = badge.achieved ? badge.color : '#515151';
+            const circleBg = badge.achieved && iconColor ? `${iconColor}4D` : '#5151514D';
 
             return (
               <TouchableOpacity
                 key={index}
-                style={[styles.badgeCard, { opacity: fullOpacity, width: CARD_WIDTH }]}
+                style={[styles.badgeCard, { opacity: badge.achieved ? 1 : 0.65, width: CARD_WIDTH }]}
                 onPress={() => setSelectedBadge(badge)}
               >
                 <View style={[styles.badgeCircle, { backgroundColor: circleBg }]}>
                   <FontAwesome name={badge.icon as any} size={20} color={iconColor} />
                 </View>
-                <Text style={styles.badgeLabel}>
-                  {badge.name.split(' ').join('\n')}
-                </Text>
+                <Text style={styles.badgeLabel}>{badge.name.split(' ').join('\n')}</Text>
               </TouchableOpacity>
             );
           })}
@@ -132,7 +102,7 @@ export default function BadgesScreen() {
       {selectedBadge && (
         <Modal transparent animationType="fade">
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalBox, { width: MODAL_WIDTH }]}>
+            <View style={styles.modalBox}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>{selectedBadge.name}</Text>
                 <TouchableOpacity onPress={() => setSelectedBadge(null)}>
@@ -144,9 +114,7 @@ export default function BadgesScreen() {
                 <View
                   style={[
                     styles.modalIconCircle,
-                    {
-                      backgroundColor: `${selectedBadge.color || '#515151'}4D`,
-                    },
+                    { backgroundColor: `${selectedBadge.color || '#515151'}4D` },
                   ]}
                 >
                   <FontAwesome
@@ -158,27 +126,23 @@ export default function BadgesScreen() {
 
                 <View style={{ flex: 1, marginLeft: 16 }}>
                   <Text style={styles.modalDate}>Verdiend op 8 jan 2025</Text>
-                  <Text style={styles.modalDescription}>
-                    Registreer en start je eerste dag in de app.
-                  </Text>
+                  <Text style={styles.modalDescription}>{selectedBadge.description}</Text>
                 </View>
               </View>
 
               <View style={styles.detailsBox}>
                 <Text style={styles.detailsTitle}>Badge Details</Text>
-                {['Open de app', 'Maak een account aan', 'Gebruik de dag voor 1 dag'].map(
-                  (item, i) => (
-                    <View key={i} style={styles.checkItem}>
-                      <FontAwesome
-                        name="check"
-                        size={14}
-                        color="#29A86E"
-                        style={{ marginRight: 8 }}
-                      />
-                      <Text style={styles.checkText}>{item}</Text>
-                    </View>
-                  )
-                )}
+                {selectedBadge.criteria?.map((item, i) => (
+                  <View key={i} style={styles.checkItem}>
+                    <FontAwesome
+                      name="check"
+                      size={14}
+                      color="#29A86E"
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text style={styles.checkText}>{item}</Text>
+                  </View>
+                ))}
               </View>
             </View>
           </View>
@@ -275,13 +239,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
+    alignItems: 'center',
+    width: '100%',
   },
   modalBox: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
-    alignSelf: 'center',
+    width: '100%',
+    alignSelf: 'stretch',
   },
   modalHeader: {
     flexDirection: 'row',
