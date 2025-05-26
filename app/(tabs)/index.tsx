@@ -42,6 +42,7 @@ const HomeScreen = () => {
   const [userName, setUserName] = useState("");
   const [totalSaved, setTotalSaved] = useState(0);
   const [puffsAvoided, setPuffsAvoided] = useState(0);
+  const [profilePicture, setProfilePicture] = useState("");
 
   useEffect(() => {
     const fetchChallenges = async () => {
@@ -84,7 +85,7 @@ const HomeScreen = () => {
 
         if (response.ok) {
           setUserName(data.firstName);
-          setTotalSaved(data.totalPuffs * 0.01);
+          setProfilePicture(data.profilePicture || 'https://via.placeholder.com/48'); // Gebruik een fallback-afbeelding
         } else {
           alert(data.error || "Fout bij het ophalen van gebruikersgegevens.");
         }
@@ -141,7 +142,7 @@ const HomeScreen = () => {
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.push("/profile")}>
             <Image
-              source={require("../../assets/images/jonas.png")}
+              source={{ uri: profilePicture }}
               style={styles.profileImage}
             />
           </TouchableOpacity>

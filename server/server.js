@@ -8,6 +8,7 @@ const PORT = 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/images', express.static('assets/images'));
 
 // Database connectie
 const db = mysql.createConnection({
@@ -26,6 +27,15 @@ db.connect((err) => {
   }
   console.log("✅ Verbonden met MySQL-database");
 });
+const API_BASE_URL = 'http://192.168.0.105:5000'; // Vervang dit door je eigen IP-adres of domein
+// Kies een willekeurige profielfoto
+const profilePictures = [
+  `${API_BASE_URL}/images/profile1.png`,
+  `${API_BASE_URL}/images/profile2.png`,
+  `${API_BASE_URL}/images/profile3.png`,
+  `${API_BASE_URL}/images/profile4.png`,
+  `${API_BASE_URL}/images/profile5.png`,
+];
 
 app.post('/puffs', (req, res) => {
   const { userId, puffs, timeOfDay } = req.body;
@@ -107,8 +117,15 @@ app.post("/register", (req, res) => {
     return res.status(400).json({ error: "Alle velden zijn verplicht" });
   }
 
-  const query = "INSERT INTO users (first_name, last_name, email, birth_date) VALUES (?, ?, ?, ?)";
-  db.query(query, [firstName, lastName, email, birthDate], (err, result) => {
+  // Kies een willekeurige profielfoto (alleen de bestandsnaam)
+  const profilePictures = ['profile1.png', 'profile2.png', 'profile3.png', 'profile4.png', 'profile5.png'];
+  const randomProfilePicture = profilePictures[Math.floor(Math.random() * profilePictures.length)];
+
+  const query = `
+    INSERT INTO users (first_name, last_name, email, birth_date, profile_picture)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+  db.query(query, [firstName, lastName, email, birthDate, randomProfilePicture], (err, result) => {
     if (err) {
       console.error("Fout bij het opslaan van gebruiker:", err);
       return res.status(500).json({ error: "Er is een fout opgetreden bij het opslaan van de gebruiker" });
@@ -431,7 +448,35 @@ app.get('/user/friends', (req, res) => {
   }
 
   const query = `
-    SELECT u.id, u.first_name AS name, u.last_name, u.email
+    SELECT u.id, u.first_name AS name, u.last_name, u.email,IFNULL(CONCAT('${API_BASE_URL}/images/', u.profile_picture), '${API_BASE_URL}/images/default.png') AS profilePicture
+    FROM friends f
+    JOIN users u ON u.id = f.friend_id
+    WHERE f.user_id = ?
+  `;
+
+  db.query(query, [userId], (err, results) => {
+    if (err) {
+      console.error('Fout bij het ophalen van vrienden:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van vrienden.' });
+    }
+
+    res.status(200).json(results);
+  });
+});
+
+app.get('/user/friends-with-photos', (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
+  const query = `
+    SELECT 
+      u.id AS friendId,
+      u.first_name AS firstName,
+      u.last_name AS lastName,
+      CONCAT('${API_BASE_URL}/images/', u.profile_picture) AS profilePicture
     FROM friends f
     JOIN users u ON u.id = f.friend_id
     WHERE f.user_id = ?
@@ -456,15 +501,22 @@ app.get('/user/search', (req, res) => {
   }
 
   const query = `
-    SELECT id, first_name AS name, last_name, email
+    SELECT 
+      id,
+      first_name AS name,
+      last_name,
+      email,
+      CONCAT('${API_BASE_URL}/images/', profile_picture) AS profilePicture
     FROM users
-    WHERE email LIKE ? OR first_name LIKE ? OR last_name LIKE ?
+    WHERE first_name LIKE ? OR last_name LIKE ? OR email LIKE ?
   `;
 
-  db.query(query, [`%${search}%`, `%${search}%`, `%${search}%`], (err, results) => {
+  const searchTerm = `%${search}%`;
+
+  db.query(query, [searchTerm, searchTerm, searchTerm], (err, results) => {
     if (err) {
-      console.error('Fout bij het ophalen van gebruikers:', err);
-      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van gebruikers.' });
+      console.error('Fout bij het zoeken naar gebruikers:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het zoeken naar gebruikers.' });
     }
 
     res.status(200).json(results);
@@ -610,40 +662,61 @@ app.post('/leaderboard/update', (req, res) => {
 });
 
 app.post('/leaderboard/create-with-friends', (req, res) => {
-  console.log('Ontvangen verzoek:', req.body);
-
   const { userId, friends } = req.body;
 
-  if (!userId || !friends || !Array.isArray(friends)) {
-    console.error('Ongeldige invoer:', { userId, friends });
-    return res.status(400).json({ error: 'Gebruiker ID en vrienden zijn verplicht.' });
+  if (!userId || !friends || !Array.isArray(friends) || friends.length === 0) {
+    return res.status(400).json({ error: 'Ongeldige invoer. Zorg ervoor dat er vrienden zijn geselecteerd.' });
   }
 
-  // Stap 1: Maak het leaderboard aan
-  const createLeaderboardQuery = `INSERT INTO leaderboards (user_id) VALUES (?)`;
-  db.query(createLeaderboardQuery, [userId], (err, result) => {
+  // Controleer of alle friend_id's bestaan in de users-tabel
+  const checkFriendsQuery = `
+    SELECT id FROM users WHERE id IN (?)
+  `;
+
+  db.query(checkFriendsQuery, [friends], (err, results) => {
     if (err) {
-      console.error('Fout bij het aanmaken van het leaderboard:', err);
-      return res.status(500).json({ error: 'Er is een fout opgetreden bij het aanmaken van het leaderboard.' });
+      console.error('Fout bij het controleren van vrienden:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het controleren van vrienden.' });
     }
 
-    const leaderboardId = result.insertId;
+    const validFriendIds = results.map(row => row.id);
+    const invalidFriendIds = friends.filter(friendId => !validFriendIds.includes(friendId));
 
-    // Stap 2: Voeg vrienden toe aan het leaderboard
-    const friendValues = friends.map(friendId => [leaderboardId, friendId, new Date()]);
-    const addFriendsQuery = `INSERT INTO leaderboard_friends (leaderboard_id, friend_id, added_at) VALUES ?`;
+    if (invalidFriendIds.length > 0) {
+      return res.status(400).json({ error: `Ongeldige friend_id's: ${invalidFriendIds.join(', ')}` });
+    }
 
-    db.query(addFriendsQuery, [friendValues], (err) => {
+    // Maak het leaderboard aan
+    const createLeaderboardQuery = `
+      INSERT INTO leaderboards (user_id, created_at)
+      VALUES (?, NOW())
+    `;
+
+    db.query(createLeaderboardQuery, [userId], (err, result) => {
       if (err) {
-        console.error('Fout bij het toevoegen van vrienden aan het leaderboard:', err);
-        return res.status(500).json({ error: 'Er is een fout opgetreden bij het toevoegen van vrienden aan het leaderboard.' });
+        console.error('Fout bij het aanmaken van het leaderboard:', err);
+        return res.status(500).json({ error: 'Er is een fout opgetreden bij het aanmaken van het leaderboard.' });
       }
 
-      res.status(201).json({ message: 'Leaderboard en vrienden succesvol aangemaakt.', leaderboardId });
+      const leaderboardId = result.insertId;
+
+      const friendValues = validFriendIds.map(friendId => [leaderboardId, friendId]);
+      const addFriendsQuery = `
+        INSERT INTO leaderboard_friends (leaderboard_id, friend_id)
+        VALUES ?
+      `;
+
+      db.query(addFriendsQuery, [friendValues], (err) => {
+        if (err) {
+          console.error('Fout bij het toevoegen van vrienden aan het leaderboard:', err);
+          return res.status(500).json({ error: 'Er is een fout opgetreden bij het toevoegen van vrienden aan het leaderboard.' });
+        }
+
+        res.status(201).json({ leaderboardId });
+      });
     });
   });
 });
-
 
 app.get('/leaderboards', (req, res) => {
   const { userId } = req.query;
@@ -875,7 +948,8 @@ app.get('/user-data', (req, res) => {
       last_name AS lastName,
       email,
       birth_date AS birthDate,
-      password -- Voeg het wachtwoord toe
+      
+       CONCAT('${API_BASE_URL}/images/', profile_picture) AS profilePicture
     FROM users
     WHERE id = ?
   `;
@@ -890,7 +964,11 @@ app.get('/user-data', (req, res) => {
       return res.status(404).json({ error: 'Gebruiker niet gevonden.' });
     }
 
-    res.status(200).json(results[0]);
+    res.status(200).json({
+      firstName: results[0].firstName,
+      email: results[0].email,
+      profilePicture: results[0].profilePicture || '../assets/images/profile1.png', // Gebruik een standaardafbeelding
+    });
   });
 });
 
@@ -1065,7 +1143,7 @@ app.get('/user-goals', async (req, res) => {
   });
 });
 
-app.get('/suggested-friends', async (req, res) => {
+app.get('/suggested-friends', (req, res) => {
   const { userId } = req.query;
 
   if (!userId) {
@@ -1073,13 +1151,17 @@ app.get('/suggested-friends', async (req, res) => {
   }
 
   const query = `
-    SELECT id, first_name AS name, email
-    FROM users
-    WHERE id != ? AND id NOT IN (
+    SELECT 
+      u.id AS friendId,
+      u.first_name AS firstName,
+      u.last_name AS lastName,
+      u.email,
+      CONCAT('${API_BASE_URL}/images/', u.profile_picture) AS profilePicture
+    FROM users u
+    WHERE u.id != ? AND u.id NOT IN (
       SELECT friend_id FROM friends WHERE user_id = ?
     )
-    ORDER BY RAND()
-    LIMIT 5
+    LIMIT 10
   `;
 
   db.query(query, [userId, userId], (err, results) => {
@@ -1253,5 +1335,43 @@ app.get('/stats', async (req, res) => {
   } catch (error) {
     console.error('Fout in /stats route:', error);
     res.status(500).json({ error: 'Interne serverfout' });
+  }
+});
+app.get('/badges', async (req, res) => {
+  const { userId } = req.query;
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
+  try {
+    const achieved = [];
+
+    // 1. Heeft gebruiker puffs toegevoegd?
+    const [puffs] = await new Promise((resolve, reject) => {
+      db.query('SELECT COUNT(*) AS count FROM puffs WHERE user_id = ?', [userId], (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    });
+    if (puffs.count > 0) achieved.push('First Step Hero');
+
+    // 2. Heeft gebruiker een doel ingesteld?
+    const [goals] = await new Promise((resolve, reject) => {
+      db.query('SELECT COUNT(*) AS count FROM user_goals WHERE user_id = ?', [userId], (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      });
+    });
+    if (goals.count > 0) achieved.push('Doel Starter');
+
+    // 3. Heeft gebruiker zich geregistreerd?
+    achieved.push('Vape Buddy'); // standaard badge voor registratie
+
+    // TODO: Voeg hier andere checks toe voor: 'Perfecte Week', 'Maand Meester', etc.
+
+    res.status(200).json({ badges: achieved });
+  } catch (error) {
+    console.error('Fout bij badgecheck:', error);
+    res.status(500).json({ error: 'Serverfout bij het ophalen van badges' });
   }
 });

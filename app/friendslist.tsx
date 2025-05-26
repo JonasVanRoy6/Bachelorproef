@@ -109,7 +109,10 @@ export default function FriendsListScreen() {
       <View style={styles.friendList}>
         {friends.map((friend, index) => (
           <View key={index} style={styles.friendCard}>
-            <Image source={{ uri: 'https://via.placeholder.com/48' }} style={styles.avatar} />
+            <Image
+              source={{ uri: friend.profilePicture || 'https://via.placeholder.com/48' }}
+              style={styles.avatar}
+            />
             <View style={styles.info}>
               <Text style={styles.name}>{friend.name} {friend.last_name}</Text>
               <Text style={styles.username}>{friend.email}</Text>

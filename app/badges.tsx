@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,9 @@ import {
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import API_BASE_URL from '../server/config';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 60) / 3;
 const MODAL_WIDTH = SCREEN_WIDTH * 0.9;
@@ -23,25 +25,57 @@ type Badge = {
   color?: string;
 };
 
-const badgeList: Badge[] = [
-  { name: 'First Step Hero', icon: 'rocket', achieved: true, color: '#29A86E' },
-  { name: 'Groene Dag', icon: 'leaf', achieved: true, color: '#29A86E' },
+const initialBadges: Badge[] = [
+  { name: 'First Step Hero', icon: 'rocket', achieved: false },
+  { name: 'Groene Dag', icon: 'leaf', achieved: false },
   { name: 'Perfecte Week', icon: 'calendar', achieved: false },
   { name: 'Maand Meester', icon: 'trophy', achieved: false },
-  { name: 'Doel Starter', icon: 'bullseye', achieved: true, color: '#FF7373' },
+  { name: 'Doel Starter', icon: 'bullseye', achieved: false },
   { name: 'Doel Verpletteraar', icon: 'hand-rock-o', achieved: false },
   { name: 'Uitdaging Behaald', icon: 'flag-checkered', achieved: false },
   { name: 'Dagen Gewonnen', icon: 'clock-o', achieved: false },
   { name: 'Adem Vrijheid', icon: 'cut', achieved: false },
   { name: 'Gezonde Gewoonten', icon: 'heart', achieved: false },
   { name: 'Sociale Kampioen', icon: 'users', achieved: false },
-  { name: 'Vape Buddy', icon: 'fingerprint', achieved: true, color: '#29A86E' },
+  { name: 'Vape Buddy', icon: 'fingerprint', achieved: false },
 ];
 
 export default function BadgesScreen() {
   const router = useRouter();
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
+  const [badgeList, setBadgeList] = useState<Badge[]>(initialBadges);
 
+  useEffect(() => {
+    const fetchBadges = async () => {
+      try {
+        // Haal de userId op vanuit AsyncStorage
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) {
+          console.error('Geen userId gevonden');
+          return;
+        }
+
+        // Doe de API-aanroep met de opgehaalde userId
+        const response = await fetch(`${API_BASE_URL}/badges?userId=${userId}`);
+        const data = await response.json();
+        const achievedBadges = data.badges;
+
+        // Update de badgeList met de behaalde badges
+        const updated = initialBadges.map((badge) => ({
+          ...badge,
+          achieved: achievedBadges.includes(badge.name),
+          color: achievedBadges.includes(badge.name) ? '#29A86E' : undefined,
+        }));
+
+        setBadgeList(updated);
+      } catch (err) {
+        console.error('Fout bij het ophalen van badges:', err);
+      }
+    };
+
+    fetchBadges();
+  }, []);
+  
   const earned = badgeList.filter((b) => b.achieved).length;
   const total = badgeList.length;
   const progress = Math.round((earned / total) * 100);

@@ -42,6 +42,7 @@ const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[
         ...friend,
         invited: false,
       }));
+      console.log('Opgehaalde vrienden:', friendsWithInvited); // Controleer de array
       setFriends(friendsWithInvited);
     } else {
       alert(data.error || 'Er is iets misgegaan bij het ophalen van vrienden.');
@@ -62,22 +63,12 @@ export default function InviteScreen() {
     fetchFriends(setFriends);
   }, []);
 
-  useEffect(() => {
-    if (params.friends) {
-      try {
-        const parsedFriends = JSON.parse(params.friends as string);
-        if (JSON.stringify(friends) !== JSON.stringify(parsedFriends)) {
-          setFriends(parsedFriends);
-        }
-      } catch (error) {
-        console.error('Fout bij het parsen van vrienden:', error);
-      }
-    }
-  }, [params.friends]);
+ 
+  
 
   const handleInvite = (friendId: number) => {
-    setFriends(prev =>
-      prev.map(friend =>
+    setFriends((prevFriends) =>
+      prevFriends.map((friend) =>
         friend.id === friendId ? { ...friend, invited: !friend.invited } : friend
       )
     );
@@ -91,7 +82,9 @@ export default function InviteScreen() {
         return;
       }
 
-      const invitedFriends = friends.filter(friend => friend.invited).map(friend => friend.id);
+      const invitedFriends = friends.filter((friend) => friend.invited).map((friend) => friend.id);
+
+      console.log('Uitgenodigde vrienden:', invitedFriends); // Controleer de array
 
       if (invitedFriends.length === 0) {
         alert('Selecteer minstens één vriend om een leaderboard aan te maken.');
@@ -149,8 +142,12 @@ export default function InviteScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.list}>
-          {filtered.map(user => (
-            <UserCard key={user.id} user={user} onToggle={() => handleInvite(user.id)} />
+          {friends.map((friend) => (
+            <UserCard
+              key={friend.id} // Zorg voor een unieke key
+              user={friend}
+              onToggle={() => handleInvite(friend.id)}
+            />
           ))}
         </ScrollView>
 
@@ -167,12 +164,12 @@ function UserCard({ user, onToggle }: { user: any; onToggle: () => void }) {
     <View style={styles.card}>
       <View style={styles.userRow}>
         <Image
-          source={user.img || { uri: 'https://via.placeholder.com/48' }}
+          source={{ uri: user.profilePicture || 'https://via.placeholder.com/48' }}
           style={styles.avatar}
         />
         <View>
-          <Text style={styles.name}>{user.name}</Text>
-          <Text style={styles.username}>{user.username}</Text>
+          <Text style={styles.name}>{user.name} {user.lastName}</Text>
+          <Text style={styles.username}>{user.email}</Text>
         </View>
       </View>
       <TouchableOpacity

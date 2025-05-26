@@ -142,7 +142,7 @@ export default function AddFriendsScreen() {
             {allUsers.map((user) => (
               <View key={user.id} style={styles.card}>
                 <Image
-                  source={{ uri: 'https://via.placeholder.com/48' }}
+                  source={{ uri: user.profilePicture || 'https://via.placeholder.com/48' }}
                   style={styles.avatar}
                 />
                 <View style={{ flex: 1 }}>

@@ -62,6 +62,8 @@ export default function ProfileScreen() {
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [suggestedFriends, setSuggestedFriends] = useState([]);
+  const [profilePicture, setProfilePicture] = useState(profileImage);
+  const [friendsList, setFriendsList] = useState([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -76,8 +78,9 @@ export default function ProfileScreen() {
         const data = await response.json();
 
         if (response.ok) {
-          setUserName(data.firstName);
-          setUserEmail(data.email);
+          console.log('Profile Picture URL:', data.profilePicture); // Log de URL
+          setProfilePicture(data.profilePicture || 'https://via.placeholder.com/150'); // Gebruik een fallback-afbeelding
+          setUserName(data.firstName); // Stel de gebruikersnaam in
         } else {
           alert(data.error || 'Er is iets misgegaan bij het ophalen van gebruikersgegevens.');
         }
@@ -114,6 +117,32 @@ export default function ProfileScreen() {
     };
 
     fetchSuggestedFriends();
+  }, []);
+
+  useEffect(() => {
+    const fetchFriends = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) {
+          alert('Kan de ingelogde gebruiker niet vinden.');
+          return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/user/friends-with-photos?userId=${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          setFriendsList(data);
+        } else {
+          alert(data.error || 'Fout bij het ophalen van vrienden.');
+        }
+      } catch (error) {
+        console.error('Fout bij het ophalen van vrienden:', error);
+        alert('Kan geen verbinding maken met de server.');
+      }
+    };
+
+    fetchFriends();
   }, []);
 
   const toggleInvite = (name: string) => {
@@ -157,7 +186,10 @@ export default function ProfileScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
-            <Image source={profileImage} style={styles.avatar} />
+            <Image
+              source={{ uri: typeof profilePicture === 'string' && profilePicture ? profilePicture : 'https://via.placeholder.com/150' }}
+              style={styles.avatar}
+            />
             <TouchableOpacity style={styles.cameraButton}>
               <FontAwesome name="camera" size={14} color="#fff" />
             </TouchableOpacity>
@@ -182,10 +214,13 @@ export default function ProfileScreen() {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.horizontalList}>
-              {friends.map((friend, index) => (
-                <View key={index} style={styles.friendItem}>
-                  <Image source={friend.img} style={styles.friendAvatar} />
-                  <Text style={styles.friendName}>{friend.name}</Text>
+              {friendsList.map((friend) => (
+                <View key={friend.friendId} style={styles.friendItem}>
+                  <Image
+                    source={{ uri: friend.profilePicture || 'https://via.placeholder.com/150' }}
+                    style={styles.friendAvatar}
+                  />
+                  <Text style={styles.friendName}>{friend.firstName} </Text>
                 </View>
               ))}
             </View>
@@ -222,22 +257,25 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Voorgestelde vrienden</Text>
           {suggestedFriends.map((sugg, index) => (
             <View
-              key={sugg.id}
+              key={sugg.friendId}
               style={[
                 styles.suggestionItem,
                 { marginTop: index === 0 ? 16 : 0, marginBottom: 16 },
               ]}
             >
-              <Image source={{ uri: sugg.img || 'https://via.placeholder.com/48' }} style={styles.suggestionAvatar} />
+              <Image
+                source={{ uri: sugg.profilePicture || 'https://via.placeholder.com/48' }}
+                style={styles.suggestionAvatar}
+              />
               <View style={{ flex: 1 }}>
-                <Text style={styles.suggestionName}>{sugg.name}</Text>
-                <Text style={styles.suggestionInfo}>
-                  {sugg.email}
+                <Text style={styles.suggestionName}>
+                  {sugg.firstName} {sugg.lastName}
                 </Text>
+                <Text style={styles.suggestionInfo}>{sugg.email}</Text>
               </View>
               <TouchableOpacity
                 style={styles.inviteButton}
-                onPress={() => addFriend(sugg.id)}
+                onPress={() => addFriend(sugg.friendId)}
               >
                 <FontAwesome name="user-plus" size={14} color="#29A86E" />
               </TouchableOpacity>
