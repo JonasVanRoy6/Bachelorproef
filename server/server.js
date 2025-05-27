@@ -8,7 +8,10 @@ const PORT = 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use('/images', express.static('assets/images'));
+
+const path = require('path');
+app.use('/images', express.static(path.join(__dirname, '..', 'assets', 'images')));
+
 
 // Database connectie
 const db = mysql.createConnection({
@@ -27,7 +30,7 @@ db.connect((err) => {
   }
   console.log("✅ Verbonden met MySQL-database");
 });
-const API_BASE_URL = 'http://192.168.0.105:5000'; // Vervang dit door je eigen IP-adres of domein
+const API_BASE_URL = 'http://192.168.0.130:5000'; // Vervang dit door je eigen IP-adres of domein
 // Kies een willekeurige profielfoto
 const profilePictures = [
   `${API_BASE_URL}/images/profile1.png`,
@@ -1426,8 +1429,8 @@ app.get('/badges', (req, res) => {
     'Uitdaging Behaald': (user) => user.challengeStarted && user.goalAmountReached,
     'Dagen Gewonnen': (user) => user.consecutiveDaysUnderGoal >= 5,
     'Gezonde Gewoonten': (user) => user.healthGoals >= 6 && user.daysUnderGoal >= 10,
-    'Financiële Focus': (user) => user.moneyGoals >= 6 en user.moneySaved >= 25,
-    'Leaderboard Legend': (user) => user.firstPlace en user.leaderboardDays >= 5,
+    'Financiële Focus': (user) => user.moneyGoals >= 6 && user.moneySaved >= 25,
+    'Leaderboard Legend': (user) => user.firstPlace && user.leaderboardDays >= 5,
     'Vrienden Strijder': (user) => user.invitedFriends >= 2,
   };
 

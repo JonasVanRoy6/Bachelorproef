@@ -48,7 +48,7 @@ const doelen = [
     title: 'Levensverandering',
     progress: 0.0016,
     progressText: '0.16%',
-    description: 'Je hebt een aanzienlijk bedrag bespaard – denk aan een vakantie of grote aankoop!',
+    description: 'Je hebt een aanzienlijk bedrag bespaard, denk aan een vakantie of grote aankoop!',
   },
 ];
 

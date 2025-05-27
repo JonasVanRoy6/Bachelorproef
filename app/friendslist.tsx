@@ -23,7 +23,12 @@ const getUserId = async (): Promise<number | null> => {
   }
 };
 
-const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[]>>, badgeEarned: boolean, setBadgeEarned: React.Dispatch<React.SetStateAction<boolean>>, setShowBadgePopup: React.Dispatch<React.SetStateAction<boolean>>) => {
+const fetchFriends = async (
+  setFriends: React.Dispatch<React.SetStateAction<any[]>>,
+  badgeEarned: boolean,
+  setBadgeEarned: React.Dispatch<React.SetStateAction<boolean>>,
+  setShowBadgePopup: React.Dispatch<React.SetStateAction<boolean>>
+) => {
   try {
     const userId = await getUserId();
 
@@ -42,10 +47,9 @@ const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[
       }));
       setFriends(friendsWithAdded);
 
-      // Controleer of de gebruiker 2 vrienden heeft en de badge nog niet is verdiend
       if (friendsWithAdded.length >= 2 && !badgeEarned) {
-        setBadgeEarned(true); // Markeer de badge als verdiend
-        setShowBadgePopup(true); // Toon de pop-up
+        setBadgeEarned(true);
+        setShowBadgePopup(true);
       }
     } else {
       alert(data.error || 'Fout bij het ophalen van vrienden.');
@@ -88,8 +92,8 @@ const removeFriendFromDatabase = async (friendId: number) => {
 export default function FriendsListScreen() {
   const router = useRouter();
   const [friends, setFriends] = useState<any[]>([]);
-  const [badgeEarned, setBadgeEarned] = useState(false); // Houd bij of de badge is verdiend
-  const [showBadgePopup, setShowBadgePopup] = useState(false); // Houd bij of de pop-up moet worden weergegeven
+  const [badgeEarned, setBadgeEarned] = useState(false);
+  const [showBadgePopup, setShowBadgePopup] = useState(false);
 
   useEffect(() => {
     fetchFriends(setFriends, badgeEarned, setBadgeEarned, setShowBadgePopup);
@@ -114,30 +118,41 @@ export default function FriendsListScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      <View style={styles.friendList}>
-        {friends.map((friend, index) => (
-          <View key={index} style={styles.friendCard}>
-            <Image
-              source={{ uri: friend.profilePicture || 'https://via.placeholder.com/48' }}
-              style={styles.avatar}
-            />
-            <View style={styles.info}>
-              <Text style={styles.name}>{friend.name} {friend.last_name}</Text>
-              <Text style={styles.username}>{friend.email}</Text>
+      {friends.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Image
+            source={require('../assets/images/ImageNoFriends.png')}
+            style={styles.emptyImage}
+            resizeMode="contain"
+          />
+          <Text style={styles.emptyTitle}>Nog geen vrienden</Text>
+          <Text style={styles.emptyText}>Maak contact met andere gebruikers</Text>
+          <TouchableOpacity style={styles.searchButton} onPress={() => router.push('/add-friends')}>
+            <Text style={styles.searchButtonText}>Vrienden Zoeken</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.friendList}>
+          {friends.map((friend, index) => (
+            <View key={index} style={styles.friendCard}>
+              <Image
+                source={{ uri: friend.profilePicture || 'https://via.placeholder.com/48' }}
+                style={styles.avatar}
+              />
+              <View style={styles.info}>
+                <Text style={styles.name}>{friend.name} {friend.last_name}</Text>
+                <Text style={styles.username}>{friend.email}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.removeButton}
+                onPress={() => removeFriend(index)}
+              >
+                <FontAwesome name="trash" size={16} color="#EB5757" />
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.removeButton}
-              onPress={() => removeFriend(index)}
-            >
-              <FontAwesome name="trash" size={16} color="#EB5757" />
-            </TouchableOpacity>
-          </View>
-        ))}
-      </View>
-
-      <TouchableOpacity style={styles.addLink} onPress={() => router.push('/add-friends')}>
-        <Text style={styles.addText}>VRIENDEN TOEVOEGEN</Text>
-      </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {showBadgePopup && (
         <View style={styles.overlay}>
@@ -274,5 +289,39 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#515151',
     textAlign: 'center',
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 40,
+    marginBottom: 24,
+  },
+  emptyImage: {
+    width: 200,
+    height: 200,
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#252525',
+    marginBottom: 4,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#515151',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  searchButton: {
+    backgroundColor: '#29A86E',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  searchButtonText: {
+    color: '#fefefe',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

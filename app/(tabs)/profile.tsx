@@ -223,7 +223,9 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Voorgestelde vrienden</Text>
+            <View style={styles.sectionHeader}>
+            <Text  style={styles.sectionTitle}>Voorgestelde vrienden</Text>
+            </View>
             {suggestedFriends.map((sugg, index) => (
               <View key={sugg.friendId} style={styles.suggestionItem}>
                 <Image source={{ uri: sugg.profilePicture || 'https://via.placeholder.com/48' }} style={styles.suggestionAvatar} />
