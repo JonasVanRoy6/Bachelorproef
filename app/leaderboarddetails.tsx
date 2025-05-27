@@ -88,7 +88,7 @@ export default function LeaderboardDetailsScreen() {
             style={[styles.card, user.user_id === userId && styles.activeCard]}
           >
             <Text style={styles.rank}>{user.rank}</Text>
-            <Image source={require('../assets/images/andres.png')} style={styles.avatar} />
+            <Image source={{ uri: user.profilePicture }} style={styles.avatar} />
             <View style={styles.userInfo}>
               <Text style={styles.name}>{user.name}</Text>
               <Text style={styles.days}>{user.total_puffs} puffs</Text>

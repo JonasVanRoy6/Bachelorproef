@@ -23,7 +23,7 @@ const getUserId = async (): Promise<number | null> => {
   }
 };
 
-const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[]>>) => {
+const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[]>>, badgeEarned: boolean, setBadgeEarned: React.Dispatch<React.SetStateAction<boolean>>, setShowBadgePopup: React.Dispatch<React.SetStateAction<boolean>>) => {
   try {
     const userId = await getUserId();
 
@@ -41,6 +41,12 @@ const fetchFriends = async (setFriends: React.Dispatch<React.SetStateAction<any[
         added: false,
       }));
       setFriends(friendsWithAdded);
+
+      // Controleer of de gebruiker 2 vrienden heeft en de badge nog niet is verdiend
+      if (friendsWithAdded.length >= 2 && !badgeEarned) {
+        setBadgeEarned(true); // Markeer de badge als verdiend
+        setShowBadgePopup(true); // Toon de pop-up
+      }
     } else {
       alert(data.error || 'Fout bij het ophalen van vrienden.');
     }
@@ -82,9 +88,11 @@ const removeFriendFromDatabase = async (friendId: number) => {
 export default function FriendsListScreen() {
   const router = useRouter();
   const [friends, setFriends] = useState<any[]>([]);
+  const [badgeEarned, setBadgeEarned] = useState(false); // Houd bij of de badge is verdiend
+  const [showBadgePopup, setShowBadgePopup] = useState(false); // Houd bij of de pop-up moet worden weergegeven
 
   useEffect(() => {
-    fetchFriends(setFriends);
+    fetchFriends(setFriends, badgeEarned, setBadgeEarned, setShowBadgePopup);
   }, []);
 
   const removeFriend = async (index: number) => {
@@ -130,6 +138,27 @@ export default function FriendsListScreen() {
       <TouchableOpacity style={styles.addLink} onPress={() => router.push('/add-friends')}>
         <Text style={styles.addText}>VRIENDEN TOEVOEGEN</Text>
       </TouchableOpacity>
+
+      {showBadgePopup && (
+        <View style={styles.overlay}>
+          <View style={styles.popup}>
+            <View style={styles.popupHeader}>
+              <Text style={styles.popupTitle}>Proficiat!</Text>
+              <TouchableOpacity onPress={() => setShowBadgePopup(false)}>
+                <FontAwesome name="close" size={24} color="#29A86E" />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.popupContent}>
+              <View style={[styles.popupIconCircle, { backgroundColor: '#DFF5E5' }]}>
+                <FontAwesome name="user-plus" size={36} color="#29A86E" />
+              </View>
+              <Text style={styles.popupDesc}>
+                Je hebt de badge "Vrienden Strijder" verdiend door 2 vrienden toe te voegen!
+              </Text>
+            </View>
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -205,5 +234,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#29A86E',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  popup: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+    alignItems: 'center',
+  },
+  popupHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 16,
+  },
+  popupTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#252525',
+  },
+  popupContent: {
+    alignItems: 'center',
+  },
+  popupIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  popupDesc: {
+    fontSize: 14,
+    color: '#515151',
+    textAlign: 'center',
   },
 });

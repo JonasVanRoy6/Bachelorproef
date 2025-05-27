@@ -32,14 +32,16 @@ export default function BadgesScreen() {
           return;
         }
 
+        // Haal de verdiende badges op van de backend
         const response = await fetch(`${API_BASE_URL}/badges?userId=${userId}`);
         const data = await response.json();
-        const achievedBadges = data.badges;
+        const achievedBadges = data.badges; // Lijst met verdiende badges
 
+        // Update de badges op basis van de verdiende badges
         const updated = initialBadges.map((badge) => ({
           ...badge,
-          achieved: achievedBadges.includes(badge.name),
-          color: achievedBadges.includes(badge.name) ? '#29A86E' : undefined,
+          achieved: achievedBadges.includes(badge.name), // Controleer of de badge is verdiend
+          color: achievedBadges.includes(badge.name) ? '#29A86E' : undefined, // Groen als verdiend
         }));
 
         setBadgeList(updated);
@@ -51,9 +53,9 @@ export default function BadgesScreen() {
     fetchBadges();
   }, []);
 
-  const earned = badgeList.filter((b) => b.achieved).length;
-  const total = badgeList.length;
-  const progress = Math.round((earned / total) * 100);
+  const earned = badgeList.filter((b) => b.achieved).length; // Aantal verdiende badges
+  const total = badgeList.length; // Totaal aantal badges
+  const progress = Math.round((earned / total) * 100); // Bereken het percentage
 
   return (
     <>
@@ -80,8 +82,8 @@ export default function BadgesScreen() {
 
         <View style={styles.grid}>
           {badgeList.map((badge, index) => {
-            const iconColor = badge.achieved ? badge.color : '#515151';
-            const circleBg = badge.achieved && iconColor ? `${iconColor}4D` : '#5151514D';
+            const iconColor = badge.achieved ? badge.color : '#515151'; // Groen als verdiend
+            const circleBg = badge.achieved && iconColor ? `${iconColor}4D` : '#5151514D'; // Achtergrondkleur
 
             return (
               <TouchableOpacity

@@ -27,7 +27,7 @@ db.connect((err) => {
   }
   console.log("✅ Verbonden met MySQL-database");
 });
-const API_BASE_URL = 'http://192.168.0.130:5000'; // Vervang dit door je eigen IP-adres of domein
+const API_BASE_URL = 'http://192.168.0.105:5000'; // Vervang dit door je eigen IP-adres of domein
 // Kies een willekeurige profielfoto
 const profilePictures = [
   `${API_BASE_URL}/images/profile1.png`,
@@ -121,17 +121,37 @@ app.post("/register", (req, res) => {
   const profilePictures = ['profile1.png', 'profile2.png', 'profile3.png', 'profile4.png', 'profile5.png'];
   const randomProfilePicture = profilePictures[Math.floor(Math.random() * profilePictures.length)];
 
-  const query = `
+  const insertUserQuery = `
     INSERT INTO users (first_name, last_name, email, birth_date, profile_picture)
     VALUES (?, ?, ?, ?, ?)
   `;
-  db.query(query, [firstName, lastName, email, birthDate, randomProfilePicture], (err, result) => {
+
+  db.query(insertUserQuery, [firstName, lastName, email, birthDate, randomProfilePicture], (err, result) => {
     if (err) {
       console.error("Fout bij het opslaan van gebruiker:", err);
       return res.status(500).json({ error: "Er is een fout opgetreden bij het opslaan van de gebruiker" });
     }
 
-    res.status(201).json({ message: "Gebruiker succesvol geregistreerd", userId: result.insertId });
+    const userId = result.insertId; // Haal de ID van de nieuw aangemaakte gebruiker op
+
+    // Voeg een nieuwe rij toe aan de `user_progress`-tabel
+    const insertProgressQuery = `
+      INSERT INTO user_progress (
+        user_id, appOpened, accountCreated, firstDayUnderGoal, daysUnderGoal,
+        consecutiveDaysUnderGoal, noDaysOverGoal, sustainableGoals, healthGoals,
+        mentalGoals, challengeStarted, goalAmountReached, moneyGoals, moneySaved,
+        firstPlace, leaderboardDays, invitedFriends
+      ) VALUES (?, TRUE, TRUE, FALSE, 0, 0, FALSE, 0, 0, 0, FALSE, FALSE, 0, 0.00, FALSE, 0, 0)
+    `;
+
+    db.query(insertProgressQuery, [userId], (err) => {
+      if (err) {
+        console.error("Fout bij het aanmaken van de gebruikersvoortgang:", err);
+        return res.status(500).json({ error: "Er is een fout opgetreden bij het aanmaken van de gebruikersvoortgang." });
+      }
+
+      res.status(201).json({ message: "Gebruiker succesvol geregistreerd", userId });
+    });
   });
 });
 
@@ -388,31 +408,80 @@ app.post('/user/add-friend', (req, res) => {
           return res.status(500).json({ error: 'Er is een fout opgetreden bij het toevoegen van de vriend.' });
         }
 
-        res.status(201).json({ message: 'Vriend succesvol toegevoegd.' });
+        // Update het aantal vrienden in de `user_progress`-tabel
+        const updateProgressQuery = `
+          UPDATE user_progress
+          SET invitedFriends = invitedFriends + 1
+          WHERE user_id = ?
+        `;
+
+        db.query(updateProgressQuery, [userId], (err) => {
+          if (err) {
+            console.error('Fout bij het bijwerken van de gebruikersvoortgang:', err);
+            return res.status(500).json({ error: 'Er is een fout opgetreden bij het bijwerken van de gebruikersvoortgang.' });
+          }
+
+          res.status(201).json({ message: 'Vriend succesvol toegevoegd en voortgang bijgewerkt.' });
+        });
       });
     });
   });
 });
 
-app.post('/add-friend', async (req, res) => {
+app.post('/add-friend', (req, res) => {
   const { userId, friendId } = req.body;
 
   if (!userId || !friendId) {
     return res.status(400).json({ error: 'Gebruiker ID en vriend ID zijn verplicht.' });
   }
 
-  const query = `
+  // Voeg de vriend toe
+  const addFriendQuery = `
     INSERT INTO friends (user_id, friend_id)
     VALUES (?, ?)
   `;
 
-  db.query(query, [userId, friendId], (err, results) => {
+  db.query(addFriendQuery, [userId, friendId], (err) => {
     if (err) {
       console.error('Fout bij het toevoegen van de vriend:', err);
       return res.status(500).json({ error: 'Er is een fout opgetreden bij het toevoegen van de vriend.' });
     }
 
-    res.status(201).json({ message: 'Vriend succesvol toegevoegd.' });
+    // Controleer het aantal vrienden van de gebruiker
+    const countFriendsQuery = `
+      SELECT COUNT(*) AS friendCount
+      FROM friends
+      WHERE user_id = ?
+    `;
+
+    db.query(countFriendsQuery, [userId], (err, results) => {
+      if (err) {
+        console.error('Fout bij het tellen van vrienden:', err);
+        return res.status(500).json({ error: 'Er is een fout opgetreden bij het tellen van vrienden.' });
+      }
+
+      const friendCount = results[0].friendCount;
+
+      // Controleer of de gebruiker de badge "Vrienden Strijder" heeft verdiend
+      if (friendCount >= 2) {
+        const earnBadgeQuery = `
+          INSERT INTO user_badges (user_id, badge_name, earned_date)
+          VALUES (?, 'Vrienden Strijder', NOW())
+          ON DUPLICATE KEY UPDATE earned_date = earned_date
+        `;
+
+        db.query(earnBadgeQuery, [userId], (err) => {
+          if (err) {
+            console.error('Fout bij het toekennen van de badge:', err);
+            return res.status(500).json({ error: 'Er is een fout opgetreden bij het toekennen van de badge.' });
+          }
+
+          return res.status(201).json({ message: 'Vriend toegevoegd en badge verdiend!', newBadge: 'Vrienden Strijder' });
+        });
+      } else {
+        return res.status(201).json({ message: 'Vriend succesvol toegevoegd.' });
+      }
+    });
   });
 });
 
@@ -760,17 +829,18 @@ app.get('/leaderboard/details', (req, res) => {
   }
 
   const query = `
-    SELECT 
-      u.id AS user_id,
-      u.first_name AS name,
-      COALESCE(SUM(p.puffs_count), 0) AS total_puffs,
-      RANK() OVER (ORDER BY COALESCE(SUM(p.puffs_count), 0) ASC) AS rank
-    FROM leaderboard_friends lf
-    JOIN users u ON u.id = lf.friend_id
-    LEFT JOIN puffs p ON p.user_id = u.id
-    WHERE lf.leaderboard_id = ?
-    GROUP BY u.id, u.first_name
-  `;
+  SELECT 
+    u.id AS user_id,
+    u.first_name AS name,
+    IFNULL(CONCAT('${API_BASE_URL}/images/', u.profile_picture), '${API_BASE_URL}/images/default.png') AS profilePicture,
+    COALESCE(SUM(p.puffs_count), 0) AS total_puffs,
+    RANK() OVER (ORDER BY COALESCE(SUM(p.puffs_count), 0) ASC) AS rank
+  FROM leaderboard_friends lf
+  JOIN users u ON u.id = lf.friend_id
+  LEFT JOIN puffs p ON p.user_id = u.id
+  WHERE lf.leaderboard_id = ?
+  GROUP BY u.id, u.first_name, u.profile_picture
+`;
 
   db.query(query, [leaderboardId], (err, results) => {
     if (err) {
@@ -804,6 +874,7 @@ app.get('/leaderboard/details-with-rank', (req, res) => {
     SELECT 
       u.id AS user_id,
       u.first_name AS name,
+       IFNULL(CONCAT('${API_BASE_URL}/images/', u.profile_picture), '${API_BASE_URL}/images/default.png') AS profilePicture,
       COALESCE(SUM(p.amount), 0) AS total_puffs,
       RANK() OVER (ORDER BY COALESCE(SUM(p.amount), 0) ASC) AS rank
     FROM (
@@ -1337,41 +1408,65 @@ app.get('/stats', async (req, res) => {
     res.status(500).json({ error: 'Interne serverfout' });
   }
 });
-app.get('/badges', async (req, res) => {
+app.get('/badges', (req, res) => {
   const { userId } = req.query;
+
   if (!userId) {
     return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
   }
 
-  try {
-    const achieved = [];
+  // Voorbeeldcriteria
+  const criteria = {
+    'First Step Hero': (user) => user.appOpened && user.accountCreated && user.firstDayUnderGoal,
+    'Groene Dag': (user) => user.daysUnderGoal >= 1,
+    'Perfecte Week': (user) => user.consecutiveDaysUnderGoal >= 7,
+    'Maand Meester': (user) => user.daysUnderGoal >= 30 && user.noDaysOverGoal,
+    'Doel Beuker': (user) => user.sustainableGoals >= 3 && user.healthGoals >= 3 && user.mentalGoals >= 3,
+    'Mentale Meester': (user) => user.mentalGoals >= 6 && user.activeDays >= 10,
+    'Uitdaging Behaald': (user) => user.challengeStarted && user.goalAmountReached,
+    'Dagen Gewonnen': (user) => user.consecutiveDaysUnderGoal >= 5,
+    'Gezonde Gewoonten': (user) => user.healthGoals >= 6 && user.daysUnderGoal >= 10,
+    'Financiële Focus': (user) => user.moneyGoals >= 6 en user.moneySaved >= 25,
+    'Leaderboard Legend': (user) => user.firstPlace en user.leaderboardDays >= 5,
+    'Vrienden Strijder': (user) => user.invitedFriends >= 2,
+  };
 
-    // 1. Heeft gebruiker puffs toegevoegd?
-    const [puffs] = await new Promise((resolve, reject) => {
-      db.query('SELECT COUNT(*) AS count FROM puffs WHERE user_id = ?', [userId], (err, result) => {
-        if (err) return reject(err);
-        resolve(result);
-      });
-    });
-    if (puffs.count > 0) achieved.push('First Step Hero');
+  // Haal gebruikersgegevens op
+  db.query('SELECT * FROM user_progress WHERE user_id = ?', [userId], (err, results) => {
+    if (err) {
+      console.error('Fout bij het ophalen van gebruikersgegevens:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden.' });
+    }
 
-    // 2. Heeft gebruiker een doel ingesteld?
-    const [goals] = await new Promise((resolve, reject) => {
-      db.query('SELECT COUNT(*) AS count FROM user_goals WHERE user_id = ?', [userId], (err, result) => {
-        if (err) return reject(err);
-        resolve(result);
-      });
-    });
-    if (goals.count > 0) achieved.push('Doel Starter');
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Geen gegevens gevonden voor deze gebruiker.' });
+    }
 
-    // 3. Heeft gebruiker zich geregistreerd?
-    achieved.push('Vape Buddy'); // standaard badge voor registratie
+    const user = results[0];
+    const achievedBadges = Object.keys(criteria).filter((badge) => criteria[badge](user));
 
-    // TODO: Voeg hier andere checks toe voor: 'Perfecte Week', 'Maand Meester', etc.
+    res.status(200).json({ badges: achievedBadges });
+  });
+});
 
-    res.status(200).json({ badges: achieved });
-  } catch (error) {
-    console.error('Fout bij badgecheck:', error);
-    res.status(500).json({ error: 'Serverfout bij het ophalen van badges' });
+app.post('/earn-badge', (req, res) => {
+  const { userId, badgeName } = req.body;
+
+  if (!userId || !badgeName) {
+    return res.status(400).json({ error: 'Gebruiker ID en badge naam zijn verplicht.' });
   }
+
+  const query = `
+    INSERT INTO user_badges (user_id, badge_name, earned_date)
+    VALUES (?, ?, NOW())
+  `;
+
+  db.query(query, [userId, badgeName], (err, result) => {
+    if (err) {
+      console.error('Fout bij het opslaan van de verdiende badge:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het opslaan van de badge.' });
+    }
+
+    res.status(201).json({ message: 'Badge succesvol verdiend.' });
+  });
 });

@@ -89,7 +89,7 @@ const initialBadges: Badge[] = [
     name: 'Vrienden Strijder',
     icon: 'user-plus',
     achieved: false,
-    description: 'Je hebt vrienden uitgenodigd en samen gestreden op het leaderboard.',
+    description: 'Je hebt vrienden toegevoegd',
     criteria: ['Minstens 2 vrienden uitgenodigd'],
   },
 ];

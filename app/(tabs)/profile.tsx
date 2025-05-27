@@ -15,6 +15,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../../server/config';
+import initialBadges from '../../components/badgesData';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -45,6 +46,7 @@ export default function ProfileScreen() {
   const [suggestedFriends, setSuggestedFriends] = useState([]);
   const [profilePicture, setProfilePicture] = useState(profileImage);
   const [friendsList, setFriendsList] = useState([]);
+  const [completedBadges, setCompletedBadges] = useState([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -103,6 +105,35 @@ export default function ProfileScreen() {
       }
     };
     fetchFriends();
+  }, []);
+
+  useEffect(() => {
+    const fetchCompletedBadges = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) return alert('Kan de ingelogde gebruiker niet vinden.');
+        const response = await fetch(`${API_BASE_URL}/badges?userId=${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          // Combineer behaalde badges met volledige badgegegevens
+          const achievedBadges = data.badges; // Namen van behaalde badges
+          const completed = initialBadges
+            .filter((badge) => achievedBadges.includes(badge.name)) // Filter behaalde badges
+            .sort((a, b) => new Date(b.date) - new Date(a.date)) // Sorteer op datum
+            .slice(0, 3); // Neem de laatste 3 badges
+
+          setCompletedBadges(completed);
+        } else {
+          alert(data.error || 'Fout bij het ophalen van badges.');
+        }
+      } catch (error) {
+        console.error('Fout bij het ophalen van badges:', error);
+        alert('Kan geen verbinding maken met de server.');
+      }
+    };
+
+    fetchCompletedBadges();
   }, []);
 
   const addFriend = async (friendId) => {
@@ -178,13 +209,13 @@ export default function ProfileScreen() {
             </View>
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={styles.horizontalList}>
-                {badges.map((badge, index) => (
+                {completedBadges.map((badge, index) => (
                   <TouchableOpacity
                     key={index}
-                    style={[styles.badge, { backgroundColor: badge.background }]}
+                    style={[styles.badge, { backgroundColor: badge.background || '#DFF5E5' }]} // Groene achtergrond
                     onPress={() => setSelectedBadge(badge)}
                   >
-                    <FontAwesome name={badge.icon} size={20} color={badge.color} />
+                    <FontAwesome name={badge.icon} size={20} color={badge.color || '#29A86E'} /> {/* Groen icoon */}
                   </TouchableOpacity>
                 ))}
               </View>
@@ -447,5 +478,13 @@ const styles = StyleSheet.create({
   checkText: {
     fontSize: 14,
     color: '#515151',
+  },
+  badge: {
+    width: 64, // Grotere badge
+    height: 64,
+    borderRadius: 32, // Ronde badge
+    marginRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
