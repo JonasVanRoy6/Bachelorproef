@@ -215,7 +215,7 @@ const HomeScreen = () => {
                     style={[
                       styles.progressBarFg,
                       {
-                        width: `${(item.huidig / (item.bedrag * 100)) * 100}%`,
+                        width: `${Math.min((totalSaved / item.bedrag) * 100, 100)}%`, // Correcte berekening
                         backgroundColor: kleuren[item.thema] || "#29A86E",
                       },
                     ]}

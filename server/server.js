@@ -1150,6 +1150,13 @@ app.get('/calculate-savings', (req, res) => {
     LIMIT 1
   `;
 
+  // Query om het totaal aantal puffs van vandaag te berekenen uit de `puffs`-tabel
+  const puffsTodayQuery = `
+    SELECT SUM(amount) AS puffs_today
+    FROM puffs
+    WHERE user_id = ? AND DATE(created_at) = CURDATE()
+  `;
+
   // Query om het totale aantal puffs (`total_puffs`) te berekenen uit de `puffs`-tabel
   const puffsQuery = `
     SELECT SUM(amount) AS total_puffs
@@ -1180,20 +1187,32 @@ app.get('/calculate-savings', (req, res) => {
 
       const currentUsage = goalsResults.length > 0 ? goalsResults[0].current_usage : 0;
 
-      db.query(puffsQuery, [userId], (err, puffsResults) => {
+      db.query(puffsTodayQuery, [userId], (err, puffsTodayResults) => {
         if (err) {
-          console.error('Fout bij het ophalen van puffs:', err);
-          return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van puffs.' });
+          console.error('Fout bij het ophalen van puffs van vandaag:', err);
+          return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van puffs van vandaag.' });
         }
 
-        const totalPuffs = puffsResults[0].total_puffs || 0;
+        const puffsToday = puffsTodayResults[0].puffs_today || 0;
 
-        // Bereken geld bespaard
-        const totalSavings = ((currentUsage * daysSinceCreated) - totalPuffs) * 0.01; // Vermenigvuldig met 0,01
+        db.query(puffsQuery, [userId], (err, puffsResults) => {
+          if (err) {
+            console.error('Fout bij het ophalen van puffs:', err);
+            return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van puffs.' });
+          }
 
-        res.status(200).json({
-          totalSavings: totalSavings.toFixed(2),
-          puffsAvoided: totalPuffs,
+          const totalPuffs = puffsResults[0].total_puffs || 0;
+
+          // Bereken geld bespaard
+          const totalSavings = ((currentUsage * daysSinceCreated) - totalPuffs) * 0.01; // Vermenigvuldig met 0,01
+
+          // Bereken puffs vermeden vandaag
+          const puffsAvoidedToday = currentUsage - puffsToday; // Begin opnieuw op current_usage en trek puffs van vandaag af
+
+          res.status(200).json({
+            totalSavings: totalSavings.toFixed(2), // Geld bespaard
+            puffsAvoided: puffsAvoidedToday, // Puffs vermeden vandaag
+          });
         });
       });
     });

@@ -181,7 +181,7 @@ const Challenges = () => {
                   style={[
                     styles.progressBarFill,
                     {
-                      width: `${actieve.bedrag ? (actieve.huidig / (actieve.bedrag * 100)) * 100 : 0}%`,
+                      width: `${Math.min((totalSaved / actieve.bedrag) * 100, 100)}%`, // Correcte berekening
                       backgroundColor: kleuren[actieve.thema],
                     },
                   ]}
@@ -231,7 +231,7 @@ const Challenges = () => {
                       style={[
                         styles.progressBarFill,
                         {
-                          width: `${item.bedrag ? (item.huidig / (item.bedrag * 100)) * 100 : 0}%`,
+                          width: `${Math.min((totalSaved / item.bedrag) * 100, 100)}%`, // Correcte berekening
                           backgroundColor: kleuren[item.thema],
                         },
                       ]}
