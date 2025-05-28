@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,52 +7,96 @@ import {
   TouchableOpacity,
   StatusBar,
   Dimensions,
+  
 } from 'react-native';
 import { FontAwesome, FontAwesome5, Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_BASE_URL from '../server/config';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PADDING = SCREEN_WIDTH * 0.06;
 
-const doelen = [
-  {
-    icon: <Feather name="trash-2" size={20} color="#3ED9E2" />,
-    title: 'Kleine Impact',
-    progress: 0.28,
-    progressText: '28%',
-    description: 'Je hebt al een bijdrage geleverd door minder vape-afval te produceren.',
-  },
-  {
-    icon: <FontAwesome5 name="recycle" size={20} color="#3ED9E2" />,
-    title: 'Schonere omgeving',
-    progress: 0.08,
-    progressText: '8%',
-    description: 'Je voorkomt dat schadelijke stoffen in de natuur belanden.',
-  },
-  {
-    icon: <Feather name="shopping-bag" size={20} color="#3ED9E2" />,
-    title: 'Duurzame keuze',
-    progress: 0.02,
-    progressText: '2%',
-    description: 'Je helpt de vraag naar wegwerp-vapes en nicotineproducten te verminderen.',
-  },
-  {
-    icon: <Feather name="wind" size={20} color="#3ED9E2" />,
-    title: 'Frisse lucht',
-    progress: 0.006,
-    progressText: '0.6%',
-    description: 'Je vermindert luchtvervuiling door minder uitstoot en afval.',
-  },
-  {
-    icon: <FontAwesome5 name="globe" size={20} color="#3ED9E2" />,
-    title: 'Groene toekomst',
-    progress: 0.0016,
-    progressText: '0.16%',
-    description: 'Je draagt bij aan een schonere, duurzamere planeet.',
-  },
-];
+ // Replace with your actual API base URL
 
 const DuurzaamheidDoelen = () => {
+  const [progressData, setProgressData] = useState([]);
+  const [averageProgress, setAverageProgress] = useState(0); // Houd het gemiddelde bij
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) {
+          alert('Kan de ingelogde gebruiker niet vinden.');
+          return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/user/progress?userId=${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          const createdAt = new Date(data.createdAt);
+          const today = new Date();
+          const daysSinceCreated = Math.floor((today - createdAt) / (1000 * 60 * 60 * 24)); // Bereken aantal dagen
+
+          // Doelen met dynamische voortgang
+          const doelen = [
+            {
+              icon: <Feather name="trash-2" size={20} color="#3ED9E2" />,
+              title: 'Kleine Impact',
+              progressPerDay: 50, // 100% / 2 dagen
+              description: 'Je hebt al een bijdrage geleverd door minder vape-afval te produceren.',
+            },
+            {
+              icon: <FontAwesome5 name="recycle" size={20} color="#3ED9E2" />,
+              title: 'Schonere omgeving',
+              progressPerDay: 20, // 100% / 5 dagen
+              description: 'Je voorkomt dat schadelijke stoffen in de natuur belanden.',
+            },
+            {
+              icon: <Feather name="shopping-bag" size={20} color="#3ED9E2" />,
+              title: 'Duurzame keuze',
+              progressPerDay: 10, // 100% / 10 dagen
+              description: 'Je helpt de vraag naar wegwerp-vapes en nicotineproducten te verminderen.',
+            },
+            {
+              icon: <Feather name="wind" size={20} color="#3ED9E2" />,
+              title: 'Frisse lucht',
+              progressPerDay: 5, // 100% / 20 dagen
+              description: 'Je vermindert luchtvervuiling door minder uitstoot en afval.',
+            },
+            {
+              icon: <FontAwesome5 name="globe" size={20} color="#3ED9E2" />,
+              title: 'Groene toekomst',
+              progressPerDay: 2.5, // 100% / 40 dagen
+              description: 'Je draagt bij aan een schonere, duurzamere planeet.',
+            },
+          ];
+
+          // Bereken voortgang voor elk doel
+          const updatedProgress = doelen.map((doel) => {
+            const progress = Math.min(daysSinceCreated * doel.progressPerDay, 100); // Maximaal 100%
+            return { ...doel, progress, progressText: `${Math.round(progress)}%` };
+          });
+
+          setProgressData(updatedProgress);
+
+          // Bereken het gemiddelde van alle doelen
+          const totalProgress = updatedProgress.reduce((sum, doel) => sum + doel.progress, 0);
+          const average = totalProgress / updatedProgress.length;
+          setAverageProgress(Math.round(average)); // Rond het gemiddelde af
+        } else {
+          alert(data.error || 'Fout bij het ophalen van voortgang.');
+        }
+      } catch (error) {
+        console.error('Fout bij het ophalen van voortgang:', error);
+        alert('Kan geen verbinding maken met de server.');
+      }
+    };
+
+    fetchProgress();
+  }, []);
+
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#3ED9E2" barStyle="light-content" />
@@ -64,20 +108,22 @@ const DuurzaamheidDoelen = () => {
         <View style={{ width: 24 }} />
       </View>
 
+      {/* Progress bar bovenaan */}
       <View style={styles.progressCard}>
         <View style={styles.progressHeader}>
-          <Text style={styles.progressLabel}>Jouw Progressie</Text>
+          <Text style={styles.progressLabel}>Totale voortgang</Text>
           <View style={styles.progressPercentage}>
-            <Text style={styles.progressPercentageText}>25%</Text>
+            <Text style={styles.progressPercentageText}>{averageProgress}%</Text>
           </View>
         </View>
         <View style={styles.progressBarBackground}>
-          <View style={[styles.progressBarForeground, { width: '25%' }]} />
+          <View style={[styles.progressBarForeground, { width: `${averageProgress}%` }]} />
         </View>
       </View>
 
+      {/* Doelen */}
       <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-        {doelen.map((doel, index) => (
+        {progressData.map((doel, index) => (
           <View key={index} style={styles.doelCard}>
             <View style={styles.doelHeader}>
               <View style={styles.iconContainer}>{doel.icon}</View>
@@ -85,7 +131,7 @@ const DuurzaamheidDoelen = () => {
               <Text style={styles.percentage}>{doel.progressText}</Text>
             </View>
             <View style={styles.barBackground}>
-              <View style={[styles.barFill, { width: `${doel.progress * 100}%` }]} />
+              <View style={[styles.barFill, { width: `${doel.progress}%` }]} />
             </View>
             <Text style={styles.description}>{doel.description}</Text>
             <View style={styles.divider} />

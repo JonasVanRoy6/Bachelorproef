@@ -30,7 +30,7 @@ db.connect((err) => {
   }
   console.log("✅ Verbonden met MySQL-database");
 });
-const API_BASE_URL = 'http://192.168.0.130:5000'; // Vervang dit door je eigen IP-adres of domein
+const API_BASE_URL = 'http://192.168.0.105:5000'; // Vervang dit door je eigen IP-adres of domein
 // Kies een willekeurige profielfoto
 const profilePictures = [
   `${API_BASE_URL}/images/profile1.png`,
@@ -1127,15 +1127,22 @@ app.post('/delete-account', (req, res) => {
   });
 });
 
-app.get('/calculate-savings', async (req, res) => {
+app.get('/calculate-savings', (req, res) => {
   const { userId } = req.query;
 
   if (!userId) {
     return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
   }
 
-  // Query om de huidige gebruiksdoelen op te halen
-  const userGoalsQuery = `
+  // Query om `created_at` op te halen uit de `users`-tabel
+  const userQuery = `
+    SELECT created_at
+    FROM users
+    WHERE id = ?
+  `;
+
+  // Query om `current_usage` op te halen uit de `user_goals`-tabel
+  const goalsQuery = `
     SELECT current_usage
     FROM user_goals
     WHERE user_id = ?
@@ -1143,49 +1150,54 @@ app.get('/calculate-savings', async (req, res) => {
     LIMIT 1
   `;
 
-  // Query om het totaal aantal ingevoerde puffs op te halen
-  const totalPuffsQuery = `
+  // Query om het totale aantal puffs (`total_puffs`) te berekenen uit de `puffs`-tabel
+  const puffsQuery = `
     SELECT SUM(amount) AS total_puffs
     FROM puffs
     WHERE user_id = ?
   `;
 
-  try {
-    // Haal de huidige gebruiksdoelen op
-    db.query(userGoalsQuery, [userId], (err, goalsResults) => {
+  // Voer de queries uit
+  db.query(userQuery, [userId], (err, userResults) => {
+    if (err) {
+      console.error('Fout bij het ophalen van gebruikersgegevens:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van gebruikersgegevens.' });
+    }
+
+    if (userResults.length === 0) {
+      return res.status(404).json({ error: 'Gebruiker niet gevonden.' });
+    }
+
+    const createdAt = new Date(userResults[0].created_at);
+    const today = new Date();
+    const daysSinceCreated = Math.floor((today - createdAt) / (1000 * 60 * 60 * 24)); // Bereken aantal dagen
+
+    db.query(goalsQuery, [userId], (err, goalsResults) => {
       if (err) {
         console.error('Fout bij het ophalen van gebruikersdoelen:', err);
         return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van gebruikersdoelen.' });
       }
 
-      if (goalsResults.length === 0) {
-        return res.status(404).json({ error: 'Geen doelen gevonden voor deze gebruiker.' });
-      }
+      const currentUsage = goalsResults.length > 0 ? goalsResults[0].current_usage : 0;
 
-      const { current_usage } = goalsResults[0];
-
-      // Haal het totaal aantal ingevoerde puffs op
-      db.query(totalPuffsQuery, [userId], (err, puffsResults) => {
+      db.query(puffsQuery, [userId], (err, puffsResults) => {
         if (err) {
           console.error('Fout bij het ophalen van puffs:', err);
           return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van puffs.' });
         }
 
-        const totalPuffs = puffsResults[0]?.total_puffs || 0;
+        const totalPuffs = puffsResults[0].total_puffs || 0;
 
-        // Bereken het verschil tussen current_usage en ingevoerde puffs
-        const puffsAvoided = Math.max(0, current_usage - totalPuffs);
+        // Bereken geld bespaard
+        const totalSavings = ((currentUsage * daysSinceCreated) - totalPuffs) * 0.01; // Vermenigvuldig met 0,01
 
         res.status(200).json({
-          puffsAvoided,
-          totalSavings: (puffsAvoided * 0.01).toFixed(2), // Bespaarde geldwaarde
+          totalSavings: totalSavings.toFixed(2),
+          puffsAvoided: totalPuffs,
         });
       });
     });
-  } catch (error) {
-    console.error('Fout bij het berekenen van besparingen:', error);
-    res.status(500).json({ error: 'Er is een fout opgetreden bij het berekenen van besparingen.' });
-  }
+  });
 });
 
 app.get('/user-goals', async (req, res) => {
@@ -1471,5 +1483,33 @@ app.post('/earn-badge', (req, res) => {
     }
 
     res.status(201).json({ message: 'Badge succesvol verdiend.' });
+  });
+});
+
+app.get('/user/progress', (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
+  const query = `
+    SELECT created_at
+    FROM users
+    WHERE id = ?
+  `;
+
+  db.query(query, [userId], (err, results) => {
+    if (err) {
+      console.error('Fout bij het ophalen van gebruikersgegevens:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van gebruikersgegevens.' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Gebruiker niet gevonden.' });
+    }
+
+    const createdAt = results[0].created_at;
+    res.status(200).json({ createdAt });
   });
 });

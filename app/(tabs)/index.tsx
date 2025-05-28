@@ -81,13 +81,18 @@ const HomeScreen = () => {
     const fetchSavings = async () => {
       const userId = await AsyncStorage.getItem("userId");
       if (!userId) return;
+
       const response = await fetch(`${API_BASE_URL}/calculate-savings?userId=${userId}`);
       const data = await response.json();
+
       if (response.ok) {
-        setTotalSaved(data.totalSavings);
-        setPuffsAvoided(data.puffsAvoided);
+        setTotalSaved(data.totalSavings); // Geld bespaard
+        setPuffsAvoided(data.puffsAvoided); // Puffs vermeden
+      } else {
+        alert(data.error || "Fout bij het ophalen van besparingen.");
       }
     };
+
     fetchSavings();
   }, []);
 

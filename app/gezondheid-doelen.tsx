@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { FontAwesome, FontAwesome5, Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import API_BASE_URL from '../server/config';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const PADDING = SCREEN_WIDTH * 0.06;
 
@@ -18,41 +19,80 @@ const doelen = [
   {
     icon: <FontAwesome5 name="lungs" size={20} color="#29A86E" />,
     title: 'Beter ademen',
-    progress: 0.28,
-    progressText: '28%',
     description: 'Na 48 uur begint je ademhaling te verbeteren door minder vapen.',
+    progressPerDay: 5, // 10% per 2 dagen = 5% per dag
   },
   {
     icon: <Feather name="zap" size={20} color="#29A86E" />,
     title: 'Meer energie',
-    progress: 0.57,
-    progressText: '57%',
     description: 'Je voelt je fitter en hebt meer energie in je dagelijkse activiteiten.',
+    progressPerDay: 10, // 10% per dag
   },
   {
     icon: <FontAwesome5 name="smile" size={20} color="#29A86E" />,
     title: 'Smaak en geur herstellen',
-    progress: 0.08,
-    progressText: '8%',
     description: 'Na een week merk je dat je smaak- en reukvermogen terugkomen.',
+    progressPerDay: 15, // 15% per dag
   },
   {
     icon: <FontAwesome5 name="ban" size={20} color="#29A86E" />,
     title: 'Minder cravings',
-    progress: 0.04,
-    progressText: '4%',
     description: 'Na twee weken zijn de meeste nicotine-cravings verdwenen.',
+    progressPerDay: 7.14, // 100% / 14 dagen = 7.14% per dag
   },
   {
     icon: <FontAwesome5 name="heartbeat" size={20} color="#29A86E" />,
     title: 'Longgezondheid verbeteren',
-    progress: 0.006,
-    progressText: '0.6%',
     description: 'Je longcapaciteit herstelt zich binnen enkele maanden.',
+    progressPerDay: 1.11, // 100% / 90 dagen = 1.11% per dag
   },
 ];
 
 const GezondheidDoelen = () => {
+  const [progressData, setProgressData] = useState([]);
+  const [averageProgress, setAverageProgress] = useState(0); // Houd het gemiddelde bij
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      try {
+        const userId = await AsyncStorage.getItem('userId');
+        if (!userId) {
+          alert('Kan de ingelogde gebruiker niet vinden.');
+          return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/user/progress?userId=${userId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          const createdAt = new Date(data.createdAt);
+          const today = new Date();
+          const daysSinceCreated = Math.floor((today - createdAt) / (1000 * 60 * 60 * 24)); // Bereken aantal dagen
+
+          // Bereken voortgang voor elk doel
+          const updatedProgress = doelen.map((doel) => {
+            const progress = Math.min(daysSinceCreated * doel.progressPerDay, 100); // Maximaal 100%
+            return { ...doel, progress, progressText: `${Math.round(progress)}%` };
+          });
+
+          setProgressData(updatedProgress);
+
+          // Bereken het gemiddelde van alle doelen
+          const totalProgress = updatedProgress.reduce((sum, doel) => sum + doel.progress, 0);
+          const average = totalProgress / updatedProgress.length;
+          setAverageProgress(Math.round(average)); // Rond het gemiddelde af
+        } else {
+          alert(data.error || 'Fout bij het ophalen van voortgang.');
+        }
+      } catch (error) {
+        console.error('Fout bij het ophalen van voortgang:', error);
+        alert('Kan geen verbinding maken met de server.');
+      }
+    };
+
+    fetchProgress();
+  }, []);
+
   return (
     <View style={styles.container}>
       <StatusBar backgroundColor="#29A86E" barStyle="light-content" />
@@ -64,20 +104,22 @@ const GezondheidDoelen = () => {
         <View style={{ width: 24 }} />
       </View>
 
+      {/* Progress bar bovenaan */}
       <View style={styles.progressCard}>
         <View style={styles.progressHeader}>
-          <Text style={styles.progressLabel}>Jouw Progressie</Text>
+          <Text style={styles.progressLabel}>Totale voortgang</Text>
           <View style={styles.progressPercentage}>
-            <Text style={styles.progressPercentageText}>25%</Text>
+            <Text style={styles.progressPercentageText}>{averageProgress}%</Text>
           </View>
         </View>
         <View style={styles.progressBarBackground}>
-          <View style={[styles.progressBarForeground, { width: '25%' }]} />
+          <View style={[styles.progressBarForeground, { width: `${averageProgress}%` }]} />
         </View>
       </View>
 
+      {/* Doelen */}
       <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-        {doelen.map((doel, index) => (
+        {progressData.map((doel, index) => (
           <View key={index} style={styles.doelCard}>
             <View style={styles.doelHeader}>
               <View style={styles.iconContainer}>{doel.icon}</View>
@@ -85,7 +127,7 @@ const GezondheidDoelen = () => {
               <Text style={styles.percentage}>{doel.progressText}</Text>
             </View>
             <View style={styles.barBackground}>
-              <View style={[styles.barFill, { width: `${doel.progress * 100}%` }]} />
+              <View style={[styles.barFill, { width: `${doel.progress}%` }]} />
             </View>
             <Text style={styles.description}>{doel.description}</Text>
             <View style={styles.divider} />
