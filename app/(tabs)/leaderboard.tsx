@@ -84,6 +84,42 @@ const LeaderboardScreen = () => {
     }
   };
 
+  const joinLeaderboard = async () => {
+    try {
+      const userId = await getUserId();
+      if (!userId) {
+        alert('Kan de ingelogde gebruiker niet vinden.');
+        return;
+      }
+
+      if (!search) {
+        alert('Voer een leaderboard naam in.');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/leaderboard/join`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, leaderboardName: search }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Je bent succesvol toegevoegd aan het leaderboard!');
+        setSearch(''); // Reset de zoekbalk
+        fetchLeaderboards(); // Update de lijst met leaderboards
+      } else {
+        alert(data.error || 'Er is een fout opgetreden.');
+      }
+    } catch (error) {
+      console.error('Fout bij het joinen van het leaderboard:', error);
+      alert('Kan geen verbinding maken met de server.');
+    }
+  };
+
   const filtered = leaderboards.filter(lb =>
     search.length > 0 ? lb.name.toLowerCase().includes(search.toLowerCase()) : lb.joined
   );
@@ -127,7 +163,7 @@ const LeaderboardScreen = () => {
           <FontAwesome name="search" size={16} color="#515151" style={{ marginRight: 8 }} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Geef een leaderboardcode in"
+            placeholder="Geef een leaderboardnaam in"
             value={search}
             onChangeText={setSearch}
             placeholderTextColor="#515151"
@@ -138,6 +174,9 @@ const LeaderboardScreen = () => {
             </TouchableOpacity>
           )}
         </View>
+        <TouchableOpacity style={styles.joinButton} onPress={joinLeaderboard}>
+          <Text style={styles.joinButtonText}>Join</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -233,6 +272,18 @@ const styles = StyleSheet.create({
   clearText: {
     fontWeight: 'bold',
     color: '#29A86E',
+  },
+  joinButton: {
+    backgroundColor: '#29A86E',
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  joinButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 

@@ -806,20 +806,27 @@ app.get('/leaderboards', (req, res) => {
       COALESCE(SUM(p.amount), 0) AS total_puffs,
       RANK() OVER (PARTITION BY l.id ORDER BY COALESCE(SUM(p.amount), 0) ASC) AS rank
     FROM leaderboards l
-    JOIN leaderboard_friends lf ON l.id = lf.leaderboard_id
-    JOIN users u ON u.id = lf.friend_id
+    LEFT JOIN leaderboard_friends lf ON l.id = lf.leaderboard_id
+    LEFT JOIN users u ON u.id = lf.friend_id
     LEFT JOIN puffs p ON p.user_id = u.id
-    WHERE l.user_id = ?
+    WHERE l.id IN (
+      SELECT leaderboard_id
+      FROM leaderboard_friends
+      WHERE friend_id = ?
+      UNION
+      SELECT id
+      FROM leaderboards
+      WHERE user_id = ?
+    )
     GROUP BY l.id, l.name, u.id, u.first_name
   `;
 
-  db.query(query, [userId], (err, results) => {
+  db.query(query, [userId, userId], (err, results) => {
     if (err) {
       console.error('Fout bij het ophalen van leaderboards:', err);
       return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van leaderboards.' });
     }
 
-    console.log('Serverresultaten:', results); // Controleer de resultaten
     res.status(200).json(results);
   });
 });
@@ -855,6 +862,48 @@ app.get('/leaderboard/details', (req, res) => {
   });
 });
 
+app.post('/leaderboard/join', (req, res) => {
+  const { userId, leaderboardName } = req.body;
+
+  if (!userId || !leaderboardName) {
+    return res.status(400).json({ error: 'Gebruiker ID en leaderboard naam zijn verplicht.' });
+  }
+
+  // Zoek het leaderboard op basis van de naam
+  const findLeaderboardQuery = `
+    SELECT id AS leaderboard_id
+    FROM leaderboards
+    WHERE name = ?
+  `;
+
+  // Voeg de gebruiker toe aan het leaderboard
+  const addUserToLeaderboardQuery = `
+    INSERT INTO leaderboard_friends (leaderboard_id, friend_id)
+    VALUES (?, ?)
+  `;
+
+  db.query(findLeaderboardQuery, [leaderboardName], (err, results) => {
+    if (err) {
+      console.error('Fout bij het zoeken van het leaderboard:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het zoeken van het leaderboard.' });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ error: 'Leaderboard niet gevonden.' });
+    }
+
+    const leaderboardId = results[0].leaderboard_id;
+
+    db.query(addUserToLeaderboardQuery, [leaderboardId, userId], (err) => {
+      if (err) {
+        console.error('Fout bij het toevoegen van de gebruiker aan het leaderboard:', err);
+        return res.status(500).json({ error: 'Er is een fout opgetreden bij het toevoegen van de gebruiker aan het leaderboard.' });
+      }
+
+      res.status(200).json({ message: 'Succesvol toegevoegd aan het leaderboard.' });
+    });
+  });
+});
 
 // Test endpoint
 app.get("/test", (req, res) => {
@@ -1530,5 +1579,62 @@ app.get('/user/progress', (req, res) => {
 
     const createdAt = results[0].created_at;
     res.status(200).json({ createdAt });
+  });
+});
+
+app.get('/calculate-streak', (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
+  }
+
+  // Query om `goal_usage` op te halen uit de `user_goals`-tabel
+  const goalUsageQuery = `
+    SELECT goal_usage
+    FROM user_goals
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+
+  // Query om het aantal puffs per dag te berekenen
+  const dailyPuffsQuery = `
+    SELECT DATE(created_at) AS puff_date, SUM(amount) AS daily_puffs
+    FROM puffs
+    WHERE user_id = ?
+    GROUP BY DATE(created_at)
+    ORDER BY puff_date DESC
+  `;
+
+  db.query(goalUsageQuery, [userId], (err, goalResults) => {
+    if (err) {
+      console.error('Fout bij het ophalen van goal_usage:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van goal_usage.' });
+    }
+
+    if (goalResults.length === 0) {
+      return res.status(404).json({ error: 'Geen doelen gevonden voor deze gebruiker.' });
+    }
+
+    const goalUsage = goalResults[0].goal_usage;
+
+    db.query(dailyPuffsQuery, [userId], (err, puffsResults) => {
+      if (err) {
+        console.error('Fout bij het ophalen van dagelijkse puffs:', err);
+        return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van dagelijkse puffs.' });
+      }
+
+      let streak = 0;
+
+      for (const day of puffsResults) {
+        if (day.daily_puffs > goalUsage) {
+          break; // Reset streak als de puffs van een dag boven de goal_usage komen
+        }
+        streak++;
+      }
+
+      res.status(200).json({ streak });
+    });
   });
 });

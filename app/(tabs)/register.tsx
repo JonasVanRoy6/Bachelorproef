@@ -7,8 +7,11 @@ import {
   StyleSheet,
   Alert,
   Dimensions,
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
 import API_BASE_URL from '../../server/config';
@@ -20,9 +23,14 @@ export default function RegisterScreen() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const router = useRouter();
 
   const handleRegister = async () => {
-    const data = { firstName, lastName, email, birthDate };
+    // Converteer geboortedatum naar JJJJ-MM-DD
+    const [day, month, year] = birthDate.split('/');
+    const formattedBirthDate = `${year}-${month}-${day}`;
+
+    const data = { firstName, lastName, email, birthDate: formattedBirthDate };
 
     try {
       const response = await fetch(`${API_BASE_URL}/register`, {
@@ -31,16 +39,24 @@ export default function RegisterScreen() {
         body: JSON.stringify(data),
       });
 
+      const responseData = await response.json();
+
       if (response.ok) {
-        const responseData = await response.json();
+        console.log('Succesvolle registratie:', responseData);
+
+        // Sla de gebruikersgegevens op in AsyncStorage
         await AsyncStorage.setItem('userId', responseData.userId.toString());
         await AsyncStorage.setItem('userName', `${data.firstName} ${data.lastName}`);
         await AsyncStorage.setItem('userEmail', data.email);
+
+        // Toon een succesmelding
         Alert.alert('Succes', 'Gebruiker succesvol geregistreerd!');
+
+        // Navigeer naar het volgende scherm
+        router.push('/password'); // Gebruik router.push om naar het volgende scherm te navigeren
       } else {
-        const errorData = await response.json();
-        console.error(errorData);
-        Alert.alert('Fout', 'Er is een probleem opgetreden bij het registreren.');
+        console.error('Fout bij registratie:', responseData);
+        Alert.alert('Fout', responseData.error || 'Er is een probleem opgetreden bij het registreren.');
       }
     } catch (error) {
       console.error('Fout bij het maken van de HTTP-aanroep:', error);
@@ -49,95 +65,123 @@ export default function RegisterScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Back button */}
-      <View style={styles.backButton}>
-        <FontAwesome name="arrow-left" size={24} color="#fff" />
-      </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0} // Zorgt voor extra ruimte boven het toetsenbord
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled" // Zorgt ervoor dat tikken buiten het toetsenbord het toetsenbord sluit
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Back button */}
+        <View style={styles.backButton}>
+          <FontAwesome name="arrow-left" size={24} color="#fff" />
+        </View>
 
-      {/* Title */}
-      <Text style={styles.title}>Welkom bij Breezd,{"\n"}registreer je.</Text>
+        {/* Title */}
+        <Text style={styles.title}>Welkom bij Breezd,{"\n"}registreer je.</Text>
 
-      {/* Social buttons */}
-      <View style={styles.socialButtons}>
-        <TouchableOpacity style={styles.socialButton}>
-          <FontAwesome name="facebook" size={24} color="#1877F2" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.socialButton}>
-          <FontAwesome name="google" size={24} color="#EA4335" />
-        </TouchableOpacity>
-      </View>
+        {/* Social buttons */}
+        <View style={styles.socialButtons}>
+          <TouchableOpacity style={styles.socialButton}>
+            <FontAwesome name="facebook" size={24} color="#1877F2" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.socialButton}>
+            <FontAwesome name="google" size={24} color="#EA4335" />
+          </TouchableOpacity>
+        </View>
 
-      <Text style={styles.orText}>Of, registreren met email...</Text>
+        <Text style={styles.orText}>Of, registreren met email...</Text>
 
-      {/* Input row */}
-      <View style={styles.inputRow}>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Voornaam</Text>
+        {/* Input row */}
+        <View style={styles.inputRow}>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Voornaam</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Voornaam"
+              placeholderTextColor="#515151"
+              value={firstName}
+              onChangeText={setFirstName}
+            />
+          </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Achternaam</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Achternaam"
+              placeholderTextColor="#515151"
+              value={lastName}
+              onChangeText={setLastName}
+            />
+          </View>
+        </View>
+
+        <View style={styles.inputGroupFull}>
+          <Text style={styles.label}>E-mailadres</Text>
           <TextInput
             style={styles.input}
-            placeholder="Voornaam"
+            placeholder="E-mailadres"
+            keyboardType="email-address"
             placeholderTextColor="#515151"
-            value={firstName}
-            onChangeText={setFirstName}
+            value={email}
+            onChangeText={setEmail}
           />
         </View>
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Achternaam</Text>
+
+        <View style={styles.inputGroupFull}>
+          <Text style={styles.label}>Geboortedatum</Text>
           <TextInput
             style={styles.input}
-            placeholder="Achternaam"
+            placeholder="DD / MM / JJJJ"
             placeholderTextColor="#515151"
-            value={lastName}
-            onChangeText={setLastName}
+            value={birthDate}
+            keyboardType="numeric" // Numeriek toetsenbord
+            onChangeText={(text) => {
+              // Verwijder niet-numerieke karakters
+              let formattedText = text.replace(/[^0-9]/g, '');
+
+              // Voeg `/` toe op de juiste posities
+              if (formattedText.length > 2 && formattedText.length <= 4) {
+                formattedText = `${formattedText.slice(0, 2)}/${formattedText.slice(2)}`;
+              } else if (formattedText.length > 4) {
+                formattedText = `${formattedText.slice(0, 2)}/${formattedText.slice(2, 4)}/${formattedText.slice(4, 8)}`;
+              }
+
+              // Beperk de lengte tot 10 karakters (DD/MM/JJJJ)
+              if (formattedText.length > 10) {
+                formattedText = formattedText.slice(0, 10);
+              }
+
+              setBirthDate(formattedText);
+            }}
           />
         </View>
-      </View>
 
-      <View style={styles.inputGroupFull}>
-        <Text style={styles.label}>E-mailadres</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="E-mailadres"
-          keyboardType="email-address"
-          placeholderTextColor="#515151"
-          value={email}
-          onChangeText={setEmail}
-        />
-      </View>
-
-      <View style={styles.inputGroupFull}>
-        <Text style={styles.label}>Geboortedatum</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="DD / MM / JJJJ"
-          placeholderTextColor="#515151"
-          value={birthDate}
-          onChangeText={setBirthDate}
-        />
-      </View>
-
-      {/* Volgende knop */}
-      <Link href="/password" asChild>
-        <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
-          <Text style={styles.registerButtonText}>Volgende</Text>
-        </TouchableOpacity>
-      </Link>
-
-      {/* Log in */}
-      <Text style={styles.loginText}>
-        Al een account?{' '}
-        <Link href="/login" asChild>
-          <Text style={styles.loginLink}>Log in</Text>
+        {/* Volgende knop */}
+        <Link href="/password" asChild>
+          <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
+            <Text style={styles.registerButtonText}>Volgende</Text>
+          </TouchableOpacity>
         </Link>
-      </Text>
-    </View>
+
+        {/* Log in */}
+        <Text style={styles.loginText}>
+          Al een account?{' '}
+          <Link href="/login" asChild>
+            <Text style={styles.loginLink}>Log in</Text>
+          </Link>
+        </Text>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1, // Zorgt ervoor dat de inhoud scrollbaar blijft
     paddingTop: 48,
     paddingHorizontal: 36,
     backgroundColor: '#fff',

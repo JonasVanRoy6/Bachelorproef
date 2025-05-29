@@ -48,6 +48,7 @@ const HomeScreen = () => {
   const [totalSaved, setTotalSaved] = useState(0);
   const [puffsAvoided, setPuffsAvoided] = useState(0);
   const [profilePicture, setProfilePicture] = useState("");
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     const fetchChallenges = async () => {
@@ -96,6 +97,24 @@ const HomeScreen = () => {
     fetchSavings();
   }, []);
 
+  useEffect(() => {
+    const fetchStreak = async () => {
+      const userId = await AsyncStorage.getItem("userId");
+      if (!userId) return;
+
+      const response = await fetch(`${API_BASE_URL}/calculate-streak?userId=${userId}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setStreak(data.streak); // Zet de streak in de state
+      } else {
+        alert(data.error || "Fout bij het ophalen van de streak.");
+      }
+    };
+
+    fetchStreak();
+  }, []);
+
   const handleGoalPress = (route) => {
     router.push(`/${route}`);
   };
@@ -124,7 +143,7 @@ const HomeScreen = () => {
           <View style={styles.streakCard}>
             <View style={styles.streakHeader}>
               <Text style={styles.streakTitle}>Huidige Streak</Text>
-              <Text style={styles.streakCount}>16 dagen</Text>
+              <Text style={styles.streakCount}>{streak} dagen</Text>
             </View>
             <View style={styles.statsRow}>
               <View style={[styles.statBox, { backgroundColor: "rgba(41, 168, 110, 0.15)" }]}>
