@@ -14,16 +14,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../../server/config';
+import ImageNoLeaderboards from '../../assets/images/ImageNoLeaderboards.png'; // 👈 Toegevoegd
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
-const avatarMap = {
-  'andres.png': require('../../assets/images/andres.png'),
-  'jens.png': require('../../assets/images/jens.png'),
-  'jonas.png': require('../../assets/images/jonas.png'),
-  'arno.png': require('../../assets/images/arno.png'),
-  'lotte.png': require('../../assets/images/lotte.png'),
-};
 
 export const getUserId = async () => {
   try {
@@ -109,8 +102,8 @@ const LeaderboardScreen = () => {
 
       if (response.ok) {
         alert('Je bent succesvol toegevoegd aan het leaderboard!');
-        setSearch(''); // Reset de zoekbalk
-        fetchLeaderboards(); // Update de lijst met leaderboards
+        setSearch('');
+        fetchLeaderboards();
       } else {
         alert(data.error || 'Er is een fout opgetreden.');
       }
@@ -140,21 +133,29 @@ const LeaderboardScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {uniqueLeaderboards.map((lb, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.joinedCard}
-            onPress={() => router.push(`/leaderboarddetails?leaderboardId=${lb.id}`)}
-          >
-            <View style={styles.cardTop}>
-              <Text style={styles.cardTitle}>{lb.name || 'Naam ontbreekt'}</Text>
-              <View style={styles.rankBadge}>
-                <Text style={styles.rankText}>#{lb.rank || '-'}</Text>
+        {uniqueLeaderboards.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Image source={ImageNoLeaderboards} style={styles.emptyImage} resizeMode="contain" />
+            <Text style={styles.emptyTitle}>Nog geen leaderboards</Text>
+            <Text style={styles.emptyText}>Join of maak een leaderboard om de strijd aan te gaan!</Text>
+          </View>
+        ) : (
+          uniqueLeaderboards.map((lb, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.joinedCard}
+              onPress={() => router.push(`/leaderboarddetails?leaderboardId=${lb.id}`)}
+            >
+              <View style={styles.cardTop}>
+                <Text style={styles.cardTitle}>{lb.name || 'Naam ontbreekt'}</Text>
+                <View style={styles.rankBadge}>
+                  <Text style={styles.rankText}>#{lb.rank || '-'}</Text>
+                </View>
               </View>
-            </View>
-            <Text style={styles.cardSub}>{lb.participants} deelnemers</Text>
-          </TouchableOpacity>
-        ))}
+              <Text style={styles.cardSub}>{lb.participants} deelnemers</Text>
+            </TouchableOpacity>
+          ))
+        )}
 
         <View style={styles.sectionDivider} />
         <Text style={styles.sectionTitle}>Join een leaderboard</Text>
@@ -284,6 +285,31 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+
+  // ✅ Empty state styles
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 32,
+    marginBottom: 24,
+    paddingHorizontal: 20,
+  },
+  emptyImage: {
+    width: 160,
+    height: 160,
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#252525',
+    marginBottom: 6,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#515151',
+    textAlign: 'center',
   },
 });
 

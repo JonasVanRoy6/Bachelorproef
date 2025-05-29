@@ -13,9 +13,9 @@ export default function Slide3() {
   return (
     <View style={styles.container}>
       <Image
-        source={require('../../assets/images/journey3.png')}
+        source={require('../../assets/images/ImageSlide3.png')}
         style={styles.image}
-        resizeMode="cover"
+        resizeMode="contain"
       />
 
       <View style={styles.textWrapper}>
@@ -33,16 +33,20 @@ const styles = StyleSheet.create({
     width: width,
     flex: 1,
     backgroundColor: '#FFFFFF',
+    alignItems: 'center',
   },
   image: {
-    width: '100%',
-    height: height * 0.5,
+    width: width * 0.8,
+    height: height * 0.4,
+    marginTop: 40,
+    marginHorizontal: 20,
   },
   textWrapper: {
     flex: 1,
     paddingHorizontal: 36,
     paddingTop: 40,
     justifyContent: 'flex-start',
+    width: '100%',
   },
   title: {
     fontSize: 24,

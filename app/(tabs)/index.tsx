@@ -20,18 +20,17 @@ import {
 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import API_BASE_URL from "../../server/config";
+import EmptyImage from "../../assets/images/ImageNoChallenges.png"; // 📸 Zorg dat dit pad klopt
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const ICONS = {
   reizen: <FontAwesome5 name="suitcase-rolling" size={24} color="#29A86E" />,
   kleding: <FontAwesome5 name="tshirt" size={24} color="#3ED9E2" />,
-  voeding: (
-    <MaterialCommunityIcons name="silverware-fork-knife" size={24} color="#FF7373" />
-  ),
+  voeding: <MaterialCommunityIcons name="silverware-fork-knife" size={24} color="#FF7373" />,
   elektronica: <FontAwesome5 name="mobile-alt" size={24} color="#7061BB" />,
   cadeau: <FontAwesome name="gift" size={24} color="#FFCD0F" />,
-} as const;
+};
 
 const kleuren = {
   reizen: "#29A86E",
@@ -54,9 +53,9 @@ const HomeScreen = () => {
     const fetchChallenges = async () => {
       const userId = await AsyncStorage.getItem("userId");
       if (!userId) return;
-      const response = await fetch(`${API_BASE_URL}/challenges?userId=${userId}`);
-      const data = await response.json();
-      if (response.ok) {
+      const res = await fetch(`${API_BASE_URL}/challenges?userId=${userId}`);
+      const data = await res.json();
+      if (res.ok) {
         setActiveChallenge(data[0]);
         setChallenges(data);
       }
@@ -68,9 +67,9 @@ const HomeScreen = () => {
     const fetchUserData = async () => {
       const userId = await AsyncStorage.getItem("userId");
       if (!userId) return;
-      const response = await fetch(`${API_BASE_URL}/user-data?userId=${userId}`);
-      const data = await response.json();
-      if (response.ok) {
+      const res = await fetch(`${API_BASE_URL}/user-data?userId=${userId}`);
+      const data = await res.json();
+      if (res.ok) {
         setUserName(data.firstName);
         setProfilePicture(data.profilePicture || "https://via.placeholder.com/48");
       }
@@ -82,18 +81,13 @@ const HomeScreen = () => {
     const fetchSavings = async () => {
       const userId = await AsyncStorage.getItem("userId");
       if (!userId) return;
-
-      const response = await fetch(`${API_BASE_URL}/calculate-savings?userId=${userId}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setTotalSaved(data.totalSavings); // Geld bespaard
-        setPuffsAvoided(data.puffsAvoided); // Puffs vermeden
-      } else {
-        alert(data.error || "Fout bij het ophalen van besparingen.");
+      const res = await fetch(`${API_BASE_URL}/calculate-savings?userId=${userId}`);
+      const data = await res.json();
+      if (res.ok) {
+        setTotalSaved(data.totalSavings);
+        setPuffsAvoided(data.puffsAvoided);
       }
     };
-
     fetchSavings();
   }, []);
 
@@ -101,17 +95,10 @@ const HomeScreen = () => {
     const fetchStreak = async () => {
       const userId = await AsyncStorage.getItem("userId");
       if (!userId) return;
-
-      const response = await fetch(`${API_BASE_URL}/calculate-streak?userId=${userId}`);
-      const data = await response.json();
-
-      if (response.ok) {
-        setStreak(data.streak); // Zet de streak in de state
-      } else {
-        alert(data.error || "Fout bij het ophalen van de streak.");
-      }
+      const res = await fetch(`${API_BASE_URL}/calculate-streak?userId=${userId}`);
+      const data = await res.json();
+      if (res.ok) setStreak(data.streak);
     };
-
     fetchStreak();
   }, []);
 
@@ -138,7 +125,7 @@ const HomeScreen = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Streak Card op juiste hoogte */}
+        {/* STREAK */}
         <View style={styles.streakCardContainer}>
           <View style={styles.streakCard}>
             <View style={styles.streakHeader}>
@@ -147,34 +134,21 @@ const HomeScreen = () => {
             </View>
             <View style={styles.statsRow}>
               <View style={[styles.statBox, { backgroundColor: "rgba(41, 168, 110, 0.15)" }]}>
-                <Text style={[styles.statLabel, { color: "#29A86E", textAlign: "center" }]}>
-                  Geld{"\n"}Bespaard
-                </Text>
-                <Text style={[styles.statValue, { color: "#29A86E", textAlign: "center" }]}>
-                  €{totalSaved}
-                </Text>
+                <Text style={[styles.statLabel, { color: "#29A86E", textAlign: "center" }]}>Geld{"\n"}Bespaard</Text>
+                <Text style={[styles.statValue, { color: "#29A86E", textAlign: "center" }]}>€{totalSaved}</Text>
               </View>
               <View style={[styles.statBox, { backgroundColor: "rgba(112, 97, 187, 0.15)" }]}>
-                <Text style={[styles.statLabel, { color: "#7061BB", textAlign: "center" }]}>
-                  Puffs{"\n"}Vermeden
-                </Text>
-                <Text style={[styles.statValue, { color: "#7061BB", textAlign: "center" }]}>
-                  {puffsAvoided}
-                </Text>
+                <Text style={[styles.statLabel, { color: "#7061BB", textAlign: "center" }]}>Puffs{"\n"}Vermeden</Text>
+                <Text style={[styles.statValue, { color: "#7061BB", textAlign: "center" }]}>{puffsAvoided}</Text>
               </View>
             </View>
           </View>
         </View>
 
-        {/* Content met border radius */}
+        {/* DOELEN + UITDAGINGEN */}
         <View style={styles.contentContainer}>
           <Text style={styles.sectionTitle}>Mijn Doelen</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingLeft: 16, paddingRight: 32 }}
-            style={{ marginTop: 16 }}
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingLeft: 16, paddingRight: 32 }} style={{ marginTop: 16 }}>
             {[
               { label: "Gezondheid", icon: <Feather name="heart" size={24} color="#29A86E" />, color: "#29A86E", route: "gezondheid-doelen" },
               { label: "Mentaal", icon: <MaterialIcons name="psychology" size={24} color="#7061BB" />, color: "#7061BB", route: "mentaal-doelen" },
@@ -184,14 +158,7 @@ const HomeScreen = () => {
               <TouchableOpacity
                 key={index}
                 onPress={() => handleGoalPress(item.route)}
-                style={[
-                  styles.goalTab,
-                  {
-                    backgroundColor: item.color + "26",
-                    marginRight: index === 3 ? 0 : 16,
-                    width: SCREEN_WIDTH * 0.32,
-                  },
-                ]}
+                style={[styles.goalTab, { backgroundColor: item.color + "26", marginRight: index === 3 ? 0 : 16, width: SCREEN_WIDTH * 0.32 }]}
               >
                 {item.icon}
                 <Text style={[styles.goalText, { color: item.color }]}>{item.label}</Text>
@@ -199,6 +166,7 @@ const HomeScreen = () => {
             ))}
           </ScrollView>
 
+          {/* Uitdagingen */}
           <View style={{ marginTop: 24 }}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Mijn Uitdagingen</Text>
@@ -207,45 +175,62 @@ const HomeScreen = () => {
               </TouchableOpacity>
             </View>
 
-            {challenges.map((item, index) => (
-              <View
-                key={item.challenge_id}
-                style={[styles.challengeCard, index === 1 ? { marginBottom: 16 } : null]}
-              >
-                <View style={styles.challengeHeader}>
-                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                    {ICONS[item.thema] || <FontAwesome name="question" size={24} color="#29A86E" />}
-                    <Text style={styles.challengeTitle}>{item.titel}</Text>
-                  </View>
-                  <Text
-                    style={[
-                      styles.statusTag,
-                      {
-                        backgroundColor: activeChallenge?.challenge_id === item.challenge_id ? "#E6F5EC" : "#EAEAEA",
-                        color: activeChallenge?.challenge_id === item.challenge_id ? "#29A86E" : "#8C8C8C",
-                      },
-                    ]}
-                  >
-                    {activeChallenge?.challenge_id === item.challenge_id ? "Actief" : "Niet-Actief"}
-                  </Text>
-                </View>
-                <View style={styles.progressBarBg}>
-                  <View
-                    style={[
-                      styles.progressBarFg,
-                      {
-                        width: `${Math.min((totalSaved / item.bedrag) * 100, 100)}%`, // Correcte berekening
-                        backgroundColor: kleuren[item.thema] || "#29A86E",
-                      },
-                    ]}
-                  />
-                </View>
-                <View style={styles.goalRow}>
-                  <Text style={styles.goalLabel}>€{totalSaved} gespaard</Text>
-                  <Text style={styles.goalLabel}>Doel: €{item.bedrag}</Text>
-                </View>
+            {challenges.length === 0 ? (
+              <View style={{ alignItems: "center", marginTop: 32 }}>
+                <Image source={EmptyImage} style={{ width: 140, height: 140, marginBottom: 16 }} resizeMode="contain" />
+                <Text style={{ fontSize: 16, fontWeight: "600", color: "#252525", marginBottom: 4 }}>Geen uitdagingen</Text>
+                <Text style={{ fontSize: 14, color: "#515151", textAlign: "center", marginBottom: 12 }}>
+                  Begin vandaag nog met je eerste uitdaging.
+                </Text>
+                <TouchableOpacity
+                  onPress={() => router.push("/challenges-add")}
+                  style={{
+                    backgroundColor: "#29A86E",
+                    paddingHorizontal: 20,
+                    paddingVertical: 10,
+                    borderRadius: 20,
+                  }}
+                >
+                  <Text style={{ color: "#fff", fontWeight: "600", fontSize: 14 }}>Toevoegen</Text>
+                </TouchableOpacity>
               </View>
-            ))}
+            ) : (
+              challenges.map((item, index) => (
+                <View key={item.challenge_id} style={[styles.challengeCard, index === 1 ? { marginBottom: 16 } : null]}>
+                  <View style={styles.challengeHeader}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      {ICONS[item.thema] || <FontAwesome name="question" size={24} color="#29A86E" />}
+                      <Text style={styles.challengeTitle}>{item.titel}</Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.statusTag,
+                        {
+                          backgroundColor: activeChallenge?.challenge_id === item.challenge_id ? "#E6F5EC" : "#EAEAEA",
+                          color: activeChallenge?.challenge_id === item.challenge_id ? "#29A86E" : "#8C8C8C",
+                        },
+                      ]}
+                    >
+                      {activeChallenge?.challenge_id === item.challenge_id ? "Actief" : "Niet-Actief"}
+                    </Text>
+                  </View>
+                  <View style={styles.progressBarBg}>
+                    <View
+                      style={{
+                        width: `${Math.min((totalSaved / item.bedrag) * 100, 100)}%`,
+                        height: 8,
+                        backgroundColor: kleuren[item.thema] || "#29A86E",
+                        borderRadius: 4,
+                      }}
+                    />
+                  </View>
+                  <View style={styles.goalRow}>
+                    <Text style={styles.goalLabel}>€{totalSaved} gespaard</Text>
+                    <Text style={styles.goalLabel}>Doel: €{item.bedrag}</Text>
+                  </View>
+                </View>
+              ))
+            )}
           </View>
         </View>
       </ScrollView>
@@ -256,15 +241,14 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   wrapper: { flex: 1, backgroundColor: "#fff" },
   curvedBackground: {
-    height: 360, // verhoogd van 240 naar 360
+    height: 360,
     backgroundColor: "#29A86E",
     position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     zIndex: -1,
-},
-
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -372,7 +356,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginTop: 22,
   },
-  progressBarFg: { height: 8, borderRadius: 4 },
   goalRow: {
     flexDirection: "row",
     justifyContent: "space-between",

@@ -127,9 +127,6 @@ export default function FriendsListScreen() {
           />
           <Text style={styles.emptyTitle}>Nog geen vrienden</Text>
           <Text style={styles.emptyText}>Maak contact met andere gebruikers</Text>
-          <TouchableOpacity style={styles.searchButton} onPress={() => router.push('/add-friends')}>
-            <Text style={styles.searchButtonText}>Vrienden Zoeken</Text>
-          </TouchableOpacity>
         </View>
       ) : (
         <View style={styles.friendList}>
@@ -153,6 +150,13 @@ export default function FriendsListScreen() {
           ))}
         </View>
       )}
+
+      {/* Vrienden Zoeken Knop - altijd zichtbaar */}
+      <View style={styles.addLink}>
+        <TouchableOpacity style={styles.searchButton} onPress={() => router.push('/add-friends')}>
+          <Text style={styles.searchButtonText}>Vrienden Zoeken</Text>
+        </TouchableOpacity>
+      </View>
 
       {showBadgePopup && (
         <View style={styles.overlay}>
@@ -245,10 +249,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
   },
-  addText: {
+  searchButton: {
+    backgroundColor: '#29A86E',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  searchButtonText: {
+    color: '#fefefe',
     fontSize: 14,
     fontWeight: '600',
-    color: '#29A86E',
   },
   overlay: {
     flex: 1,
@@ -312,16 +322,5 @@ const styles = StyleSheet.create({
     color: '#515151',
     textAlign: 'center',
     marginBottom: 20,
-  },
-  searchButton: {
-    backgroundColor: '#29A86E',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  searchButtonText: {
-    color: '#fefefe',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

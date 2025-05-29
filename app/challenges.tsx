@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  Image,
   Dimensions,
 } from 'react-native';
 import {
@@ -18,6 +19,8 @@ import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../server/config';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 const ICONS = {
   reizen: <FontAwesome5 name="suitcase-rolling" size={24} color="#29A86E" />,
   kleding: <FontAwesome5 name="tshirt" size={24} color="#3ED9E2" />,
@@ -26,7 +29,7 @@ const ICONS = {
   ),
   elektronica: <FontAwesome5 name="mobile-alt" size={24} color="#7061BB" />,
   cadeau: <FontAwesome name="gift" size={24} color="#FFCD0F" />,
-} as const;
+};
 
 const kleuren = {
   reizen: '#29A86E',
@@ -34,7 +37,7 @@ const kleuren = {
   voeding: '#FF7373',
   elektronica: '#7061BB',
   cadeau: '#FFCD0F',
-} as const;
+};
 
 const achtergrondKleurBox = {
   elektronica: '#EAE8F5',
@@ -42,7 +45,7 @@ const achtergrondKleurBox = {
   kleding: '#E2FAFB',
   voeding: '#FFEAEA',
   cadeau: '#FFF8DB',
-} as const;
+};
 
 type Thema = keyof typeof kleuren;
 
@@ -68,7 +71,6 @@ const Challenges = () => {
           return;
         }
 
-        // Haal de uitdagingen op
         const response = await fetch(`${API_BASE_URL}/challenges?userId=${userId}`);
         const data = await response.json();
 
@@ -84,12 +86,11 @@ const Challenges = () => {
           alert(data.error || 'Fout bij het ophalen van uitdagingen.');
         }
 
-        // Haal de bespaarde waarde op
         const savingsResponse = await fetch(`${API_BASE_URL}/calculate-savings?userId=${userId}`);
         const savingsData = await savingsResponse.json();
 
         if (savingsResponse.ok) {
-          setTotalSaved(savingsData.totalSavings); // Stel de bespaarde waarde in
+          setTotalSaved(savingsData.totalSavings);
         } else {
           alert(savingsData.error || 'Fout bij het berekenen van besparingen.');
         }
@@ -112,13 +113,8 @@ const Challenges = () => {
 
       const response = await fetch(`${API_BASE_URL}/challenges/set-active`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId,
-          challengeId: nieuw.challenge_id,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, challengeId: nieuw.challenge_id }),
       });
 
       const data = await response.json();
@@ -129,7 +125,6 @@ const Challenges = () => {
         } else {
           setOverige((prev) => prev.filter((u) => u.challenge_id !== nieuw.challenge_id));
         }
-
         setActieve(nieuw);
       } else {
         alert(data.error || 'Fout bij het instellen van actieve uitdaging.');
@@ -154,7 +149,7 @@ const Challenges = () => {
           <View style={{ width: 24 }} />
         </View>
 
-        {actieve ? (
+        {actieve && (
           <View style={styles.cardContainer}>
             <View style={[styles.challengeCard, { backgroundColor: achtergrondKleurBox[actieve.thema] || '#fff' }]}>
               <View style={styles.cardTop}>
@@ -169,43 +164,27 @@ const Challenges = () => {
                   <Text style={[styles.actiefTagText, { color: kleuren[actieve.thema] }]}>Actief</Text>
                 </View>
               </View>
-              
               <View style={styles.cardBottom}>
                 <Text style={styles.progressLabel}>Progressie</Text>
-                <Text style={[styles.progressValue, { color: kleuren[actieve.thema], fontWeight: '600' }]}>
-                  €{totalSaved} / €{actieve.bedrag}
-                </Text>
+                <Text style={[styles.progressValue, { color: kleuren[actieve.thema], fontWeight: '600' }]}>€{totalSaved} / €{actieve.bedrag}</Text>
               </View>
               <View style={[styles.progressBarBg, { backgroundColor: getOpacityColor(kleuren[actieve.thema]) }]}>
-                <View
-                  style={[
-                    styles.progressBarFill,
-                    {
-                      width: `${Math.min((totalSaved / actieve.bedrag) * 100, 100)}%`, // Correcte berekening
-                      backgroundColor: kleuren[actieve.thema],
-                    },
-                  ]}
-                />
+                <View style={[styles.progressBarFill, { width: `${Math.min((totalSaved / actieve.bedrag) * 100, 100)}%`, backgroundColor: kleuren[actieve.thema] }]} />
               </View>
             </View>
           </View>
-        ) : (
-          <Text style={styles.noChallengesText}>Nog geen uitdagingen toegevoegd</Text>
         )}
       </View>
 
       <View style={styles.scrollWrapper}>
         <View style={styles.overigeHeaderSticky}>
           <Text style={styles.overigeTitle}>Overige Uitdagingen</Text>
-          <TouchableOpacity
-            style={[styles.plusCircle, { backgroundColor: actieve ? kleuren[actieve.thema] : '#29A86E' }]}
-            onPress={() => router.push('/challenges-add')}
-          >
+          <TouchableOpacity style={[styles.plusCircle, { backgroundColor: actieve ? kleuren[actieve.thema] : '#29A86E' }]} onPress={() => router.push('/challenges-add')}>
             <FontAwesome name="plus" size={16} color="#F5F5F5" />
           </TouchableOpacity>
         </View>
 
-        {overige.length > 0 ? (
+        {(actieve || overige.length > 0) ? (
           <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
             {overige.map((item) => (
               <TouchableOpacity key={item.challenge_id} onPress={() => maakActief(item)} style={styles.challengeWrapper}>
@@ -222,27 +201,25 @@ const Challenges = () => {
 
                   <View style={[styles.cardBottom, { marginBottom: 8 }]}>
                     <Text style={styles.progressLabel}>Progressie</Text>
-                    <Text style={[styles.progressValue, { color: kleuren[item.thema], fontWeight: '600' }]}>
-                      €{totalSaved} / €{item.bedrag}
-                    </Text>
+                    <Text style={[styles.progressValue, { color: kleuren[item.thema], fontWeight: '600' }]}>€{totalSaved} / €{item.bedrag}</Text>
                   </View>
                   <View style={[styles.progressBarBg, { backgroundColor: '#F5F5F5' }]}>
-                    <View
-                      style={[
-                        styles.progressBarFill,
-                        {
-                          width: `${Math.min((totalSaved / item.bedrag) * 100, 100)}%`, // Correcte berekening
-                          backgroundColor: kleuren[item.thema],
-                        },
-                      ]}
-                    />
+                    <View style={[styles.progressBarFill, { width: `${Math.min((totalSaved / item.bedrag) * 100, 100)}%`, backgroundColor: kleuren[item.thema] }]} />
                   </View>
                 </View>
               </TouchableOpacity>
             ))}
           </ScrollView>
         ) : (
-          <Text style={styles.noChallengesText}>Nog geen uitdagingen toegevoegd</Text>
+          <View style={{ alignItems: 'center', marginTop: 40, paddingHorizontal: SCREEN_WIDTH * 0.1 }}>
+            <Image source={require('../assets/images/ImageNoChallenges.png')} style={{ width: 220, height: 220, marginBottom: 20 }} resizeMode="contain" />
+            <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#252525', marginBottom: 6, textAlign: 'center' }}>
+              Nog geen uitdagingen
+            </Text>
+            <Text style={{ fontSize: 15, color: '#515151', textAlign: 'center', lineHeight: 22 }}>
+              Voeg een uitdaging toe en begin met besparen!
+            </Text>
+          </View>
         )}
       </View>
     </View>
@@ -250,12 +227,6 @@ const Challenges = () => {
 };
 
 const styles = StyleSheet.create({
-  noChallengesText: {
-    textAlign: 'center',
-    fontSize: 16,
-    color: '#515151',
-    marginTop: 20,
-  },
   topContainer: {
     paddingTop: 64,
     paddingHorizontal: 20,

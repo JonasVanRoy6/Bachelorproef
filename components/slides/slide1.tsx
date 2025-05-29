@@ -13,9 +13,9 @@ export default function Slide1() {
   return (
     <View style={styles.container}>
       <Image
-        source={require('../../assets/images/journey.png')}
+        source={require('../../assets/images/ImageSlide1.png')}
         style={styles.image}
-        resizeMode="cover"
+        resizeMode="contain"
       />
 
       <View style={styles.textWrapper}>
@@ -33,16 +33,20 @@ const styles = StyleSheet.create({
     width: width,
     flex: 1,
     backgroundColor: '#FFFFFF',
+    alignItems: 'center',
   },
   image: {
-    width: '100%',
-    height: height * 0.5, // responsive hoogte (50% van schermhoogte)
+    width: width * 0.8,           // iets smaller dan schermbreedte
+    height: height * 0.4,         // iets kleiner dan de helft van het scherm
+    marginTop: 40,                // ruimte boven
+    marginHorizontal: 20,         // marge links/rechts
   },
   textWrapper: {
     flex: 1,
     paddingHorizontal: 36,
     paddingTop: 40,
     justifyContent: 'flex-start',
+    width: '100%',
   },
   title: {
     fontSize: 24,
