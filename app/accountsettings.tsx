@@ -56,13 +56,15 @@ const AccountSettingsScreen = () => {
         const response = await fetch(`${API_BASE_URL}/user-data?userId=${userId}`);
         const data = await response.json();
 
+        console.log('Gebruikersgegevens:', data); // Log de API-respons
+
         if (response.ok) {
           setFirstName(data.firstName);
-          setLastName(data.lastName);
+          setLastName(data.lastName); // Controleer of lastName correct wordt ingesteld
           setEmail(data.email);
-          setBirthDate(data.birthDate);
-          setBirthDateInput(formatDateToEuropean(data.birthDate)); // Stel de tijdelijke invoer in
-          setPassword(data.password); // Stel het wachtwoord in
+          setBirthDate(data.birthDate); // Controleer of birthDate correct wordt ingesteld
+          setBirthDateInput(formatDateToEuropean(data.birthDate)); // Format de geboortedatum
+          setPassword(data.password);
         } else {
           alert(data.error || 'Er is iets misgegaan bij het ophalen van gebruikersgegevens.');
         }

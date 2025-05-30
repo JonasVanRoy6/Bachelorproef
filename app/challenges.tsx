@@ -135,6 +135,34 @@ const Challenges = () => {
     }
   };
 
+  const verwijderUitdaging = async (challengeId: number) => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        alert('Kan de ingelogde gebruiker niet vinden.');
+        return;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/challenges/delete`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, challengeId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setOverige((prev) => prev.filter((item) => item.challenge_id !== challengeId));
+        alert('Uitdaging succesvol verwijderd.');
+      } else {
+        alert(data.error || 'Fout bij het verwijderen van de uitdaging.');
+      }
+    } catch (error) {
+      console.error('Fout bij het verwijderen van de uitdaging:', error);
+      alert('Kan geen verbinding maken met de server.');
+    }
+  };
+
   const getOpacityColor = (kleur: string) => kleur + '26';
 
   return (
@@ -187,7 +215,11 @@ const Challenges = () => {
         {(actieve || overige.length > 0) ? (
           <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
             {overige.map((item) => (
-              <TouchableOpacity key={item.challenge_id} onPress={() => maakActief(item)} style={styles.challengeWrapper}>
+              <TouchableOpacity
+                key={item.challenge_id}
+                onPress={() => maakActief(item)}
+                style={styles.challengeWrapper}
+              >
                 <View style={[styles.challengeCard, styles.overigeCard]}>
                   <View style={styles.cardTop}>
                     <View style={[styles.iconBox, { backgroundColor: getOpacityColor(kleuren[item.thema]) }]}>
@@ -197,14 +229,36 @@ const Challenges = () => {
                       <Text style={styles.title}>{item.titel}</Text>
                       <Text style={styles.subtitle}>Bespaar €{item.bedrag}</Text>
                     </View>
+                    {/* Verwijderknop rechtsboven */}
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => verwijderUitdaging(item.challenge_id)}
+                    >
+                      <FontAwesome name="trash" size={16} color="#fff" />
+                    </TouchableOpacity>
                   </View>
 
                   <View style={[styles.cardBottom, { marginBottom: 8 }]}>
                     <Text style={styles.progressLabel}>Progressie</Text>
-                    <Text style={[styles.progressValue, { color: kleuren[item.thema], fontWeight: '600' }]}>€{totalSaved} / €{item.bedrag}</Text>
+                    <Text
+                      style={[
+                        styles.progressValue,
+                        { color: kleuren[item.thema], fontWeight: '600' },
+                      ]}
+                    >
+                      €{totalSaved} / €{item.bedrag}
+                    </Text>
                   </View>
                   <View style={[styles.progressBarBg, { backgroundColor: '#F5F5F5' }]}>
-                    <View style={[styles.progressBarFill, { width: `${Math.min((totalSaved / item.bedrag) * 100, 100)}%`, backgroundColor: kleuren[item.thema] }]} />
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        {
+                          width: `${Math.min((totalSaved / item.bedrag) * 100, 100)}%`,
+                          backgroundColor: kleuren[item.thema],
+                        },
+                      ]}
+                    />
                   </View>
                 </View>
               </TouchableOpacity>
@@ -341,6 +395,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    backgroundColor: '#FF7373',
+    borderRadius: 12,
+    padding: 8,
   },
 });
 

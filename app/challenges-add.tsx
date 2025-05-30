@@ -7,11 +7,15 @@ import {
   StatusBar,
   StyleSheet,
   Dimensions,
+  KeyboardAvoidingView,
+  ScrollView,
+  Platform,
 } from 'react-native';
 import { FontAwesome5, FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../server/config';
+
 
 const ICON_OPTIONS = [
   { key: 'reizen', icon: <FontAwesome5 name="suitcase-rolling" size={24} />, color: '#29A86E' },
@@ -29,6 +33,7 @@ const ChallengesAdd = () => {
   const [titel, setTitel] = useState('');
   const [bedrag, setBedrag] = useState('');
   const [containerWidth, setContainerWidth] = useState(0);
+  const [isActive, setIsActive] = useState(false); // State om de checkbox bij te houden
 
   const handleCreate = async () => {
     try {
@@ -50,6 +55,7 @@ const ChallengesAdd = () => {
           icon: selectedIcon,
           title: titel,
           budget: parseFloat(bedrag),
+          isActive, // Stuur de waarde van de checkbox mee
         }),
       });
 
@@ -76,81 +82,117 @@ const ChallengesAdd = () => {
     : 50;
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
-      <StatusBar barStyle="dark-content" />
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <FontAwesome name="arrow-left" size={24} color="#29A86E" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Uitdaging Aanmaken</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} // Zorgt voor correcte werking op iOS en Android
+    >
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled" // Zorgt ervoor dat je buiten het toetsenbord kunt tikken om het te sluiten
+      >
+        <View style={{ flex: 1, backgroundColor: '#fff' }}>
+          <StatusBar barStyle="dark-content" />
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => router.back()}>
+              <FontAwesome name="arrow-left" size={24} color="#29A86E" />
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Uitdaging Aanmaken</Text>
+            <View style={{ width: 24 }} />
+          </View>
 
-      <View style={styles.section}>
-        <View
-          style={styles.iconBoxContainer}
-          onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width - 32)} // remove internal padding
-        >
-          <Text style={styles.label}>Selecteer Een Icoon</Text>
-          <View style={styles.iconRow}>
-            {ICON_OPTIONS.map(({ key, icon, color }, index) => {
-              const isSelected = selectedIcon === key;
-              const isLast = index === ICON_OPTIONS.length - 1;
-              return (
-                <TouchableOpacity
-                  key={key}
-                  onPress={() => setSelectedIcon(key)}
-                  style={{
-                    width: iconSize,
-                    height: iconSize,
-                    borderRadius: iconSize / 3,
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    marginRight: isLast ? 0 : GAP,
-                    backgroundColor: getOpacityColor(color),
-                    borderWidth: 1.5,
-                    borderColor: isSelected ? color : 'transparent',
-                    opacity: isSelected ? 1 : 0.6,
-                  }}
-                >
-                  {React.cloneElement(icon, { color })}
-                </TouchableOpacity>
-              );
-            })}
+          <View style={styles.section}>
+            <View
+              style={styles.iconBoxContainer}
+              onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width - 32)} // remove internal padding
+            >
+              <Text style={styles.label}>Selecteer Een Icoon</Text>
+              <View style={styles.iconRow}>
+                {ICON_OPTIONS.map(({ key, icon, color }, index) => {
+                  const isSelected = selectedIcon === key;
+                  const isLast = index === ICON_OPTIONS.length - 1;
+                  return (
+                    <TouchableOpacity
+                      key={key}
+                      onPress={() => setSelectedIcon(key)}
+                      style={{
+                        width: iconSize,
+                        height: iconSize,
+                        borderRadius: iconSize / 3,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        marginRight: isLast ? 0 : GAP,
+                        backgroundColor: getOpacityColor(color),
+                        borderWidth: 1.5,
+                        borderColor: isSelected ? color : 'transparent',
+                        opacity: isSelected ? 1 : 0.6,
+                      }}
+                    >
+                      {React.cloneElement(icon, { color })}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={styles.inputBox}>
+              <Text style={styles.label}>Naam Uitdaging</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Bijv. Vakantie"
+                placeholderTextColor="#515151"
+                value={titel}
+                onChangeText={setTitel}
+              />
+            </View>
+
+            <View style={styles.inputBox}>
+              <Text style={styles.label}>Budgetdoel</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="€ 100" // Placeholder die verdwijnt zodra de gebruiker begint te typen
+                placeholderTextColor="#515151" // Grijze kleur voor de placeholder
+                value={`€ ${bedrag}`} // Voeg het euroteken toe aan de waarde
+                onChangeText={(text) => {
+                  // Verwijder alles behalve cijfers en een optioneel decimaal punt
+                  const numericText = text.replace(/[^0-9.]/g, '');
+                  setBedrag(numericText); // Sla alleen het numerieke deel op
+                }}
+                keyboardType="decimal-pad"
+              />
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+              <TouchableOpacity
+                onPress={() => setIsActive(!isActive)}
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 4,
+                  borderWidth: 1,
+                  borderColor: '#E3E3E3',
+                  backgroundColor: isActive ? '#29A86E' : '#fff',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginRight: 8,
+                }}
+              >
+                {isActive && <FontAwesome name="check" size={16} color="#fff" />}
+              </TouchableOpacity>
+              <Text style={{ fontSize: 16, color: '#252525' }}>
+               Als actief instellen?
+              </Text>
+            </View>
+
+            <View style={{ flex: 1 }} />
+            <View style={{ marginBottom: 72, alignItems: 'center' }}>
+              <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
+                <Text style={styles.createText}>Aanmaken</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-
-        <View style={styles.inputBox}>
-          <Text style={styles.label}>Naam Uitdaging</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Bijv. Vakantie"
-            placeholderTextColor="#515151"
-            value={titel}
-            onChangeText={setTitel}
-          />
-        </View>
-
-        <View style={styles.inputBox}>
-          <Text style={styles.label}>Budgetdoel</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="€ 100"
-            placeholderTextColor="#515151"
-            value={bedrag}
-            onChangeText={setBedrag}
-            keyboardType="numeric"
-          />
-        </View>
-
-        <View style={{ flex: 1 }} />
-        <View style={{ marginBottom: 72, alignItems: 'center' }}>
-          <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
-            <Text style={styles.createText}>Aanmaken</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 

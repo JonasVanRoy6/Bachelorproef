@@ -22,6 +22,7 @@ export default function LeaderboardDetailsScreen() {
   const [leaderboardData, setLeaderboardData] = useState([]);
   const [userRank, setUserRank] = useState(null);
   const [userId, setUserId] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
 
   useEffect(() => {
     const fetchLeaderboardDetails = async () => {
@@ -42,6 +43,7 @@ export default function LeaderboardDetailsScreen() {
 
           setLeaderboardData(updatedList);
           setUserRank(updatedList.find(u => u.user_id === id)?.rank);
+          setIsOwner(data.isOwner);
         } catch (err) {
           console.error('Fout bij ophalen leaderboarddetails:', err);
           alert('Fout bij ophalen van leaderboardgegevens');
@@ -51,6 +53,28 @@ export default function LeaderboardDetailsScreen() {
 
     fetchLeaderboardDetails();
   }, [leaderboardId]);
+
+  const leaveLeaderboard = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/leaderboard/leave`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, leaderboardId }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(data.message || 'Je bent succesvol uit het leaderboard gestapt.');
+        router.push('/leaderboard'); // Navigeer terug naar de lijst met leaderboards
+      } else {
+        alert(data.error || 'Er is een fout opgetreden bij het verlaten van het leaderboard.');
+      }
+    } catch (err) {
+      console.error('Fout bij het verlaten van het leaderboard:', err);
+      alert('Kan geen verbinding maken met de server.');
+    }
+  };
 
   if (!leaderboardId) {
     return (
@@ -68,8 +92,8 @@ export default function LeaderboardDetailsScreen() {
             <FontAwesome name="arrow-left" size={24} color="#29A86E" />
           </TouchableOpacity>
           <Text style={styles.title}>Leaderboard Details</Text>
-          <TouchableOpacity>
-            <FontAwesome name="share-alt" size={20} color="#29A86E" />
+          <TouchableOpacity onPress={leaveLeaderboard}>
+            <FontAwesome name="sign-out" size={20} color="#29A86E" />
           </TouchableOpacity>
         </View>
 
@@ -100,43 +124,45 @@ export default function LeaderboardDetailsScreen() {
         )}
       </ScrollView>
 
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => {
-          Alert.alert(
-            'Bevestiging',
-            'Weet je zeker dat je dit leaderboard wilt verwijderen?',
-            [
-              { text: 'Annuleer', style: 'cancel' },
-              {
-                text: 'Verwijder',
-                style: 'destructive',
-                onPress: async () => {
-                  try {
-                    const res = await fetch(`${API_BASE_URL}/leaderboard/delete?leaderboardId=${leaderboardId}`, {
-                      method: 'DELETE',
-                    });
+      {isOwner && (
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => {
+            Alert.alert(
+              'Bevestiging',
+              'Weet je zeker dat je dit leaderboard wilt verwijderen?',
+              [
+                { text: 'Annuleer', style: 'cancel' },
+                {
+                  text: 'Verwijder',
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      const res = await fetch(`${API_BASE_URL}/leaderboard/delete?leaderboardId=${leaderboardId}`, {
+                        method: 'DELETE',
+                      });
 
-                    const data = await res.json();
+                      const data = await res.json();
 
-                    if (res.ok) {
-                      alert(data.message || 'Leaderboard verwijderd');
-                      router.push('/leaderboard');
-                    } else {
-                      alert(data.error || 'Verwijderen mislukt');
+                      if (res.ok) {
+                        alert(data.message || 'Leaderboard verwijderd');
+                        router.push('/leaderboard');
+                      } else {
+                        alert(data.error || 'Verwijderen mislukt');
+                      }
+                    } catch (err) {
+                      console.error('Fout bij verwijderen:', err);
+                      alert('Er is een fout opgetreden bij het verwijderen.');
                     }
-                  } catch (err) {
-                    console.error('Fout bij verwijderen:', err);
-                    alert('Er is een fout opgetreden bij het verwijderen.');
-                  }
+                  },
                 },
-              },
-            ]
-          );
-        }}
-      >
-        <Text style={styles.deleteText}>Verwijder leaderboard</Text>
-      </TouchableOpacity>
+              ]
+            );
+          }}
+        >
+          <Text style={styles.deleteText}>Verwijder leaderboard</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -249,5 +275,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  exitIcon: {
+    color: '#29A86E', // Rode kleur voor de exit-actie
   },
 });

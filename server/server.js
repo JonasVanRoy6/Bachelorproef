@@ -30,7 +30,7 @@ db.connect((err) => {
   }
   console.log("✅ Verbonden met MySQL-database");
 });
-const API_BASE_URL = 'http://192.168.0.130:5000'; // Vervang dit door je eigen IP-adres of domein
+const API_BASE_URL = 'http://192.168.0.105:5000'; // Vervang dit door je eigen IP-adres of domein
 // Kies een willekeurige profielfoto
 const profilePictures = [
   `${API_BASE_URL}/images/profile1.png`,
@@ -928,7 +928,8 @@ app.get('/leaderboard/details-with-rank', (req, res) => {
       u.first_name AS name,
        IFNULL(CONCAT('${API_BASE_URL}/images/', u.profile_picture), '${API_BASE_URL}/images/default.png') AS profilePicture,
       COALESCE(SUM(p.amount), 0) AS total_puffs,
-      RANK() OVER (ORDER BY COALESCE(SUM(p.amount), 0) ASC) AS rank
+      RANK() OVER (ORDER BY COALESCE(SUM(p.amount), 0) ASC) AS rank,
+      l.user_id AS owner_id -- Voeg de eigenaar van het leaderboard toe
     FROM (
       SELECT friend_id AS user_id FROM leaderboard_friends WHERE leaderboard_id = ?
       UNION
@@ -936,10 +937,11 @@ app.get('/leaderboard/details-with-rank', (req, res) => {
     ) AS all_users
     JOIN users u ON u.id = all_users.user_id
     LEFT JOIN puffs p ON p.user_id = u.id AND YEARWEEK(p.created_at, 1) = YEARWEEK(CURDATE(), 1)
-    GROUP BY u.id, u.first_name
+    JOIN leaderboards l ON l.id = ? -- Voeg de leaderboards-tabel toe om de eigenaar op te halen
+    GROUP BY u.id, u.first_name, l.user_id
   `;
 
-  db.query(query, [leaderboardId, leaderboardId], (err, results) => {
+  db.query(query, [leaderboardId, leaderboardId, leaderboardId], (err, results) => {
     if (err) {
       console.error('Fout bij het ophalen van leaderboarddetails:', err);
       return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van leaderboarddetails.' });
@@ -947,8 +949,9 @@ app.get('/leaderboard/details-with-rank', (req, res) => {
 
     const user = results.find(r => r.user_id == userId);
     const userRank = user ? user.rank : null;
+    const isOwner = results.length > 0 && results[0].owner_id == userId; // Controleer of de ingelogde gebruiker de eigenaar is
 
-    res.status(200).json({ leaderboard: results, userRank });
+    res.status(200).json({ leaderboard: results, userRank, isOwner });
   });
 });
 
@@ -981,24 +984,43 @@ app.delete('/leaderboard/delete', (req, res) => {
 });
 
 app.post('/challenges/create', (req, res) => {
-  const { userId, icon, title, budget } = req.body;
+  const { userId, icon, title, budget, isActive } = req.body;
 
   if (!userId || !icon || !title || !budget) {
     return res.status(400).json({ error: 'Alle velden zijn verplicht.' });
   }
 
-  const query = `
+  const insertChallengeQuery = `
     INSERT INTO challenges (user_id, icon, title, budget)
     VALUES (?, ?, ?, ?)
   `;
 
-  db.query(query, [userId, icon, title, budget], (err, result) => {
+  db.query(insertChallengeQuery, [userId, icon, title, budget], (err, result) => {
     if (err) {
       console.error('Fout bij het opslaan van de uitdaging:', err);
       return res.status(500).json({ error: 'Er is een fout opgetreden bij het opslaan van de uitdaging.' });
     }
 
-    res.status(201).json({ message: 'Uitdaging succesvol aangemaakt.' });
+    const challengeId = result.insertId; // Haal het ID van de nieuw aangemaakte uitdaging op
+
+    if (isActive) {
+      const updateUserQuery = `
+        UPDATE users
+        SET active_challenge_id = ?
+        WHERE id = ?
+      `;
+
+      db.query(updateUserQuery, [challengeId, userId], (err) => {
+        if (err) {
+          console.error('Fout bij het bijwerken van active_challenge_id:', err);
+          return res.status(500).json({ error: 'Er is een fout opgetreden bij het instellen van de actieve uitdaging.' });
+        }
+
+        res.status(201).json({ message: 'Uitdaging succesvol aangemaakt en ingesteld als actief.' });
+      });
+    } else {
+      res.status(201).json({ message: 'Uitdaging succesvol aangemaakt.' });
+    }
   });
 });
 
@@ -1011,18 +1033,21 @@ app.get('/challenges', (req, res) => {
 
   const query = `
     SELECT 
-      c.id AS challenge_id,
-      c.title AS titel,
-      c.icon AS thema,
-      c.budget AS bedrag,
-      COALESCE(SUM(p.amount), 0) AS huidig,
-      u.active_challenge_id
-    FROM challenges c
-    LEFT JOIN puffs p ON p.user_id = c.user_id
-    LEFT JOIN users u ON u.id = c.user_id
-    WHERE c.user_id = ?
-    GROUP BY c.id, c.title, c.icon, c.budget, u.active_challenge_id
-    ORDER BY c.id = u.active_challenge_id DESC, c.created_at DESC
+  c.id AS challenge_id,
+  c.title AS titel,
+  c.icon AS thema,
+  c.budget AS bedrag,
+  COALESCE(SUM(p.amount), 0) AS huidig,
+  CASE 
+    WHEN c.id = u.active_challenge_id THEN 1
+    ELSE 0
+  END AS is_active
+FROM challenges c
+LEFT JOIN puffs p ON p.user_id = c.user_id
+LEFT JOIN users u ON u.id = c.user_id
+WHERE c.user_id = ?
+GROUP BY c.id, c.title, c.icon, c.budget, u.active_challenge_id
+ORDER BY is_active DESC, c.created_at DESC
   `;
 
   db.query(query, [userId], (err, results) => {
@@ -1071,8 +1096,8 @@ app.get('/user-data', (req, res) => {
       last_name AS lastName,
       email,
       birth_date AS birthDate,
-      
-       CONCAT('${API_BASE_URL}/images/', profile_picture) AS profilePicture
+      password, -- Voeg het wachtwoord toe aan de query
+      CONCAT('${API_BASE_URL}/images/', profile_picture) AS profilePicture
     FROM users
     WHERE id = ?
   `;
@@ -1089,8 +1114,11 @@ app.get('/user-data', (req, res) => {
 
     res.status(200).json({
       firstName: results[0].firstName,
+      lastName: results[0].lastName,
       email: results[0].email,
-      profilePicture: results[0].profilePicture || '../assets/images/profile1.png', // Gebruik een standaardafbeelding
+      birthDate: results[0].birthDate,
+      password: results[0].password, // Voeg het wachtwoord toe aan de response
+      profilePicture: results[0].profilePicture || '../assets/images/profile1.png',
     });
   });
 });
@@ -1509,8 +1537,8 @@ app.get('/badges', (req, res) => {
     'Uitdaging Behaald': (user) => user.challengeStarted && user.goalAmountReached,
     'Dagen Gewonnen': (user) => user.consecutiveDaysUnderGoal >= 5,
     'Gezonde Gewoonten': (user) => user.healthGoals >= 6 && user.daysUnderGoal >= 10,
-    'Financiële Focus': (user) => user.moneyGoals >= 6 && user.moneySaved >= 25,
-    'Leaderboard Legend': (user) => user.firstPlace && user.leaderboardDays >= 5,
+    'Financiële Focus': (user) => user.moneyGoals >= 6 &&  user.moneySaved >= 25,
+    'Leaderboard Legend': (user) => user.firstPlace &&  user.leaderboardDays >= 5,
     'Vrienden Strijder': (user) => user.invitedFriends >= 2,
   };
 
@@ -1636,5 +1664,57 @@ app.get('/calculate-streak', (req, res) => {
 
       res.status(200).json({ streak });
     });
+  });
+});
+
+app.delete('/challenges/delete', (req, res) => {
+  const { userId, challengeId } = req.body;
+
+  if (!userId || !challengeId) {
+    return res.status(400).json({ error: 'Gebruiker ID en uitdaging ID zijn verplicht.' });
+  }
+
+  const query = `
+    DELETE FROM challenges
+    WHERE user_id = ? AND id = ?
+  `;
+
+  db.query(query, [userId, challengeId], (err, result) => {
+    if (err) {
+      console.error('Fout bij het verwijderen van de uitdaging:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het verwijderen van de uitdaging.' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Uitdaging niet gevonden of behoort niet tot de gebruiker.' });
+    }
+
+    res.status(200).json({ message: 'Uitdaging succesvol verwijderd.' });
+  });
+});
+
+app.delete('/leaderboard/leave', (req, res) => {
+  const { userId, leaderboardId } = req.body;
+
+  if (!userId || !leaderboardId) {
+    return res.status(400).json({ error: 'User ID en Leaderboard ID zijn verplicht.' });
+  }
+
+  const query = `
+    DELETE FROM leaderboard_friends
+    WHERE friend_id = ? AND leaderboard_id = ?
+  `;
+
+  db.query(query, [userId, leaderboardId], (err, result) => {
+    if (err) {
+      console.error('Fout bij het verlaten van het leaderboard:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het verlaten van het leaderboard.' });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Gebruiker zit niet in het leaderboard of bestaat niet.' });
+    }
+
+    res.status(200).json({ message: 'Je bent succesvol uit het leaderboard gestapt.' });
   });
 });
