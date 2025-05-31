@@ -8,7 +8,7 @@ import {
   Alert,
   Dimensions,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import API_BASE_URL from '../server/config';
 
@@ -18,11 +18,14 @@ const horizontalPadding = 36;
 export default function PasswordScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // Voor het eerste wachtwoordveld
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Voor het bevestigingswachtwoordveld
 
   const handleSavePassword = async () => {
+    // Controleer of de wachtwoorden overeenkomen
     if (password !== confirmPassword) {
       Alert.alert('Fout', 'Wachtwoorden komen niet overeen.');
-      return;
+      return; // Stop de navigatie als de wachtwoorden niet overeenkomen
     }
 
     try {
@@ -34,6 +37,8 @@ export default function PasswordScreen() {
 
       if (response.ok) {
         Alert.alert('Succes', 'Wachtwoord succesvol opgeslagen!');
+        // Navigeer naar het volgende scherm
+        router.push('/goalsScreen'); // Gebruik router.push om naar het volgende scherm te navigeren
       } else {
         Alert.alert('Fout', 'Er is een probleem opgetreden bij het opslaan van het wachtwoord.');
       }
@@ -65,11 +70,13 @@ export default function PasswordScreen() {
             style={styles.input}
             placeholder="Geef je wachtwoord in"
             placeholderTextColor="#515151"
-            secureTextEntry
+            secureTextEntry={!showPassword} // Verberg of toon het wachtwoord
             value={password}
             onChangeText={setPassword}
           />
-          <Text style={styles.showText}>Toon</Text>
+          <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+            <Text style={styles.showText}>{showPassword ? 'Verberg' : 'Toon'}</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -81,20 +88,22 @@ export default function PasswordScreen() {
             style={styles.input}
             placeholder="Geef je wachtwoord in"
             placeholderTextColor="#515151"
-            secureTextEntry
+            secureTextEntry={!showConfirmPassword} // Verberg of toon het wachtwoord
             value={confirmPassword}
             onChangeText={setConfirmPassword}
           />
-          <Text style={styles.showText}>Toon</Text>
+          <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+            <Text style={styles.showText}>{showConfirmPassword ? 'Verberg' : 'Toon'}</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
       {/* Volgende knop */}
-      <Link href="/goalsScreen" asChild>
+      
         <TouchableOpacity style={styles.nextButton} onPress={handleSavePassword}>
           <Text style={styles.nextButtonText}>Volgende</Text>
         </TouchableOpacity>
-      </Link>
+      
 
       {/* Log in link */}
       <Text style={styles.loginText}>

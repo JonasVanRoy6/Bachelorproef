@@ -111,7 +111,7 @@ export default function FriendsListScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.push('/profile')}>
           <FontAwesome name="arrow-left" size={24} color="#29A86E" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Vrienden</Text>

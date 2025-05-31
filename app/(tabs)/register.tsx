@@ -26,6 +26,24 @@ export default function RegisterScreen() {
   const router = useRouter();
 
   const handleRegister = async () => {
+    // Controleer of alle velden zijn ingevuld
+    if (!firstName || !lastName || !email || !birthDate) {
+      Alert.alert('Fout', 'Vul alle velden in.');
+      return; // Stop de registratie als een veld leeg is
+    }
+
+    // Controleer of het e-mailadres geldig is
+    if (!email.includes('@') || !email.includes('.')) {
+      Alert.alert('Ongeldig e-mailadres', 'Voer een geldig e-mailadres in.');
+      return; // Stop de registratie als het e-mailadres ongeldig is
+    }
+
+    // Controleer of de geboortedatum correct is (DD/MM/JJJJ)
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(birthDate)) {
+      Alert.alert('Ongeldige geboortedatum', 'Voer een geldige geboortedatum in (DD/MM/JJJJ).');
+      return; // Stop de registratie als de geboortedatum ongeldig is
+    }
+
     // Converteer geboortedatum naar JJJJ-MM-DD
     const [day, month, year] = birthDate.split('/');
     const formattedBirthDate = `${year}-${month}-${day}`;
@@ -161,11 +179,11 @@ export default function RegisterScreen() {
         </View>
 
         {/* Volgende knop */}
-        <Link href="/password" asChild>
+       
           <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
             <Text style={styles.registerButtonText}>Volgende</Text>
           </TouchableOpacity>
-        </Link>
+        
 
         {/* Log in */}
         <Text style={styles.loginText}>
