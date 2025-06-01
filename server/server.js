@@ -15,10 +15,10 @@ app.use('/images', express.static(path.join(__dirname, '..', 'assets', 'images')
 
 // Database connectie
 const db = mysql.createConnection({
-  host: "localhost", // Externe databasehost
-  user: "root", // Databasegebruikersnaam
-  password: "", // Databasewachtwoord
-  database: "puff_tracker", // Databasenaam
+  host: "sql.freedb.tech", // Externe databasehost
+  user: "freedb_breezd", // Databasegebruikersnaam
+  password: "at$SDdMvU%QW7VW", // Databasewachtwoord
+  database: "freedb_puff_tracker", // Databasenaam
   port: 3306
 });
 
@@ -597,31 +597,47 @@ app.get('/user/search', (req, res) => {
 
 // Endpoint om een leaderboard aan te maken
 app.post('/leaderboard/create', (req, res) => {
-
   const { userId, name } = req.body;
 
   if (!userId || !name) {
     return res.status(400).json({ error: 'Gebruiker ID en naam zijn verplicht.' });
   }
 
-  const query = `INSERT INTO leaderboards (user_id, name) VALUES (?, ?)`;
+  // Controleer of er al een leaderboard met dezelfde naam bestaat voor deze gebruiker
+  const checkQuery = `
+    SELECT id FROM leaderboards WHERE user_id = ? AND name = ?
+  `;
 
-  db.query(query, [userId, name], (err, result) => {
-
-
+  db.query(checkQuery, [userId, name], (err, results) => {
     if (err) {
-      console.error('Fout bij het aanmaken van het leaderboard:', err);
-      return res.status(500).json({ error: 'Er is een fout opgetreden bij het aanmaken van het leaderboard.' });
+      console.error('Fout bij het controleren van bestaande leaderboards:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het controleren van bestaande leaderboards.' });
     }
 
-    const leaderboardId = result.insertId;
+    if (results.length > 0) {
+      return res.status(400).json({ error: 'Er bestaat al een leaderboard met deze naam.' });
+    }
 
-    res.status(201).json({
-      message: 'Leaderboard succesvol aangemaakt.',
-      leaderboardId,
-      name, // Zorg ervoor dat de naam wordt teruggestuurd
+    // Maak het leaderboard aan
+    const createQuery = `
+      INSERT INTO leaderboards (user_id, name)
+      VALUES (?, ?)
+    `;
+
+    db.query(createQuery, [userId, name], (err, result) => {
+      if (err) {
+        console.error('Fout bij het aanmaken van het leaderboard:', err);
+        return res.status(500).json({ error: 'Er is een fout opgetreden bij het aanmaken van het leaderboard.' });
+      }
+
+      const leaderboardId = result.insertId;
+
+      res.status(201).json({
+        message: 'Leaderboard succesvol aangemaakt.',
+        leaderboardId,
+        name,
+      });
     });
-
   });
 });
 
@@ -760,15 +776,15 @@ app.post('/leaderboard/create-with-friends', (req, res) => {
 
     // Maak het leaderboard aan
     const createLeaderboardQuery = `
-      INSERT INTO leaderboards (user_id, created_at)
-      VALUES (?, NOW())
-    `;
-
-    db.query(createLeaderboardQuery, [userId], (err, result) => {
-      if (err) {
-        console.error('Fout bij het aanmaken van het leaderboard:', err);
-        return res.status(500).json({ error: 'Er is een fout opgetreden bij het aanmaken van het leaderboard.' });
-      }
+    INSERT INTO leaderboards (user_id, name, created_at)
+    VALUES (?, ?, NOW())
+  `;
+  
+  db.query(createLeaderboardQuery, [userId, "Standaard Naam"], (err, result) => {
+    if (err) {
+      console.error('Fout bij het aanmaken van het leaderboard:', err);
+      return res.status(500).json({ error: 'Er is een fout opgetreden bij het aanmaken van het leaderboard.' });
+    }
 
       const leaderboardId = result.insertId;
 
@@ -798,28 +814,29 @@ app.get('/leaderboards', (req, res) => {
   }
 
   const query = `
-    SELECT 
-      l.id AS leaderboard_id,
-      l.name AS leaderboard_name,
-      u.id AS user_id,
-      u.first_name AS user_name,
-      COALESCE(SUM(p.amount), 0) AS total_puffs,
-      RANK() OVER (PARTITION BY l.id ORDER BY COALESCE(SUM(p.amount), 0) ASC) AS rank
-    FROM leaderboards l
-    LEFT JOIN leaderboard_friends lf ON l.id = lf.leaderboard_id
-    LEFT JOIN users u ON u.id = lf.friend_id
-    LEFT JOIN puffs p ON p.user_id = u.id
-    WHERE l.id IN (
-      SELECT leaderboard_id
-      FROM leaderboard_friends
-      WHERE friend_id = ?
-      UNION
-      SELECT id
-      FROM leaderboards
-      WHERE user_id = ?
-    )
-    GROUP BY l.id, l.name, u.id, u.first_name
-  `;
+  SELECT 
+    l.id AS leaderboard_id,
+    l.name AS leaderboard_name,
+    u.id AS user_id,
+    u.first_name AS user_name,
+    COALESCE(SUM(p.amount), 0) AS total_puffs,
+    RANK() OVER (PARTITION BY l.id ORDER BY COALESCE(SUM(p.amount), 0) ASC) AS "rank"
+  FROM leaderboards l
+  LEFT JOIN leaderboard_friends lf ON l.id = lf.leaderboard_id
+  LEFT JOIN users u ON u.id = lf.friend_id
+  LEFT JOIN puffs p ON p.user_id = u.id
+  WHERE l.id IN (
+    SELECT leaderboard_id
+    FROM leaderboard_friends
+    WHERE friend_id = ?
+    UNION
+    SELECT id
+    FROM leaderboards
+    WHERE user_id = ?
+  )
+  GROUP BY l.id, l.name, u.id, u.first_name
+  ORDER BY "rank" ASC;
+`;
 
   db.query(query, [userId, userId], (err, results) => {
     if (err) {
@@ -926,9 +943,9 @@ app.get('/leaderboard/details-with-rank', (req, res) => {
     SELECT 
       u.id AS user_id,
       u.first_name AS name,
-       IFNULL(CONCAT('${API_BASE_URL}/images/', u.profile_picture), '${API_BASE_URL}/images/default.png') AS profilePicture,
+      IFNULL(CONCAT('${API_BASE_URL}/images/', u.profile_picture), '${API_BASE_URL}/images/default.png') AS profilePicture,
       COALESCE(SUM(p.amount), 0) AS total_puffs,
-      RANK() OVER (ORDER BY COALESCE(SUM(p.amount), 0) ASC) AS rank,
+      RANK() OVER (ORDER BY COALESCE(SUM(p.amount), 0) ASC) AS user_rank,
       l.user_id AS owner_id -- Voeg de eigenaar van het leaderboard toe
     FROM (
       SELECT friend_id AS user_id FROM leaderboard_friends WHERE leaderboard_id = ?
@@ -948,7 +965,7 @@ app.get('/leaderboard/details-with-rank', (req, res) => {
     }
 
     const user = results.find(r => r.user_id == userId);
-    const userRank = user ? user.rank : null;
+    const userRank = user ? user.user_rank : null;
     const isOwner = results.length > 0 && results[0].owner_id == userId; // Controleer of de ingelogde gebruiker de eigenaar is
 
     res.status(200).json({ leaderboard: results, userRank, isOwner });
@@ -1457,11 +1474,12 @@ app.get('/stats', async (req, res) => {
     else if (period === 'Maand') {
       const dataQuery = `
         SELECT 
-          WEEK(created_at, 1) - WEEK(DATE_SUB(CURDATE(), INTERVAL DAY(CURDATE()) - 1 DAY), 1) + 1 AS weeknummer,
+          WEEK(created_at, 1) AS weeknummer,
           SUM(amount) AS totaal
         FROM puffs
         WHERE user_id = ? AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())
         GROUP BY weeknummer
+        ORDER BY weeknummer ASC
       `;
       const totalQuery = `
         SELECT SUM(amount) AS total
@@ -1474,7 +1492,7 @@ app.get('/stats', async (req, res) => {
         WHERE user_id = ? AND MONTH(created_at) = MONTH(CURDATE() - INTERVAL 1 MONTH)
           AND YEAR(created_at) = YEAR(CURDATE() - INTERVAL 1 MONTH)
       `;
-
+    
       const [dataResult, currentTotalResult, previousTotalResult] = await Promise.all([
         new Promise((resolve, reject) => {
           db.query(dataQuery, [userId], (err, results) => {
@@ -1485,30 +1503,32 @@ app.get('/stats', async (req, res) => {
         new Promise((resolve, reject) => {
           db.query(totalQuery, [userId], (err, results) => {
             if (err) return reject(err);
-            resolve(results[0].total || 0);
+            resolve(results[0]?.total || 0);
           });
         }),
         new Promise((resolve, reject) => {
           db.query(previousQuery, [userId], (err, results) => {
             if (err) return reject(err);
-            resolve(results[0].total || 0);
+            resolve(results[0]?.total || 0);
           });
         })
       ]);
-
-      const data = Array(4).fill(0);
+    
+      // Vul de data aan met lege weken (maximaal 5 weken in een maand)
+      const data = Array(5).fill(0);
       dataResult.forEach(({ weeknummer, totaal }) => {
-        if (weeknummer >= 1 && weeknummer <= 4) {
+        if (weeknummer >= 1 && weeknummer <= 5) {
           data[weeknummer - 1] = totaal;
         }
       });
-
+    
       res.status(200).json({
         data,
         currentTotal: currentTotalResult,
         previousTotal: previousTotalResult,
         previousMonth: previousTotalResult
       });
+    
     }
 
     else {
