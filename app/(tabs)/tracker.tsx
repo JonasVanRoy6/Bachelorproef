@@ -128,6 +128,12 @@ export default function TrackerScreen() {
           </TouchableOpacity>
         </Link>
 
+        <Link href="/change-usage" asChild>
+          <TouchableOpacity style={styles.manualAddBtn}>
+            <Text style={styles.manualAddText}>Wijzig puffs goals</Text>
+          </TouchableOpacity>
+        </Link>
+
         <Text style={styles.activityHeader}>Recente Activiteit</Text>
         <View style={styles.activityCard}>
           {recentPuffs.map((item, index) => (

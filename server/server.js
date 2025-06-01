@@ -1617,7 +1617,6 @@ app.get('/calculate-streak', (req, res) => {
     return res.status(400).json({ error: 'Gebruiker ID is verplicht.' });
   }
 
-  // Query om `goal_usage` op te halen uit de `user_goals`-tabel
   const goalUsageQuery = `
     SELECT goal_usage
     FROM user_goals
@@ -1626,13 +1625,24 @@ app.get('/calculate-streak', (req, res) => {
     LIMIT 1
   `;
 
-  // Query om het aantal puffs per dag te berekenen
   const dailyPuffsQuery = `
-    SELECT DATE(created_at) AS puff_date, SUM(amount) AS daily_puffs
-    FROM puffs
-    WHERE user_id = ?
-    GROUP BY DATE(created_at)
-    ORDER BY puff_date DESC
+    WITH RECURSIVE date_range AS (
+      SELECT GREATEST(
+        (SELECT DATE(created_at) FROM users WHERE id = ?), 
+        CURDATE() - INTERVAL 30 DAY
+      ) AS date
+      UNION ALL
+      SELECT date + INTERVAL 1 DAY
+      FROM date_range
+      WHERE date < CURDATE()
+    )
+    SELECT 
+      dr.date AS puff_date,
+      COALESCE(SUM(p.amount), 0) AS daily_puffs
+    FROM date_range dr
+    LEFT JOIN puffs p ON DATE(p.created_at) = dr.date AND p.user_id = ?
+    GROUP BY dr.date
+    ORDER BY dr.date ASC;
   `;
 
   db.query(goalUsageQuery, [userId], (err, goalResults) => {
@@ -1647,7 +1657,7 @@ app.get('/calculate-streak', (req, res) => {
 
     const goalUsage = goalResults[0].goal_usage;
 
-    db.query(dailyPuffsQuery, [userId], (err, puffsResults) => {
+    db.query(dailyPuffsQuery, [userId, userId], (err, puffsResults) => {
       if (err) {
         console.error('Fout bij het ophalen van dagelijkse puffs:', err);
         return res.status(500).json({ error: 'Er is een fout opgetreden bij het ophalen van dagelijkse puffs.' });
@@ -1657,9 +1667,10 @@ app.get('/calculate-streak', (req, res) => {
 
       for (const day of puffsResults) {
         if (day.daily_puffs > goalUsage) {
-          break; // Reset streak als de puffs van een dag boven de goal_usage komen
+          streak = 0; // Reset de streak als de gebruiker over de goal gaat
+        } else {
+          streak++; // Verhoog de streak als de gebruiker onder de goal blijft
         }
-        streak++;
       }
 
       res.status(200).json({ streak });
