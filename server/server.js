@@ -14,7 +14,7 @@ app.use('/images', express.static(path.join(__dirname, '..', 'assets', 'images')
 
 
 // Database connectie
-const db = mysql.createConnection({
+const db = mysql.createPool({
   host: "sql.freedb.tech", // Externe databasehost
   user: "freedb_breezd", // Databasegebruikersnaam
   password: "at$SDdMvU%QW7VW", // Databasewachtwoord
@@ -30,7 +30,7 @@ db.connect((err) => {
   }
   console.log("✅ Verbonden met MySQL-database");
 });
-const API_BASE_URL = 'http://192.168.0.105:5000'; // Vervang dit door je eigen IP-adres of domein
+const API_BASE_URL = 'https://bachelorproef-breezd.onrender.com'; // Vervang dit door je eigen IP-adres of domein
 // Kies een willekeurige profielfoto
 const profilePictures = [
   `${API_BASE_URL}/images/profile1.png`,
