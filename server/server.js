@@ -4,7 +4,7 @@ const cors = require("cors");
 
 const app = express();
 const PORT = 5000;
-
+const bcrypt = require('bcrypt');
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -159,23 +159,35 @@ app.post("/register", (req, res) => {
   });
 });
 
-app.post('/register-password', (req, res) => {
+
+
+app.post('/register-password', async (req, res) => {
   const { password } = req.body;
 
   if (!password) {
     return res.status(400).json({ message: 'Wachtwoord is verplicht.' });
   }
 
-  // Simuleer het opslaan van het wachtwoord in de database
-  const query = "UPDATE users SET password = ? WHERE id = LAST_INSERT_ID()";
-  db.query(query, [password], (err, result) => {
-    if (err) {
-      console.error('Fout bij het opslaan van wachtwoord:', err);
-      return res.status(500).json({ message: 'Er is een fout opgetreden bij het opslaan van het wachtwoord.' });
-    }
-    res.status(200).json({ message: 'Wachtwoord succesvol opgeslagen.' });
-  });
+  try {
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const query = "UPDATE users SET password = ? WHERE id = LAST_INSERT_ID()";
+    db.query(query, [hashedPassword], (err, result) => {
+      if (err) {
+        console.error('Fout bij het opslaan van wachtwoord:', err);
+        return res.status(500).json({ message: 'Er is een fout opgetreden bij het opslaan van het wachtwoord.' });
+      }
+      res.status(200).json({ message: 'Wachtwoord succesvol en veilig opgeslagen.' });
+    });
+  } catch (error) {
+    console.error('Fout bij hashen van wachtwoord:', error);
+    res.status(500).json({ message: 'Er is een fout opgetreden bij het verwerken van het wachtwoord.' });
+  }
 });
+
+
+
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
@@ -184,17 +196,30 @@ app.post("/login", (req, res) => {
     return res.status(400).json({ error: "E-mailadres en wachtwoord zijn verplicht." });
   }
 
-  const query = "SELECT id, first_name FROM users WHERE email = ? AND password = ?";
-  db.query(query, [email, password], (err, results) => {
+  const query = "SELECT id, first_name, password FROM users WHERE email = ?";
+  db.query(query, [email], async (err, results) => {
     if (err) {
       console.error("Fout bij het ophalen van gebruiker:", err);
       return res.status(500).json({ error: "Er is een fout opgetreden bij het inloggen." });
     }
 
-    if (results.length > 0) {
-      res.json({ userId: results[0].id, firstName: results[0].first_name });
-    } else {
-      res.status(401).json({ error: "Ongeldig e-mailadres of wachtwoord." });
+    if (results.length === 0) {
+      return res.status(401).json({ error: "Ongeldig e-mailadres of wachtwoord." });
+    }
+
+    const user = results[0];
+
+    try {
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) {
+        return res.status(401).json({ error: "Ongeldig e-mailadres of wachtwoord." });
+      }
+
+      // Login succesvol
+      res.json({ userId: user.id, firstName: user.first_name });
+    } catch (error) {
+      console.error("Fout bij wachtwoordcontrole:", error);
+      res.status(500).json({ error: "Interne serverfout bij het inloggen." });
     }
   });
 });
@@ -1141,32 +1166,44 @@ app.get('/user-data', (req, res) => {
   });
 });
 
-app.post('/update-user-data', (req, res) => {
+const bcrypt = require('bcrypt');
+
+app.post('/update-user-data', async (req, res) => {
   const { userId, firstName, lastName, email, birthDate, newPassword } = req.body;
 
   if (!userId || !firstName || !lastName || !email || !birthDate) {
     return res.status(400).json({ error: 'Alle velden zijn verplicht.' });
   }
 
-  const query = `
-    UPDATE users
-    SET first_name = ?, last_name = ?, email = ?, birth_date = ?
-    ${newPassword ? ', password = ?' : ''} -- Voeg het wachtwoord toe als het is opgegeven
-    WHERE id = ?
-  `;
+  try {
+    let query = `
+      UPDATE users
+      SET first_name = ?, last_name = ?, email = ?, birth_date = ?
+    `;
+    const params = [firstName, lastName, email, birthDate];
 
-  const params = newPassword
-    ? [firstName, lastName, email, birthDate, newPassword, userId]
-    : [firstName, lastName, email, birthDate, userId];
-
-  db.query(query, params, (err, result) => {
-    if (err) {
-      console.error('Fout bij het bijwerken van gebruikersgegevens:', err);
-      return res.status(500).json({ error: 'Er is een fout opgetreden bij het bijwerken van gebruikersgegevens.' });
+    if (newPassword) {
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+      query += ', password = ?';
+      params.push(hashedPassword);
     }
 
-    res.status(200).json({ message: 'Gebruikersgegevens succesvol bijgewerkt.' });
-  });
+    query += ' WHERE id = ?';
+    params.push(userId);
+
+    db.query(query, params, (err, result) => {
+      if (err) {
+        console.error('Fout bij het bijwerken van gebruikersgegevens:', err);
+        return res.status(500).json({ error: 'Er is een fout opgetreden bij het bijwerken van gebruikersgegevens.' });
+      }
+
+      res.status(200).json({ message: 'Gebruikersgegevens succesvol bijgewerkt.' });
+    });
+  } catch (error) {
+    console.error('Fout bij het verwerken van het nieuwe wachtwoord:', error);
+    res.status(500).json({ error: 'Interne serverfout bij het bijwerken van gebruikersgegevens.' });
+  }
 });
 
 app.post('/delete-account', (req, res) => {
