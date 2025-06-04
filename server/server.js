@@ -1166,7 +1166,7 @@ app.get('/user-data', (req, res) => {
   });
 });
 
-const bcrypt = require('bcrypt');
+
 
 app.post('/update-user-data', async (req, res) => {
   const { userId, firstName, lastName, email, birthDate, newPassword } = req.body;
