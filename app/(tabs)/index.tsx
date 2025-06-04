@@ -21,8 +21,10 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import API_BASE_URL from "../../server/config";
 import EmptyImage from "../../assets/images/ImageNoChallenges.png"; // 📸 Zorg dat dit pad klopt
+import { Modal } from "react-native";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
 
 const ICONS = {
   reizen: <FontAwesome5 name="suitcase-rolling" size={24} color="#29A86E" />,
@@ -41,6 +43,9 @@ const kleuren = {
 };
 
 const HomeScreen = () => {
+  const [showStreakPopup, setShowStreakPopup] = useState(false);
+  const [showStreakResetPopup, setShowStreakResetPopup] = useState(false);
+
   const [activeChallenge, setActiveChallenge] = useState(null);
   const [challenges, setChallenges] = useState([]);
   const [userName, setUserName] = useState("");
@@ -95,12 +100,39 @@ const HomeScreen = () => {
     const fetchStreak = async () => {
       const userId = await AsyncStorage.getItem("userId");
       if (!userId) return;
+  
       const res = await fetch(`${API_BASE_URL}/calculate-streak?userId=${userId}`);
       const data = await res.json();
-      if (res.ok) setStreak(data.streak);
+  
+      if (res.ok) {
+        const currentStreak = data.streak;
+        setStreak(currentStreak);
+  
+        const storedStreak = await AsyncStorage.getItem("lastKnownStreak");
+        const lastPopupDate = await AsyncStorage.getItem("lastPopupDate");
+        const lastResetPopupDate = await AsyncStorage.getItem("lastResetPopupDate");
+        const today = new Date().toISOString().split("T")[0];
+  
+        // Popup als streak omhoog gaat (zoals jij had)
+        if (storedStreak && parseInt(storedStreak) < currentStreak && lastPopupDate !== today) {
+          setShowStreakPopup(true);
+          await AsyncStorage.setItem("lastPopupDate", today);
+        }
+  
+        // Nieuwe popup als streak op 0 is
+        if (currentStreak === 0 && lastResetPopupDate !== today) {
+          setShowStreakResetPopup(true);
+          await AsyncStorage.setItem("lastResetPopupDate", today);
+        }
+  
+        await AsyncStorage.setItem("lastKnownStreak", currentStreak.toString());
+      }
     };
+  
     fetchStreak();
   }, []);
+  
+  
 
   const handleGoalPress = (route) => {
     router.push(`/${route}`);
@@ -108,6 +140,54 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.wrapper}>
+      <Modal
+  visible={showStreakResetPopup}
+  transparent
+  animationType="slide"
+  onRequestClose={() => setShowStreakResetPopup(false)}
+>
+  <View style={styles.modalContainer}>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Oh nee!</Text>
+      <Text style={styles.modalText}>
+        Je bent over je doel gegaan en je streak is gereset.
+      </Text>
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={() => setShowStreakResetPopup(false)}
+      >
+        <Text style={styles.closeButtonText}>Sluiten</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
+      <Modal
+  transparent
+  visible={showStreakPopup}
+  animationType="slide"
+>
+  <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)" }}>
+    <View style={{ backgroundColor: "white", padding: 24, borderRadius: 12, width: "80%", alignItems: "center" }}>
+      <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 12 }}>🎉 Proficiat!</Text>
+      <Text style={{ fontSize: 16, textAlign: "center", marginBottom: 20 }}>
+        Je streak is verhoogd naar {streak} dagen!
+      </Text>
+      <TouchableOpacity
+        onPress={() => setShowStreakPopup(false)}
+        style={{
+          backgroundColor: "#29A86E",
+          paddingVertical: 10,
+          paddingHorizontal: 20,
+          borderRadius: 8,
+        }}
+      >
+        <Text style={{ color: "#fff", fontWeight: "600" }}>Sluiten</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
+
       <StatusBar backgroundColor="#29A86E" barStyle="light-content" />
       <View style={styles.curvedBackground} />
 
@@ -362,6 +442,42 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   goalLabel: { fontSize: 14, color: "#252525" },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 30,
+    borderRadius: 20,
+    alignItems: "center",
+    elevation: 5,
+    width: "80%",
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#cc0000", // rood voor nadruk
+  },
+  modalText: {
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+  closeButton: {
+    backgroundColor: "#cc0000",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  closeButtonText: {
+    color: "white",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
 });
 
 export default HomeScreen;

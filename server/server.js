@@ -14,7 +14,7 @@ app.use('/images', express.static(path.join(__dirname, '..', 'assets', 'images')
 
 
 // Database connectie
-const db = mysql.createPool({
+const db = mysql.createConnection({
   host: "sql.freedb.tech", // Externe databasehost
   user: "freedb_breezd", // Databasegebruikersnaam
   password: "at$SDdMvU%QW7VW", // Databasewachtwoord
@@ -23,15 +23,15 @@ const db = mysql.createPool({
 });
 
 // Check databaseverbinding
-db.getConnection((err, connection) => {
+db.connect((err) => {
   if (err) {
     console.error('Error connecting to the database pool:', err);
   } else {
     console.log('Connected to the database pool');
-    connection.release(); // belangrijk!
+     // belangrijk!
   }
 });
-const API_BASE_URL = 'https://bachelorproef-breezd.onrender.com'; // Vervang dit door je eigen IP-adres of domein
+const API_BASE_URL = 'http://192.168.0.106:5000'; // Vervang dit door je eigen IP-adres of domein
 // Kies een willekeurige profielfoto
 const profilePictures = [
   `${API_BASE_URL}/images/profile1.png`,
@@ -125,74 +125,85 @@ app.post("/register", (req, res) => {
   const profilePictures = ['profile1.png', 'profile2.png', 'profile3.png', 'profile4.png', 'profile5.png'];
   const randomProfilePicture = profilePictures[Math.floor(Math.random() * profilePictures.length)];
 
+  const dummyPassword = 'temp'; // Tijdelijk wachtwoord
+
   const insertUserQuery = `
-    INSERT INTO users (first_name, last_name, email, birth_date, profile_picture)
-    VALUES (?, ?, ?, ?, ?)
-  `;
+  INSERT INTO users (first_name, last_name, email, birth_date, profile_picture, password)
+  VALUES (?, ?, ?, ?, ?, NULL)
+`;
 
-  db.query(insertUserQuery, [firstName, lastName, email, birthDate, randomProfilePicture], (err, result) => {
-    if (err) {
-      console.error("Fout bij het opslaan van gebruiker:", err);
-      return res.status(500).json({ error: "Er is een fout opgetreden bij het opslaan van de gebruiker" });
-    }
-
-    const userId = result.insertId; // Haal de ID van de nieuw aangemaakte gebruiker op
-
-    // Voeg een nieuwe rij toe aan de `user_progress`-tabel
-    const insertProgressQuery = `
-      INSERT INTO user_progress (
-        user_id, appOpened, accountCreated, firstDayUnderGoal, daysUnderGoal,
-        consecutiveDaysUnderGoal, noDaysOverGoal, sustainableGoals, healthGoals,
-        mentalGoals, challengeStarted, goalAmountReached, moneyGoals, moneySaved,
-        firstPlace, leaderboardDays, invitedFriends
-      ) VALUES (?, TRUE, TRUE, FALSE, 0, 0, FALSE, 0, 0, 0, FALSE, FALSE, 0, 0.00, FALSE, 0, 0)
-    `;
-
-    db.query(insertProgressQuery, [userId], (err) => {
+  db.query(
+    insertUserQuery,
+    [firstName, lastName, email, birthDate, randomProfilePicture, dummyPassword],
+    (err, result) => {
       if (err) {
-        console.error("Fout bij het aanmaken van de gebruikersvoortgang:", err);
-        return res.status(500).json({ error: "Er is een fout opgetreden bij het aanmaken van de gebruikersvoortgang." });
+        console.error("Fout bij het opslaan van gebruiker:", err);
+        return res.status(500).json({ error: "Er is een fout opgetreden bij het opslaan van de gebruiker" });
       }
 
-      res.status(201).json({ message: "Gebruiker succesvol geregistreerd", userId });
+      const userId = result.insertId; // Haal de ID van de nieuw aangemaakte gebruiker op
+
+      // Voeg een nieuwe rij toe aan de `user_progress`-tabel
+      const insertProgressQuery = `
+        INSERT INTO user_progress (
+          user_id, appOpened, accountCreated, firstDayUnderGoal, daysUnderGoal,
+          consecutiveDaysUnderGoal, noDaysOverGoal, sustainableGoals, healthGoals,
+          mentalGoals, challengeStarted, goalAmountReached, moneyGoals, moneySaved,
+          firstPlace, leaderboardDays, invitedFriends
+        ) VALUES (?, TRUE, TRUE, FALSE, 0, 0, FALSE, 0, 0, 0, FALSE, FALSE, 0, 0.00, FALSE, 0, 0)
+      `;
+
+      db.query(insertProgressQuery, [userId], (err) => {
+        if (err) {
+          console.error("Fout bij het aanmaken van de gebruikersvoortgang:", err);
+          return res.status(500).json({ error: "Er is een fout opgetreden bij het aanmaken van de gebruikersvoortgang." });
+        }
+
+        res.status(201).json({ message: "Gebruiker succesvol geregistreerd", userId });
+      });
+    }
+  );
+});
+
+const saltRounds = 10;
+app.post('/register-password', (req, res) => {
+  const { userId, password } = req.body;
+
+  if (!userId || !password) {
+    return res.status(400).json({ message: 'Gebruiker-ID en wachtwoord zijn verplicht.' });
+  }
+
+  // Wachtwoord hashen
+  bcrypt.hash(password, saltRounds, (err, hashedPassword) => {
+    if (err) {
+      console.error('Fout bij het hashen van wachtwoord:', err);
+      return res.status(500).json({ message: 'Fout bij het beveiligen van het wachtwoord.' });
+    }
+
+    // Update de gebruiker met het gehashte wachtwoord
+    const query = "UPDATE users SET password = ? WHERE id = ?";
+    db.query(query, [hashedPassword, userId], (err, result) => {
+      if (err) {
+        console.error('Fout bij het opslaan van wachtwoord:', err);
+        return res.status(500).json({ message: 'Er is een fout opgetreden bij het opslaan van het wachtwoord.' });
+      }
+
+      res.status(200).json({ message: 'Wachtwoord succesvol opgeslagen.' });
     });
   });
 });
 
 
 
-app.post('/register-password', async (req, res) => {
-  const { password } = req.body;
-
-  if (!password) {
-    return res.status(400).json({ message: 'Wachtwoord is verplicht.' });
-  }
-
-  try {
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    const query = "UPDATE users SET password = ? WHERE id = LAST_INSERT_ID()";
-    db.query(query, [hashedPassword], (err, result) => {
-      if (err) {
-        console.error('Fout bij het opslaan van wachtwoord:', err);
-        return res.status(500).json({ message: 'Er is een fout opgetreden bij het opslaan van het wachtwoord.' });
-      }
-      res.status(200).json({ message: 'Wachtwoord succesvol en veilig opgeslagen.' });
-    });
-  } catch (error) {
-    console.error('Fout bij hashen van wachtwoord:', error);
-    res.status(500).json({ message: 'Er is een fout opgetreden bij het verwerken van het wachtwoord.' });
-  }
-});
-
 
 
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
+  console.log('Login attempt met:', { email, password }); // Check wat binnenkomt
 
   if (!email || !password) {
+    console.log('Email of password niet ingevuld');
     return res.status(400).json({ error: "E-mailadres en wachtwoord zijn verplicht." });
   }
 
@@ -204,18 +215,23 @@ app.post("/login", (req, res) => {
     }
 
     if (results.length === 0) {
+      console.log('Geen gebruiker gevonden met email:', email);
       return res.status(401).json({ error: "Ongeldig e-mailadres of wachtwoord." });
     }
 
     const user = results[0];
+    console.log('Gevonden gebruiker:', user);
 
     try {
-      const match = await bcrypt.compare(password, user.password);
+      const match = await bcrypt.compare(password.trim(), user.password);
+      console.log('Wachtwoord match:', match);
+
       if (!match) {
+        console.log('Wachtwoord klopt niet voor gebruiker:', email);
         return res.status(401).json({ error: "Ongeldig e-mailadres of wachtwoord." });
       }
 
-      // Login succesvol
+      console.log('Login succesvol voor gebruiker:', email);
       res.json({ userId: user.id, firstName: user.first_name });
     } catch (error) {
       console.error("Fout bij wachtwoordcontrole:", error);
@@ -223,6 +239,7 @@ app.post("/login", (req, res) => {
     }
   });
 });
+
 
 // Endpoint om doelen op te slaan
 app.post("/saveGoal", (req, res) => {

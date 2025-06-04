@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 import { Link, router } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import API_BASE_URL from '../server/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 const horizontalPadding = 36;
@@ -20,25 +21,43 @@ export default function PasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false); // Voor het eerste wachtwoordveld
   const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Voor het bevestigingswachtwoordveld
+  const [userId, setUserId] = useState(null);
+
+  // Haal userId op uit AsyncStorage als component mount
+  useEffect(() => {
+    const getUserId = async () => {
+      try {
+        const id = await AsyncStorage.getItem('userId');
+        if (id) setUserId(id);
+      } catch (e) {
+        console.error('Fout bij ophalen userId:', e);
+      }
+    };
+
+    getUserId();
+  }, []);
 
   const handleSavePassword = async () => {
-    // Controleer of de wachtwoorden overeenkomen
+    if (!userId) {
+      Alert.alert('Fout', 'Gebruiker niet gevonden. Probeer opnieuw in te loggen.');
+      return;
+    }
+
     if (password !== confirmPassword) {
       Alert.alert('Fout', 'Wachtwoorden komen niet overeen.');
-      return; // Stop de navigatie als de wachtwoorden niet overeenkomen
+      return;
     }
 
     try {
       const response = await fetch(`${API_BASE_URL}/register-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password, userId }),
       });
 
       if (response.ok) {
         Alert.alert('Succes', 'Wachtwoord succesvol opgeslagen!');
-        // Navigeer naar het volgende scherm
-        router.push('/goalsScreen'); // Gebruik router.push om naar het volgende scherm te navigeren
+        router.push('/goalsScreen');
       } else {
         Alert.alert('Fout', 'Er is een probleem opgetreden bij het opslaan van het wachtwoord.');
       }
@@ -99,11 +118,9 @@ export default function PasswordScreen() {
       </View>
 
       {/* Volgende knop */}
-      
-        <TouchableOpacity style={styles.nextButton} onPress={handleSavePassword}>
-          <Text style={styles.nextButtonText}>Volgende</Text>
-        </TouchableOpacity>
-      
+      <TouchableOpacity style={styles.nextButton} onPress={handleSavePassword}>
+        <Text style={styles.nextButtonText}>Volgende</Text>
+      </TouchableOpacity>
 
       {/* Log in link */}
       <Text style={styles.loginText}>

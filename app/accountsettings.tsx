@@ -64,7 +64,7 @@ const AccountSettingsScreen = () => {
           setEmail(data.email);
           setBirthDate(data.birthDate); // Controleer of birthDate correct wordt ingesteld
           setBirthDateInput(formatDateToEuropean(data.birthDate)); // Format de geboortedatum
-          setPassword(data.password);
+          setPassword('');
         } else {
           alert(data.error || 'Er is iets misgegaan bij het ophalen van gebruikersgegevens.');
         }
@@ -178,7 +178,8 @@ const AccountSettingsScreen = () => {
             <View style={styles.inputWithButton}>
               <TextInput
                 style={styles.input}
-                value={password} // Toon het wachtwoord uit de database
+                value={password}
+                placeholder="******" // Toon het wachtwoord uit de database
                 secureTextEntry={!showPassword} // Verberg of toon het wachtwoord
                 onChangeText={setPassword} // Sta toe dat het wachtwoord wordt aangepast
               />
