@@ -7,13 +7,15 @@ import {
   Switch,
   TouchableOpacity,
   Dimensions,
+  Image,
+  StatusBar,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../server/config';
-import ImageDeleteAccount from '../../assets/images/ImageDeleteAccount.png'; // Zorg dat het pad klopt
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -24,8 +26,9 @@ const SettingsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.push('/profile')} style={styles.backButton}>
           <FontAwesome name="arrow-left" size={24} color="#29A86E" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Instellingen</Text>
@@ -92,18 +95,31 @@ const SettingsScreen = () => {
         </TouchableOpacity>
       </ScrollView>
 
-      {(showDeleteModal || showLogoutModal) && (
-        <View style={styles.overlay}>
-          <View style={styles.modal}>
-            <FontAwesome
-              name="exclamation-triangle"
-              size={28}
-              color="#FF5A5F"
-              style={{ marginBottom: 12 }}
+      <Modal
+        visible={showDeleteModal || showLogoutModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setShowDeleteModal(false);
+          setShowLogoutModal(false);
+        }}
+      >
+        <View style={styles.modalOverlayFullScreen}>
+          <View style={styles.modalFullScreenContent}>
+            <Image
+              source={
+                showDeleteModal
+                  ? require('../assets/images/ImageDeleteAccount.png')
+                  : require('../assets/images/ImageLogout.png')
+              }
+              style={styles.fullImage}
+              resizeMode="contain"
             />
+
             <Text style={styles.modalTitle}>
               {showDeleteModal ? 'Account Verwijderen' : 'Uitloggen'}
             </Text>
+
             <Text style={styles.modalText}>
               {showDeleteModal
                 ? 'Weet je zeker dat je je account wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt en al je voortgang zal verloren gaan.'
@@ -111,20 +127,7 @@ const SettingsScreen = () => {
             </Text>
 
             <TouchableOpacity
-              style={styles.keepButton}
-              onPress={() => {
-                setShowDeleteModal(false);
-                setShowLogoutModal(false);
-              }}
-            >
-              <Text style={styles.keepText}>
-                {showDeleteModal ? 'Mijn Account Behouden' : 'Annuleren'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Behoud alleen de onderste knop */}
-            <TouchableOpacity
-              style={styles.deleteConfirmButton}
+              style={styles.confirmButton}
               onPress={async () => {
                 if (showDeleteModal) {
                   try {
@@ -134,7 +137,6 @@ const SettingsScreen = () => {
                       return;
                     }
 
-                    // Roep het backend-endpoint aan om het account te verwijderen
                     const response = await fetch(`${API_BASE_URL}/delete-account`, {
                       method: 'POST',
                       headers: {
@@ -147,8 +149,8 @@ const SettingsScreen = () => {
 
                     if (response.ok) {
                       alert('Account succesvol verwijderd.');
-                      await AsyncStorage.removeItem('userId'); // Verwijder de gebruikersgegevens lokaal
-                      router.replace('/register'); // Navigeer naar het register-scherm
+                      await AsyncStorage.removeItem('userId');
+                      router.replace('/register');
                     } else {
                       alert(data.error || 'Er is iets misgegaan bij het verwijderen van het account.');
                     }
@@ -158,10 +160,8 @@ const SettingsScreen = () => {
                   }
                 } else if (showLogoutModal) {
                   try {
-                    // Verwijder de opgeslagen gebruikersgegevens
                     await AsyncStorage.removeItem('userId');
-                    // Navigeer naar het register-scherm
-                    router.replace('/welcomestart'); // Navigeer naar het welkom-scherm
+                    router.replace('/welcomestart');
                   } catch (error) {
                     console.error('Fout bij het uitloggen:', error);
                     alert('Er is iets misgegaan bij het uitloggen.');
@@ -169,13 +169,25 @@ const SettingsScreen = () => {
                 }
               }}
             >
-              <Text style={styles.deleteConfirmText}>
+              <Text style={styles.confirmButtonText}>
                 {showDeleteModal ? 'Ja, Account Verwijderen' : 'Ja, Uitloggen'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => {
+                setShowDeleteModal(false);
+                setShowLogoutModal(false);
+              }}
+            >
+              <Text style={styles.cancelButtonText}>
+                {showDeleteModal ? 'Mijn Account Behouden' : 'Annuleren'}
               </Text>
             </TouchableOpacity>
           </View>
         </View>
-      )}
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -250,61 +262,66 @@ const styles = StyleSheet.create({
     color: '#EB5757',
     flex: 1,
   },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+  modalOverlayFullScreen: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: SCREEN_WIDTH * 0.05,
-    zIndex: 10,
   },
-  modal: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
+  modalFullScreenContent: {
     width: '100%',
+    height: '100%',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  fullImage: {
+    width: 180,
+    height: 180,
+    marginBottom: 24,
   },
   modalTitle: {
-    fontSize: 16,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
     color: '#252525',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   modalText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#515151',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 32,
+    paddingHorizontal: 16,
   },
-  keepButton: {
-    backgroundColor: '#252525',
+  confirmButton: {
+    backgroundColor: '#EB5757',
     paddingVertical: 14,
     borderRadius: 8,
-    width: '100%',
+    width: '90%',
     alignItems: 'center',
-    marginBottom: 12,
+    marginTop: 8,
   },
-  keepText: {
+  confirmButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+    fontSize: 16,
   },
-  deleteConfirmButton: {
-    borderColor: '#E3E3E3',
+  cancelButton: {
+    backgroundColor: '#fff',
     borderWidth: 1,
+    borderColor: '#E3E3E3',
     paddingVertical: 14,
     borderRadius: 8,
-    width: '100%',
+    width: '90%',
     alignItems: 'center',
+    marginTop: 12,
   },
-  deleteConfirmText: {
-    fontWeight: 'bold',
+  cancelButtonText: {
     color: '#252525',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 

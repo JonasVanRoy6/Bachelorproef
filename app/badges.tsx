@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
+  StatusBar,
   StyleSheet,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
@@ -60,6 +61,7 @@ export default function BadgesScreen() {
   return (
     <>
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <StatusBar backgroundColor="#fff" barStyle="dark-content" />
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>
             <FontAwesome name="arrow-left" size={24} color="#29A86E" />

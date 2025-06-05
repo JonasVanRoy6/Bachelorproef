@@ -3,6 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
+  StatusBar,
   TouchableOpacity,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
@@ -11,6 +12,7 @@ import { router } from 'expo-router';
 const ConnectArmbandScreen = () => {
   return (
     <View style={styles.container}>
+            <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.push('/settings')} style={styles.backButton}>

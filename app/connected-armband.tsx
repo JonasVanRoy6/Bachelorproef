@@ -5,6 +5,7 @@ import {
   View,
   Text,
   StyleSheet,
+  StatusBar,
   TouchableOpacity,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
@@ -14,6 +15,7 @@ const ConnectedArmband = () => {
   return (
     <View style={styles.container}>
       {/* Header */}
+                  <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <FontAwesome name="arrow-left" size={24} color="#29A86E" />

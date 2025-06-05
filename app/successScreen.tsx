@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  StatusBar,
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -16,6 +17,7 @@ export default function SuccessScreen() {
 
   return (
     <View style={styles.container}>
+            <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <View style={styles.contentWrapper}>
         {/* ✅ Afbeelding in plaats van check-circle */}
         <Image

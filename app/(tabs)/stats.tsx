@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  StatusBar,
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -115,6 +116,7 @@ const StatsScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+            <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <Text style={styles.title}>Statistieken</Text>
 
       <View style={styles.selectorWrapper}>
@@ -259,16 +261,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: '#fff',
     marginHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
     paddingVertical: 12,
     paddingHorizontal: 8,
     justifyContent: 'space-between',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
+
   icon: { marginBottom: 6 },
   statLabel: { fontSize: 14, color: '#515151' },
   statValue: { fontSize: 24, fontWeight: 'bold', color: '#252525' },
@@ -279,12 +279,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginBottom: 24,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
+
   widgetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -346,12 +344,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
+
   compareLabel: { fontSize: 14, color: '#515151' },
   compareValue: { fontSize: 20, fontWeight: '600', color: '#252525' },
   compareChange: { fontSize: 14, color: '#29A86E' },

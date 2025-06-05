@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
+  StatusBar,
   Modal,
   Image,
 } from 'react-native';
@@ -104,6 +105,7 @@ export default function CreateLeaderboardScreen() {
   return (
     <>
       <ScrollView style={styles.wrapper} contentContainerStyle={styles.container}>
+                    <StatusBar backgroundColor="#fff" barStyle="dark-content" />
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.push('/leaderboard')}>
             <FontAwesome name="arrow-left" size={24} color="#29A86E" />

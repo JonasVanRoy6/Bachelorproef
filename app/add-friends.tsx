@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  StatusBar,
   Dimensions,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
@@ -105,6 +106,7 @@ export default function AddFriendsScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+            <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()}>

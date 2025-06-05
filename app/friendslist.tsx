@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  StatusBar,
   Dimensions,
   Modal,
 } from 'react-native';
@@ -24,96 +25,61 @@ const getUserId = async (): Promise<number | null> => {
   }
 };
 
-const fetchFriends = async (
-  setFriends: React.Dispatch<React.SetStateAction<any[]>>,
-  badgeEarned: boolean,
-  setBadgeEarned: React.Dispatch<React.SetStateAction<boolean>>,
-  setShowBadgePopup: React.Dispatch<React.SetStateAction<boolean>>
-) => {
-  try {
-    const userId = await getUserId();
-
-    if (!userId) {
-      alert('Kan de ingelogde gebruiker niet vinden.');
-      return;
-    }
-
-    const response = await fetch(`${API_BASE_URL}/user/friends?userId=${userId}`);
-    const data = await response.json();
-
-    if (response.ok) {
-      const friendsWithAdded = data.map((friend: any) => ({
-        ...friend,
-        added: false,
-      }));
-      setFriends(friendsWithAdded);
-
-      if (friendsWithAdded.length >= 2 && !badgeEarned) {
-        setBadgeEarned(true);
-        setShowBadgePopup(true);
-        await AsyncStorage.setItem('badgeEarned_friends', 'true');
-      }
-    } else {
-      alert(data.error || 'Fout bij het ophalen van vrienden.');
-    }
-  } catch (error) {
-    console.error('Fout bij het ophalen van vrienden:', error);
-    alert('Kan geen verbinding maken met de server.');
-  }
-};
-
-const removeFriendFromDatabase = async (friendId: number) => {
-  try {
-    const userId = await getUserId();
-
-    if (!userId) {
-      alert('Kan de ingelogde gebruiker niet vinden.');
-      return;
-    }
-
-    const response = await fetch(`${API_BASE_URL}/user/remove-friend`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ userId, friendId }),
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-      alert(data.message);
-    } else {
-      alert(data.error || 'Fout bij het verwijderen van de vriend.');
-    }
-  } catch (error) {
-    console.error('Fout bij verwijderen:', error);
-    alert('Serverfout bij verwijderen van vriend.');
-  }
-};
-
 export default function FriendsListScreen() {
   const router = useRouter();
   const [friends, setFriends] = useState<any[]>([]);
-  const [badgeEarned, setBadgeEarned] = useState(false);
   const [showBadgePopup, setShowBadgePopup] = useState(false);
 
-  const checkBadgeEarned = async () => {
-    const earned = await AsyncStorage.getItem('badgeEarned_friends');
-    if (earned === 'true') {
-      setBadgeEarned(true);
+  const fetchFriends = async () => {
+    try {
+      const userId = await getUserId();
+      if (!userId) return alert('Kan de ingelogde gebruiker niet vinden.');
+
+      const response = await fetch(`${API_BASE_URL}/user/friends?userId=${userId}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        const updated = data.map((f: any) => ({ ...f, added: false }));
+        setFriends(updated);
+
+        const earnedAlready = await AsyncStorage.getItem(`badgeEarned_friends_user_${userId}`);
+        const alreadyEarned = earnedAlready === 'true';
+
+        if (updated.length >= 2 && !alreadyEarned) {
+          await AsyncStorage.setItem(`badgeEarned_friends_user_${userId}`, 'true');
+          setShowBadgePopup(true);
+        }
+      } else {
+        alert(data.error || 'Fout bij het ophalen van vrienden.');
+      }
+    } catch (error) {
+      console.error('Fout bij ophalen vrienden:', error);
+      alert('Kan geen verbinding maken met de server.');
     }
   };
 
-  useEffect(() => {
-    const init = async () => {
-      const earned = await AsyncStorage.getItem('badgeEarned_friends');
-      const isEarned = earned === 'true';
-      setBadgeEarned(isEarned);
-      await fetchFriends(setFriends, isEarned, setBadgeEarned, setShowBadgePopup);
-    };
-    init();
-  }, []);
+  const removeFriendFromDatabase = async (friendId: number) => {
+    try {
+      const userId = await getUserId();
+      if (!userId) return alert('Kan de ingelogde gebruiker niet vinden.');
 
+      const response = await fetch(`${API_BASE_URL}/user/remove-friend`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, friendId }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        alert(data.message);
+      } else {
+        alert(data.error || 'Fout bij verwijderen van vriend.');
+      }
+    } catch (error) {
+      console.error('Fout bij verwijderen:', error);
+      alert('Serverfout bij verwijderen van vriend.');
+    }
+  };
 
   const removeFriend = async (index: number) => {
     const friend = friends[index];
@@ -124,8 +90,13 @@ export default function FriendsListScreen() {
     setFriends(updated);
   };
 
+  useEffect(() => {
+    fetchFriends();
+  }, []);
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.push('/profile')}>
           <FontAwesome name="arrow-left" size={24} color="#29A86E" />

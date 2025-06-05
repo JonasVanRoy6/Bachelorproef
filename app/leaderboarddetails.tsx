@@ -6,6 +6,7 @@ import {
   Image,
   TouchableOpacity,
   ScrollView,
+  StatusBar,
   Alert,
   Dimensions,
   Modal,
@@ -15,8 +16,6 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../server/config';
 
-const screenWidth = Dimensions.get('window').width;
-
 export default function LeaderboardDetailsScreen() {
   const router = useRouter();
   const { leaderboardId } = useLocalSearchParams();
@@ -25,6 +24,7 @@ export default function LeaderboardDetailsScreen() {
   const [userId, setUserId] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [showLogoutPopup, setShowLogoutPopup] = useState(false);
 
   useEffect(() => {
     const fetchLeaderboardDetails = async () => {
@@ -89,6 +89,7 @@ export default function LeaderboardDetailsScreen() {
 
       if (res.ok) {
         alert(data.message || 'Je hebt het leaderboard verlaten.');
+        setShowLogoutPopup(false);
         router.push('/leaderboard');
       } else {
         alert(data.error || 'Fout bij het verlaten van het leaderboard.');
@@ -110,12 +111,13 @@ export default function LeaderboardDetailsScreen() {
   return (
     <View style={styles.wrapper}>
       <View style={styles.container}>
+        <StatusBar backgroundColor="#fff" barStyle="dark-content" />
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.push('/leaderboard')}>
             <FontAwesome name="arrow-left" size={24} color="#29A86E" />
           </TouchableOpacity>
           <Text style={styles.title}>Leaderboard Details</Text>
-          <TouchableOpacity onPress={leaveLeaderboard}>
+          <TouchableOpacity onPress={() => setShowLogoutPopup(true)}>
             <FontAwesome name="sign-out" size={20} color="#29A86E" />
           </TouchableOpacity>
         </View>
@@ -140,6 +142,35 @@ export default function LeaderboardDetailsScreen() {
               <Text style={styles.name}>{user.name}</Text>
               <Text style={styles.days}>{user.total_puffs} puffs</Text>
             </View>
+            {user.rank <= 3 && (
+              <View
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 16,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor:
+                    user.rank === 1
+                      ? 'rgba(255, 205, 15, 0.15)'
+                      : user.rank === 2
+                      ? 'rgba(81, 81, 81, 0.15)'
+                      : 'rgba(168, 122, 38, 0.15)',
+                }}
+              >
+                <FontAwesome
+                  name="trophy"
+                  size={20}
+                  color={
+                    user.rank === 1
+                      ? '#FFCD0F'
+                      : user.rank === 2
+                      ? '#515151'
+                      : '#A87A26'
+                  }
+                />
+              </View>
+            )}
           </View>
         ))}
         {userRank && (
@@ -173,21 +204,52 @@ export default function LeaderboardDetailsScreen() {
             <Text style={styles.fullText}>
               Je staat op het punt om dit leaderboard definitief te verwijderen. Weet je het zeker?
             </Text>
+
             <TouchableOpacity
               onPress={handleDelete}
-              style={styles.continueButton}
+              style={[styles.continueButton, { backgroundColor: '#EB5757' }]}
             >
-              <Text style={styles.continueButtonText}>Ja, verwijder</Text>
+              <Text style={[styles.continueButtonText, { color: '#fff' }]}>Ja, verwijder</Text>
             </TouchableOpacity>
+
             <TouchableOpacity
               onPress={() => setShowDeletePopup(false)}
-              style={[styles.continueButton, {
-                backgroundColor: '#fff',
-                borderWidth: 1,
-                borderColor: '#E3E3E3',
-                width: '90%',
-                marginTop: 12,
-              }]}
+              style={[styles.continueButton, { backgroundColor: '#fff', borderWidth: 1, borderColor: '#E3E3E3', marginTop: 12 }]}
+            >
+              <Text style={[styles.continueButtonText, { color: '#252525' }]}>Annuleer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showLogoutPopup}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLogoutPopup(false)}
+      >
+        <View style={styles.modalOverlayFullScreen}>
+          <View style={styles.modalFullScreenContent}>
+            <Image
+              source={require('../assets/images/ImageLogout.png')}
+              style={styles.fullImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.fullTitle}>Leaderboard verlaten?</Text>
+            <Text style={styles.fullText}>
+              Je staat op het punt om dit leaderboard te verlaten. Weet je het zeker?
+            </Text>
+
+            <TouchableOpacity
+              onPress={leaveLeaderboard}
+              style={[styles.continueButton, { backgroundColor: '#EB5757' }]}
+            >
+              <Text style={[styles.continueButtonText, { color: '#fff' }]}>Ja, verlaat</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setShowLogoutPopup(false)}
+              style={[styles.continueButton, { backgroundColor: '#fff', borderWidth: 1, borderColor: '#E3E3E3', marginTop: 12 }]}
             >
               <Text style={[styles.continueButtonText, { color: '#252525' }]}>Annuleer</Text>
             </TouchableOpacity>
@@ -217,6 +279,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     height: 53,
     marginBottom: 16,
+    backgroundColor: '#fff',
   },
   inviteText: { fontSize: 18, color: '#29A86E', fontWeight: '500' },
   divider: { height: 1, backgroundColor: '#E3E3E3' },
@@ -232,10 +295,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingHorizontal: 12,
     width: '100%',
+    gap: 8,
   },
   activeCard: { backgroundColor: '#DFF5E5' },
   rank: { fontSize: 18, fontWeight: 'bold', width: 24, textAlign: 'center' },
-  avatar: { width: 48, height: 48, borderRadius: 24, marginHorizontal: 12 },
+  avatar: { width: 48, height: 48, borderRadius: 24 },
   userInfo: { flex: 1 },
   name: { fontSize: 16, fontWeight: '500' },
   days: { fontSize: 14, color: '#515151' },
@@ -281,12 +345,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   continueButton: {
-    backgroundColor: '#fff',
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 20,
     width: '90%',
     alignItems: 'center',
   },
-  continueButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  continueButtonText: {
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });

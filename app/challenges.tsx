@@ -311,12 +311,13 @@ const styles = StyleSheet.create({
   },
   overigeCard: {
     backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
+
   cardTop: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  StatusBar,
   Dimensions,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
@@ -104,6 +105,7 @@ export default function TrackerScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={[styles.puffCard, styles.centered]}>
           <Text style={styles.puffTitle}>Puffs Vandaag:</Text>
@@ -120,6 +122,15 @@ export default function TrackerScreen() {
               ]}
             />
           </View>
+
+          <View style={{ marginTop: 12 }}>
+          <Link href="/change-usage" asChild>
+              <TouchableOpacity style={styles.goalAdjustBtn}>
+                <FontAwesome name="exchange" size={14} color="#f5f5f5" style={{ marginRight: 6 }} />
+                <Text style={styles.goalAdjustText}>Doel aanpassen</Text>
+              </TouchableOpacity>
+            </Link>
+        </View>
         </View>
 
         <Link href="/screens/AddPuffsScreen" asChild>
@@ -128,11 +139,6 @@ export default function TrackerScreen() {
           </TouchableOpacity>
         </Link>
 
-        <Link href="/change-usage" asChild>
-          <TouchableOpacity style={styles.manualAddBtn}>
-            <Text style={styles.manualAddText}>Wijzig puffs goals</Text>
-          </TouchableOpacity>
-        </Link>
 
         <Text style={styles.activityHeader}>Recente Activiteit</Text>
         <View style={styles.activityCard}>
@@ -270,5 +276,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#E3E3E3',
     marginBottom: 16,
   },
+  goalAdjustBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#29A86E',
+    borderRadius: 20,
+  },
+  goalAdjustText: {
+    color: '#f5f5f5',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+
 });
 

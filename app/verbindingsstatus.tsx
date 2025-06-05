@@ -1,7 +1,7 @@
 // app/verbindingsstatus.tsx
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
 
@@ -9,6 +9,7 @@ const VerbindingsStatusScreen = () => {
   return (
     <View style={styles.container}>
       {/* Header met back button */}
+            <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <FontAwesome name="arrow-left" size={24} color="#29A86E" />

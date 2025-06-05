@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   StatusBar,
   StyleSheet,
-  Dimensions,
   KeyboardAvoidingView,
   ScrollView,
   Platform,
   Modal,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { FontAwesome5, FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -27,27 +27,23 @@ const ICON_OPTIONS = [
 ];
 
 const GAP = 8;
-const NUM_ICONS = 5;
 
 const ChallengesAdd = () => {
+  const { width: screenWidth } = useWindowDimensions();
+  const iconContainerWidth = screenWidth - 48;
+  const iconSize = (iconContainerWidth - (ICON_OPTIONS.length - 1) * GAP) / ICON_OPTIONS.length;
+
   const [selectedIcon, setSelectedIcon] = useState('reizen');
   const [titel, setTitel] = useState('');
   const [bedrag, setBedrag] = useState('');
-  const [containerWidth, setContainerWidth] = useState(0);
   const [isActive, setIsActive] = useState(false);
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const handleCreate = async () => {
     try {
       const userId = await AsyncStorage.getItem('userId');
-      if (!userId) {
-        alert('Kan de ingelogde gebruiker niet vinden.');
-        return;
-      }
-      if (!titel.trim() || !bedrag.trim()) {
-        alert('Vul alle velden in.');
-        return;
-      }
+      if (!userId) return alert('Kan de ingelogde gebruiker niet vinden.');
+      if (!titel.trim() || !bedrag.trim()) return alert('Vul alle velden in.');
 
       const response = await fetch(`${API_BASE_URL}/challenges/create`, {
         method: 'POST',
@@ -78,15 +74,11 @@ const ChallengesAdd = () => {
     return hex + opacityHex;
   };
 
-  const iconSize = containerWidth
-    ? (containerWidth - (NUM_ICONS - 1) * GAP) / NUM_ICONS
-    : 50;
-
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
-        <View style={{ flex: 1, backgroundColor: '#fff' }}>
-          <StatusBar barStyle="dark-content" />
+        <StatusBar backgroundColor="#fff" barStyle="dark-content" />
+        <View style={styles.container}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => router.back()}>
               <FontAwesome name="arrow-left" size={24} color="#29A86E" />
@@ -95,99 +87,77 @@ const ChallengesAdd = () => {
             <View style={{ width: 24 }} />
           </View>
 
-          <View style={styles.section}>
-            <View
-              style={styles.iconBoxContainer}
-              onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width - 32)}
-            >
-              <Text style={styles.label}>Selecteer Een Icoon</Text>
-              <View style={styles.iconRow}>
-                {ICON_OPTIONS.map(({ key, icon, color }, index) => {
-                  const isSelected = selectedIcon === key;
-                  const isLast = index === ICON_OPTIONS.length - 1;
-                  return (
-                    <TouchableOpacity
-                      key={key}
-                      onPress={() => setSelectedIcon(key)}
-                      style={{
-                        width: iconSize,
-                        height: iconSize,
-                        borderRadius: iconSize / 3,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginRight: isLast ? 0 : GAP,
-                        backgroundColor: getOpacityColor(color),
-                        borderWidth: 1.5,
-                        borderColor: isSelected ? color : 'transparent',
-                        opacity: isSelected ? 1 : 0.6,
-                      }}
-                    >
-                      {React.cloneElement(icon, { color })}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-
-            <View style={styles.inputBox}>
-              <Text style={styles.label}>Naam Uitdaging</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Bijv. Vakantie"
-                placeholderTextColor="#515151"
-                value={titel}
-                onChangeText={setTitel}
-              />
-            </View>
-
-            <View style={styles.inputBox}>
-              <Text style={styles.label}>Budgetdoel</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="€ 100"
-                placeholderTextColor="#515151"
-                value={`€ ${bedrag}`}
-                onChangeText={(text) => {
-                  const numericText = text.replace(/[^0-9.]/g, '');
-                  setBedrag(numericText);
-                }}
-                keyboardType="decimal-pad"
-              />
-            </View>
-
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-              <TouchableOpacity
-                onPress={() => setIsActive(!isActive)}
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 4,
-                  borderWidth: 1,
-                  borderColor: '#E3E3E3',
-                  backgroundColor: isActive ? '#29A86E' : '#fff',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginRight: 8,
-                }}
-              >
-                {isActive && <FontAwesome name="check" size={16} color="#fff" />}
-              </TouchableOpacity>
-              <Text style={{ fontSize: 16, color: '#252525' }}>
-                Als actief instellen?
-              </Text>
-            </View>
-
-            <View style={{ flex: 1 }} />
-            <View style={{ marginBottom: 72, alignItems: 'center' }}>
-              <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
-                <Text style={styles.createText}>Aanmaken</Text>
-              </TouchableOpacity>
-            </View>
+          <Text style={styles.label}>Selecteer Een Icoon</Text>
+          <View style={[styles.iconRowContainer, { width: iconContainerWidth }]}>
+            {ICON_OPTIONS.map(({ key, icon, color }, index) => {
+              const isSelected = selectedIcon === key;
+              const isLast = index === ICON_OPTIONS.length - 1;
+              return (
+                <TouchableOpacity
+                  key={key}
+                  onPress={() => setSelectedIcon(key)}
+                  style={{
+                    width: iconSize,
+                    height: iconSize,
+                    borderRadius: iconSize / 3,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginRight: isLast ? 0 : GAP,
+                    backgroundColor: getOpacityColor(color),
+                    borderWidth: 1.5,
+                    borderColor: isSelected ? color : 'transparent',
+                    opacity: isSelected ? 1 : 0.6,
+                  }}
+                >
+                  {React.cloneElement(icon, { color })}
+                </TouchableOpacity>
+              );
+            })}
           </View>
+
+          <Text style={styles.label}>Naam Uitdaging</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Bijv. Vakantie"
+            placeholderTextColor="#515151"
+            value={titel}
+            onChangeText={setTitel}
+          />
+
+          <Text style={styles.label}>Budgetdoel</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="€ 100"
+            placeholderTextColor="#515151"
+            value={`€ ${bedrag}`}
+            onChangeText={(text) => {
+              const numericText = text.replace(/[^0-9.]/g, '');
+              setBedrag(numericText);
+            }}
+            keyboardType="decimal-pad"
+          />
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
+            <TouchableOpacity
+              onPress={() => setIsActive(!isActive)}
+              style={[
+                styles.checkbox,
+                { backgroundColor: isActive ? '#29A86E' : '#fff' },
+              ]}
+            >
+              {isActive && <FontAwesome name="check" size={16} color="#fff" />}
+            </TouchableOpacity>
+            <Text style={{ fontSize: 16, color: '#252525' }}>
+              Als actief instellen?
+            </Text>
+          </View>
+
+          <TouchableOpacity style={styles.createButton} onPress={handleCreate}>
+            <Text style={styles.createText}>Aanmaken</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* ✅ POPUP FULLSCREEN */}
       <Modal
         visible={showSuccessPopup}
         transparent
@@ -222,82 +192,68 @@ const ChallengesAdd = () => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    padding: 24,
+    backgroundColor: '#fff',
+    flex: 1,
+  },
   header: {
-    paddingTop: 64,
-    paddingHorizontal: 24,
+    paddingTop: 42,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 24,
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#252525',
   },
-  section: {
-    paddingHorizontal: 24,
-    marginTop: 24,
-    flex: 1,
-  },
   label: {
     fontSize: 16,
     color: '#252525',
     fontWeight: '500',
     marginBottom: 16,
+    marginTop: 16,
   },
-  iconBoxContainer: {
-    width: '100%',
-    borderRadius: 16,
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 24,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  iconRow: {
+  iconRowContainer: {
     flexDirection: 'row',
-  },
-  inputBox: {
-    width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    alignSelf: 'center',
+    marginBottom: 16,
   },
   input: {
     height: 53,
-    borderRadius: 16,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#E3E3E3',
     paddingHorizontal: 16,
     fontSize: 16,
     color: '#252525',
+    marginBottom: 16,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#E3E3E3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
   },
   createButton: {
-    width: 330,
     height: 53,
     borderRadius: 16,
     backgroundColor: '#29A86E',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 24,
   },
   createText: {
     fontSize: 18,
     fontWeight: '600',
     color: '#F5F5F5',
   },
-
-  // ✅ Popup styles
   popupOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.8)',

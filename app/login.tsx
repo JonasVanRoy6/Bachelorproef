@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  StatusBar,
   Dimensions,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
@@ -51,6 +52,7 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       {/* Back button */}
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => router.push('/register')} // ⬅️ navigeer naar register

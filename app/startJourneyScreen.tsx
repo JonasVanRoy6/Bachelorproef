@@ -38,7 +38,7 @@ export default function StartJourneyScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      <StatusBar translucent backgroundColor="#fff" barStyle="dark-content" />
 
       <FlatList
         ref={flatListRef}

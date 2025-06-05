@@ -140,6 +140,15 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.wrapper}>
+    <StatusBar
+        backgroundColor={
+          showStreakPopup || showStreakResetPopup ? "#fff" : "#29A86E"
+        }
+        barStyle={
+          showStreakPopup || showStreakResetPopup ? "dark-content" : "light-content"
+        }
+      />
+
 <Modal
   visible={showStreakResetPopup}
   transparent
@@ -194,14 +203,6 @@ const HomeScreen = () => {
     </View>
   </View>
 </Modal>
-
-
-
-          {(showStreakPopup || showStreakResetPopup) ? (
-      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
-    ) : (
-      <StatusBar backgroundColor="#29A86E" barStyle="light-content" />
-    )}
 
       <View style={styles.curvedBackground} />
 
@@ -290,12 +291,23 @@ const HomeScreen = () => {
               </View>
             ) : (
               challenges.map((item, index) => (
-                <View key={item.challenge_id} style={[styles.challengeCard, index === 1 ? { marginBottom: 16 } : null]}>
+              <View
+                key={item.challenge_id}
+                style={[
+                  styles.challengeCard,
+                  { marginTop: 16 },
+                  index === challenges.length - 1 && { marginBottom: 16 }, // optioneel: onderaan extra marge
+                ]}
+              >
+
                   <View style={styles.challengeHeader}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                      {ICONS[item.thema] || <FontAwesome name="question" size={24} color="#29A86E" />}
+                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                      <View style={[styles.iconBox, { backgroundColor: `${kleuren[item.thema]}26` }]}>
+                        {ICONS[item.thema]}
+                      </View>
                       <Text style={styles.challengeTitle}>{item.titel}</Text>
                     </View>
+
                     <Text
                       style={[
                         styles.statusTag,
@@ -421,16 +433,15 @@ const styles = StyleSheet.create({
   viewAll: { fontSize: 14, color: "#29A86E" },
   challengeCard: {
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
+    padding: 20,
     marginTop: 16,
     marginHorizontal: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 1,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
+
   challengeHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -446,7 +457,7 @@ const styles = StyleSheet.create({
   progressBarBg: {
     width: "100%",
     height: 8,
-    backgroundColor: "#E0E0E0",
+    backgroundColor: "#F5F5F5",
     borderRadius: 4,
     marginTop: 22,
   },
@@ -522,6 +533,16 @@ fullTitle: {
   marginBottom: 12,
   textAlign: 'center',
 },
+
+iconBox: {
+  width: 44,
+  height: 44,
+  borderRadius: 12,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginRight: 12,
+},
+
 
 fullText: {
   fontSize: 16,

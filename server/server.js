@@ -1805,7 +1805,7 @@ app.delete('/leaderboard/leave', (req, res) => {
     }
 
     if (result.affectedRows === 0) {
-      return res.status(404).json({ error: 'Gebruiker zit niet in het leaderboard of bestaat niet.' });
+      return res.status(404).json({ error: 'Je bent de eigenaar van dit leaderboard en kunt het niet verlaten.' });
     }
 
     res.status(200).json({ message: 'Je bent succesvol uit het leaderboard gestapt.' });

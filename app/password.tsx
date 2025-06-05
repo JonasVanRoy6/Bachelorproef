@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  StatusBar,
   Dimensions,
 } from 'react-native';
 import { Link, router } from 'expo-router';
@@ -69,6 +70,7 @@ export default function PasswordScreen() {
 
   return (
     <View style={styles.wrapper}>
+                  <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       {/* Terugknop */}
       <View style={styles.backButtonWrapper}>
         <Link href="/register" asChild>

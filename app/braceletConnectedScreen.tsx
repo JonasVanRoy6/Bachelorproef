@@ -6,6 +6,7 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
+  StatusBar,
   SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -18,6 +19,7 @@ export default function BraceletConnectedScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+                  <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}

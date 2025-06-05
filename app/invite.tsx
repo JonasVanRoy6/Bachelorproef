@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Image,
   ScrollView,
+  StatusBar,
   Dimensions,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
@@ -177,15 +178,29 @@ export default function InviteScreen() {
 function UserCard({ user, onToggle }: { user: any; onToggle: () => void }) {
   return (
     <View style={styles.card}>
+        <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <View style={styles.userRow}>
         <Image
           source={{ uri: user.profilePicture || 'https://via.placeholder.com/48' }}
           style={styles.avatar}
         />
-        <View>
-          <Text style={styles.name}>{user.name} {user.lastName}</Text>
-          <Text style={styles.username}>{user.email}</Text>
+        <View style={{ flexShrink: 1, maxWidth: screenWidth * 0.45 }}>
+          <Text
+            style={styles.name}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {user.name} {user.lastName}
+          </Text>
+          <Text
+            style={styles.username}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {user.email}
+          </Text>
         </View>
+
       </View>
       <TouchableOpacity
         style={user.invited ? styles.invitedButton : styles.inviteButton}

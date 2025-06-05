@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  StatusBar,
   Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -56,7 +57,7 @@ export default function UsageScreen() {
 
   return (
     <View style={styles.wrapper}>
-      {/* Terugknop naar whyScreen */}
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => router.push('/password')}

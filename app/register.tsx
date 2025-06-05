@@ -8,6 +8,7 @@ import {
   Alert,
   Dimensions,
   Platform,
+  StatusBar,
   KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
@@ -88,13 +89,14 @@ export default function RegisterScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0} // Zorgt voor extra ruimte boven het toetsenbord
     >
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled" // Zorgt ervoor dat tikken buiten het toetsenbord het toetsenbord sluit
         showsVerticalScrollIndicator={false}
       >
         {/* Back button */}
-        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/welcomestart')}>
           <FontAwesome name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
 

@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  StatusBar,
   StyleSheet,
   Image,
   ScrollView,
@@ -123,7 +124,9 @@ const LeaderboardScreen = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+              
         <Text style={styles.title}>Leaderboards</Text>
 
         <View style={styles.sectionHeader}>

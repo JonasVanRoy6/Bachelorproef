@@ -5,6 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  StatusBar,
   Alert,
   Dimensions,
 } from 'react-native';
@@ -53,10 +54,11 @@ export default function UsageScreen() {
       Alert.alert('Fout', 'Er is een fout opgetreden bij het opslaan van de gegevens.');
     }
   };
-
   return (
     <View style={styles.wrapper}>
       {/* Terugknop naar whyScreen */}
+          <StatusBar backgroundColor="#fff" barStyle="dark-content" />
+
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => router.push('/(tabs)/tracker')}
