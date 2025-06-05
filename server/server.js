@@ -14,7 +14,7 @@ app.use('/images', express.static(path.join(__dirname, '..', 'assets', 'images')
 
 
 // Database connectie
-const db = mysql.createPool({
+const db = mysql.createConnection({
   host: "sql.freedb.tech", // Externe databasehost
   user: "freedb_breezd", // Databasegebruikersnaam
   password: "at$SDdMvU%QW7VW", // Databasewachtwoord
@@ -23,15 +23,14 @@ const db = mysql.createPool({
 });
 
 // Check databaseverbinding
-db.getConnection((err,connection) => {
+db.connect((err) => {
   if (err) {
-    console.error('Error connecting to the database pool:', err);
-  } else {
-    console.log('Connected to the database pool');
-     connection.release(); // Release the connection back to the pool
+    console.error('Error connecting to DB:', err);
+    return;
   }
+  console.log('Connected to database');
 });
-const API_BASE_URL = 'https://bachelorproef-breezd.onrender.com'; // Vervang dit door je eigen IP-adres of domein
+const API_BASE_URL = 'http://192.168.0.106:5000'; // Vervang dit door je eigen IP-adres of domein
 // Kies een willekeurige profielfoto
 const profilePictures = [
   `${API_BASE_URL}/images/profile1.png`,
@@ -611,9 +610,10 @@ app.get('/user/friends-with-photos', (req, res) => {
 app.get('/user/search', (req, res) => {
   const { search } = req.query;
 
-  if (!search) {
-    return res.status(400).json({ error: 'Zoekterm is verplicht.' });
+  if (!search || search.trim() === '') {
+    return res.status(200).json([]); // Geen resultaten teruggeven als zoekterm leeg is
   }
+  
 
   const query = `
     SELECT 
@@ -1326,7 +1326,9 @@ app.get('/calculate-savings', (req, res) => {
 
     const createdAt = new Date(userResults[0].created_at);
     const today = new Date();
-    const daysSinceCreated = Math.floor((today - createdAt) / (1000 * 60 * 60 * 24)); // Bereken aantal dagen
+    const rawDays = Math.floor((today - createdAt) / (1000 * 60 * 60 * 24));
+const daysSinceCreated = Math.max(1, rawDays);
+ // Bereken aantal dagen
 
     db.query(goalsQuery, [userId], (err, goalsResults) => {
       if (err) {

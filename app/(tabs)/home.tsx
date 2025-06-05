@@ -323,7 +323,8 @@ const HomeScreen = () => {
                   <View style={styles.progressBarBg}>
                     <View
                       style={{
-                        width: `${Math.min((totalSaved / item.bedrag) * 100, 100)}%`,
+                        width: `${Math.max(0, Math.min((totalSaved / item.bedrag) * 100, 100))}%`,
+
                         height: 8,
                         backgroundColor: kleuren[item.thema] || "#29A86E",
                         borderRadius: 4,

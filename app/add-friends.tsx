@@ -129,7 +129,10 @@ export default function AddFriendsScreen() {
             }}
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')}>
+            <TouchableOpacity onPress={() => {
+              setSearch('');
+              setAllUsers([]); // Wis ook de zoekresultaten
+            }}>
               <FontAwesome name="close" size={18} color="#29A86E" />
             </TouchableOpacity>
           )}

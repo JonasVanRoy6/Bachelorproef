@@ -197,7 +197,7 @@ const Challenges = () => {
                 <Text style={[styles.progressValue, { color: kleuren[actieve.thema], fontWeight: '600' }]}>€{totalSaved} / €{actieve.bedrag}</Text>
               </View>
               <View style={[styles.progressBarBg, { backgroundColor: getOpacityColor(kleuren[actieve.thema]) }]}>
-                <View style={[styles.progressBarFill, { width: `${Math.min((totalSaved / actieve.bedrag) * 100, 100)}%`, backgroundColor: kleuren[actieve.thema] }]} />
+                <View style={[styles.progressBarFill, { width: `${Math.max(0, Math.min((totalSaved / actieve.bedrag) * 100, 100))}%`, backgroundColor: kleuren[actieve.thema] }]} />
               </View>
             </View>
           </View>
@@ -254,7 +254,8 @@ const Challenges = () => {
                       style={[
                         styles.progressBarFill,
                         {
-                          width: `${Math.min((totalSaved / item.bedrag) * 100, 100)}%`,
+                          width: `${Math.max(0, Math.min((totalSaved / item.bedrag) * 100, 100))}%`,
+
                           backgroundColor: kleuren[item.thema],
                         },
                       ]}
