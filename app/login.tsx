@@ -53,7 +53,7 @@ export default function LoginScreen() {
       {/* Back button */}
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.push('/(tabs)/register')} // ⬅️ navigeer naar register
+        onPress={() => router.push('/register')} // ⬅️ navigeer naar register
       >
         <FontAwesome name="arrow-left" size={24} color="#fff" />
       </TouchableOpacity>
@@ -108,7 +108,7 @@ export default function LoginScreen() {
         Nieuw bij Breezd?{' '}
         <Text
           style={styles.registerLink}
-          onPress={() => router.push('/(tabs)/register')} // ⬅️ navigeer naar register
+          onPress={() => router.push('/register')} // ⬅️ navigeer naar register
         >
           Registreer
         </Text>

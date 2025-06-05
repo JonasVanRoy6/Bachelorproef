@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { View, Image, StyleSheet, Dimensions, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Font from 'expo-font';
-import AppLoading from 'expo-app-loading'; // Zorg dat je dit hebt geïnstalleerd
 
 const { width } = Dimensions.get('window');
 
@@ -32,8 +31,6 @@ export default function WelcomeScreen() {
       return () => clearTimeout(timer);
     }
   }, [fontsLoaded]);
-
-  if (!fontsLoaded) return <AppLoading />;
 
   return (
     <View style={styles.container}>

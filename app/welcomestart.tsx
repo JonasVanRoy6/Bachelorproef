@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import {
   View,
   Text,
@@ -8,40 +8,42 @@ import {
   Dimensions,
   StatusBar,
 } from 'react-native';
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from 'expo-router';
 
-const { width } = Dimensions.get('window');
-const BUTTON_WIDTH = width > 360 ? 330 : width - 72; // responsive: 36px padding aan beide kanten
+const { width, height } = Dimensions.get('window');
+const BUTTON_WIDTH = width > 360 ? 330 : width - 72;
 
 export default function WelcomeScreen() {
   const router = useRouter();
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="dark-content" backgroundColor="#C8E8D9" />
 
-      {/* Illustratie bovenaan */}
+      {/* Volledig brede afbeelding zonder marge */}
       <Image
-        source={require('../assets/images/ImageAccountMade.png')} // Zorg dat dit pad klopt
-        style={styles.mainImage}
-        resizeMode="contain"
+        source={require('../assets/images/ImageWelcome.png')}
+        style={styles.welcomeImage}
+        resizeMode="cover"
       />
 
+      {/* Contentblok */}
       <View style={styles.content}>
         {/* Logo */}
         <Image
-          source={require('../assets/images/logoBreezd.png')} // Zorg dat dit pad klopt
+          source={require('../assets/images/logoBreezd.png')}
           style={styles.logo}
           resizeMode="contain"
         />
 
-        {/* Subtitle */}
+        {/* Uitlegtekst */}
         <Text style={styles.subtitle}>
-          Elke dag een stap vooruit. Track je gebruik, stel doelen, en bouw aan een vape-vrije toekomst die je verdient.
+          Elke dag een stap vooruit. Track je gebruik, stel je eigen doelen, en werk op jouw manier aan een gezondere relatie met vapen.
         </Text>
+      </View>
 
-        {/* Registreren knop */}
+      {/* Onderste gedeelte */}
+      <View style={styles.bottomSection}>
         <TouchableOpacity
           style={styles.registerButton}
           onPress={() => router.push('/register')}
@@ -49,7 +51,6 @@ export default function WelcomeScreen() {
           <Text style={styles.registerText}>Registreren</Text>
         </TouchableOpacity>
 
-        {/* Login link */}
         <View style={styles.loginRow}>
           <Text style={styles.loginText}>Al een account? </Text>
           <TouchableOpacity onPress={() => router.push('/login')}>
@@ -65,25 +66,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    justifyContent: 'space-between',
   },
-  mainImage: {
+  welcomeImage: {
     width: '100%',
-    height: 320,
-    marginBottom: 24,
+    height: Math.min(height * 0.50, 494), // responsieve hoogte
+    marginTop: 0,
+    borderBottomRightRadius: 40,
+    borderBottomLeftRadius: 40,
   },
   content: {
     paddingHorizontal: 36,
-    alignItems: 'flex-start',
   },
   logo: {
-    width: 160,
-    height: 40,
+    width: 125,
+    height: 32,
     marginBottom: 24,
+    alignSelf: 'flex-start',
   },
   subtitle: {
     fontSize: 16,
     color: '#515151',
+    maxWidth: 330,
+    textAlign: 'left',
     marginBottom: 64,
+  },
+  bottomSection: {
+    alignItems: 'center',
+    paddingBottom: 36,
   },
   registerButton: {
     width: BUTTON_WIDTH,
@@ -92,7 +102,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#29A86E',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 24, // afstand tot login tekst
   },
   registerText: {
     fontSize: 18,
@@ -101,6 +111,7 @@ const styles = StyleSheet.create({
   },
   loginRow: {
     flexDirection: 'row',
+    justifyContent: 'center',
   },
   loginText: {
     fontSize: 16,
