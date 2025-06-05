@@ -101,7 +101,7 @@ const LeaderboardScreen = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert('Je bent succesvol toegevoegd aan het leaderboard!');
+       
         setSearch('');
         fetchLeaderboards();
       } else {

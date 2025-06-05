@@ -172,17 +172,7 @@ const StatsScreen = () => {
             </View>
           </View>
 
-          <View style={styles.peakWidget}>
-            <Text style={[styles.widgetTitle, { marginBottom: 16 }]}>Piekgebruik</Text>
-            {['8:00 - 10:00', '14:00 - 16:00', '18:00 - 21:00'].map((label, idx) => (
-              <View key={idx} style={styles.peakBlock}>
-                <Text style={styles.peakLabel}>{label}</Text>
-                <View style={styles.peakBarBg}>
-                  <View style={[styles.peakBarFill, { width: SCREEN_WIDTH * 0.5 }]} />
-                </View>
-              </View>
-            ))}
-          </View>
+         
 
           {[{
             label: getAverageLabel(),

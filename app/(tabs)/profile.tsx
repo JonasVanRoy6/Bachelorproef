@@ -198,7 +198,7 @@ export default function ProfileScreen() {
                 Voeg vrienden toe en moedig elkaar aan.
               </Text>
               <TouchableOpacity
-                onPress={() => router.push('/invite')}
+                onPress={() => router.push('/friendslist')}
                 style={{
                   backgroundColor: '#29A86E',
                   paddingHorizontal: 20,

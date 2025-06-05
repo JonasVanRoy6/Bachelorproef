@@ -31,7 +31,7 @@ db.connect((err) => {
      // belangrijk!
   }
 });
-const API_BASE_URL = 'http://192.168.0.130:5000'; // Vervang dit door je eigen IP-adres of domein
+const API_BASE_URL = 'http://192.168.0.106:5000'; // Vervang dit door je eigen IP-adres of domein
 // Kies een willekeurige profielfoto
 const profilePictures = [
   `${API_BASE_URL}/images/profile1.png`,
@@ -1415,7 +1415,7 @@ app.get('/suggested-friends', (req, res) => {
     WHERE u.id != ? AND u.id NOT IN (
       SELECT friend_id FROM friends WHERE user_id = ?
     )
-    LIMIT 10
+    LIMIT 4
   `;
 
   db.query(query, [userId, userId], (err, results) => {
@@ -1571,11 +1571,18 @@ app.get('/stats', async (req, res) => {
     
       // Vul de data aan met lege weken (maximaal 5 weken in een maand)
       const data = Array(5).fill(0);
+
+      // Bepaal de eerste week van de maand uit de resultaten
+      const eersteWeekVanMaand = dataResult.length > 0 ? Math.min(...dataResult.map(r => r.weeknummer)) : 0;
+      
+      // Zet de waarden in de juiste index gebaseerd op weeknummer verschil
       dataResult.forEach(({ weeknummer, totaal }) => {
-        if (weeknummer >= 1 && weeknummer <= 5) {
-          data[weeknummer - 1] = totaal;
+        const index = weeknummer - eersteWeekVanMaand;
+        if (index >= 0 && index < data.length) {
+          data[index] = totaal;
         }
       });
+      
     
       res.status(200).json({
         data,
