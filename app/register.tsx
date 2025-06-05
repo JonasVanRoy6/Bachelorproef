@@ -94,9 +94,10 @@ export default function RegisterScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Back button */}
-        <View style={styles.backButton} onPress={() => router.push('/')}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
           <FontAwesome name="arrow-left" size={24} color="#fff" />
-        </View>
+        </TouchableOpacity>
+
 
         {/* Title */}
         <Text style={styles.title}>Welkom bij Breezd,{"\n"}registreer je.</Text>

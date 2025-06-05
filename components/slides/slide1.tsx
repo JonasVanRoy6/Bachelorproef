@@ -21,8 +21,7 @@ export default function Slide1() {
       <View style={styles.textWrapper}>
         <Text style={styles.title}>Start je journey</Text>
         <Text style={styles.subtitle}>
-          Track je dagelijkse puffs, stel persoonlijke doelen in en begin met het opbouwen van jouw vape-vrije streak. Elke stap telt!
-        </Text>
+          Track je dagelijkse puffs, stel persoonlijke doelen en werk op jouw manier aan een gezondere relatie met vapen.        </Text>
       </View>
     </View>
   );
