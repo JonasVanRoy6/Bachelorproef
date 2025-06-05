@@ -14,7 +14,7 @@ import {
 import { Link, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
-import API_BASE_URL from '../../server/config';
+import API_BASE_URL from '../server/config';
 
 const { width } = Dimensions.get('window');
 

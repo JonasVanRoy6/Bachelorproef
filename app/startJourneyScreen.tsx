@@ -26,7 +26,7 @@ export default function StartJourneyScreen() {
     if (currentIndex < slides.length - 1) {
       flatListRef.current?.scrollToIndex({ index: currentIndex + 1 });
     } else {
-      router.push('/'); // Pas dit aan als je naar een ander scherm wil
+      router.push('/home'); // Pas dit aan als je naar een ander scherm wil
     }
   };
 

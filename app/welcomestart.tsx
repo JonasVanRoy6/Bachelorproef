@@ -23,7 +23,7 @@ export default function WelcomeScreen() {
 
       {/* Illustratie bovenaan */}
       <Image
-        source={require('../../assets/images/ImageAccountMade.png')} // Zorg dat dit pad klopt
+        source={require('../assets/images/ImageAccountMade.png')} // Zorg dat dit pad klopt
         style={styles.mainImage}
         resizeMode="contain"
       />
@@ -31,7 +31,7 @@ export default function WelcomeScreen() {
       <View style={styles.content}>
         {/* Logo */}
         <Image
-          source={require('../../assets/images/logoBreezd.png')} // Zorg dat dit pad klopt
+          source={require('../assets/images/logoBreezd.png')} // Zorg dat dit pad klopt
           style={styles.logo}
           resizeMode="contain"
         />

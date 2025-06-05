@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import API_BASE_URL from '../../server/config';
+import API_BASE_URL from '../server/config';
 import ImageDeleteAccount from '../../assets/images/ImageDeleteAccount.png'; // Zorg dat het pad klopt
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -25,7 +25,7 @@ const SettingsScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/')} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <FontAwesome name="arrow-left" size={24} color="#29A86E" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Instellingen</Text>
@@ -161,7 +161,7 @@ const SettingsScreen = () => {
                     // Verwijder de opgeslagen gebruikersgegevens
                     await AsyncStorage.removeItem('userId');
                     // Navigeer naar het register-scherm
-                    router.replace('/welcome');
+                    router.replace('/welcomestart'); // Navigeer naar het welkom-scherm
                   } catch (error) {
                     console.error('Fout bij het uitloggen:', error);
                     alert('Er is iets misgegaan bij het uitloggen.');

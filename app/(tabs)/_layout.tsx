@@ -7,30 +7,39 @@ export default function Layout() {
     <PuffProvider>
       <Tabs
         screenOptions={{
-          tabBarActiveTintColor: "#29A86E",
-          tabBarInactiveTintColor: "#999",
-          tabBarStyle: { backgroundColor: "#fff", height: 60 },
-          headerShown: false,
-        }}
+        tabBarActiveTintColor: "#29A86E",
+        tabBarInactiveTintColor: "#B3B3B3",
+        headerShown: false,
+        tabBarLabelPosition: "below-icon",
+        tabBarStyle: {
+          backgroundColor: "#fff",
+          height: 72,
+          borderTopWidth: 0,
+          elevation: 8,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.05,
+          shadowRadius: 4,
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          overflow: "hidden",
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          marginBottom: 8,
+        },
+        tabBarItemStyle: {
+          paddingTop: 10, 
+        },
+      }}
       >
         {/* Home Tab */}
         <Tabs.Screen
-          name="index"
+          name="home"
           options={{
             title: "Home",
             tabBarIcon: ({ color, size }) => (
               <FontAwesome name="home" size={size} color={color} />
-            ),
-          }}
-        />
-
-        {/* Profiel Tab */}
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: "Profiel",
-            tabBarIcon: ({ color, size }) => (
-              <FontAwesome name="user" size={size} color={color} />
             ),
           }}
         />
@@ -68,13 +77,13 @@ export default function Layout() {
           }}
         />
 
-        {/* Instellingen Tab */}
+        {/* Profiel Tab */}
         <Tabs.Screen
-          name="settings"
+          name="profile"
           options={{
-            title: "Instellingen",
+            title: "Profiel",
             tabBarIcon: ({ color, size }) => (
-              <FontAwesome name="cogs" size={size} color={color} />
+              <FontAwesome name="user" size={size} color={color} />
             ),
           }}
         />

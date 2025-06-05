@@ -48,7 +48,7 @@ export default function UsageScreen() {
 
       if (!response.ok) throw new Error();
 
-      router.push('/planScreen');
+      router.push('/successScreen'); // Navigeer naar de succespagina
     } catch (error) {
       Alert.alert('Fout', 'Er is een fout opgetreden bij het opslaan van de gegevens.');
     }
@@ -59,7 +59,7 @@ export default function UsageScreen() {
       {/* Terugknop naar whyScreen */}
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.push('/whyScreen')}
+        onPress={() => router.push('/password')}
       >
         <FontAwesome name="arrow-left" size={24} color="#fff" />
       </TouchableOpacity>

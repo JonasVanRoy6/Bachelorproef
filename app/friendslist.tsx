@@ -8,11 +8,11 @@ import {
   Image,
   ScrollView,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import API_BASE_URL from '../server/config';
-import { Modal } from "react-native";
 
 const getUserId = async (): Promise<number | null> => {
   try {
@@ -51,6 +51,7 @@ const fetchFriends = async (
       if (friendsWithAdded.length >= 2 && !badgeEarned) {
         setBadgeEarned(true);
         setShowBadgePopup(true);
+        await AsyncStorage.setItem('badgeEarned_friends', 'true');
       }
     } else {
       alert(data.error || 'Fout bij het ophalen van vrienden.');
@@ -96,9 +97,23 @@ export default function FriendsListScreen() {
   const [badgeEarned, setBadgeEarned] = useState(false);
   const [showBadgePopup, setShowBadgePopup] = useState(false);
 
+  const checkBadgeEarned = async () => {
+    const earned = await AsyncStorage.getItem('badgeEarned_friends');
+    if (earned === 'true') {
+      setBadgeEarned(true);
+    }
+  };
+
   useEffect(() => {
-    fetchFriends(setFriends, badgeEarned, setBadgeEarned, setShowBadgePopup);
+    const init = async () => {
+      const earned = await AsyncStorage.getItem('badgeEarned_friends');
+      const isEarned = earned === 'true';
+      setBadgeEarned(isEarned);
+      await fetchFriends(setFriends, isEarned, setBadgeEarned, setShowBadgePopup);
+    };
+    init();
   }, []);
+
 
   const removeFriend = async (index: number) => {
     const friend = friends[index];
@@ -152,40 +167,38 @@ export default function FriendsListScreen() {
         </View>
       )}
 
-      {/* Vrienden Zoeken Knop - altijd zichtbaar */}
       <View style={styles.addLink}>
         <TouchableOpacity style={styles.searchButton} onPress={() => router.push('/add-friends')}>
           <Text style={styles.searchButtonText}>Vrienden Zoeken</Text>
         </TouchableOpacity>
       </View>
-<Modal
-  visible={showBadgePopup}
-  transparent
-  animationType="fade"
-  onRequestClose={() => setShowBadgePopup(false)}
->
-  <View style={styles.modalOverlayFullScreen}>
-    <View style={styles.modalFullScreenContent}>
-      <Image
-        source={require('../assets/images/ImageBadgeEarned.png')}
-        style={styles.fullImage}
-        resizeMode="contain"
-      />
-      <Text style={styles.fullTitle}>Proficiat!</Text>
-      <Text style={styles.fullText}>
-        Je hebt de badge <Text style={styles.streakHighlight}>"Vrienden Strijder"</Text> verdiend door 2 vrienden toe te voegen!
-      </Text>
-      <TouchableOpacity
-        onPress={() => setShowBadgePopup(false)}
-        style={styles.continueButton}
+
+      <Modal
+        visible={showBadgePopup}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowBadgePopup(false)}
       >
-        <Text style={styles.continueButtonText}>Doorgaan</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
-
-
+        <View style={styles.modalOverlayFullScreen}>
+          <View style={styles.modalFullScreenContent}>
+            <Image
+              source={require('../assets/images/ImageBadgeEarned.png')}
+              style={styles.fullImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.fullTitle}>Proficiat!</Text>
+            <Text style={styles.fullText}>
+              Je hebt de badge <Text style={styles.streakHighlight}>"Vrienden Strijder"</Text> verdiend door 2 vrienden toe te voegen!
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowBadgePopup(false)}
+              style={styles.continueButton}
+            >
+              <Text style={styles.continueButtonText}>Doorgaan</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -193,196 +206,59 @@ export default function FriendsListScreen() {
 const screenWidth = Dimensions.get('window').width;
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#fff',
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingTop: 64,
-    paddingBottom: 40,
-  },
+  container: { backgroundColor: '#fff' },
+  content: { paddingHorizontal: 20, paddingTop: 64, paddingBottom: 40 },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 24,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24,
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#252525',
-  },
-  friendList: {
-    gap: 12,
-    marginBottom: 24,
-  },
+  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#252525' },
+  friendList: { gap: 12, marginBottom: 24 },
   friendCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 0.8,
-    borderColor: '#E3E3E3',
-    borderRadius: 12,
-    padding: 12,
-    width: '100%',
+    flexDirection: 'row', alignItems: 'center', borderWidth: 0.8, borderColor: '#E3E3E3',
+    borderRadius: 12, padding: 12, width: '100%',
   },
   avatar: {
     width: screenWidth < 360 ? 36 : 44,
     height: screenWidth < 360 ? 36 : 44,
-    borderRadius: 22,
-    marginRight: 12,
+    borderRadius: 22, marginRight: 12,
   },
-  info: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#252525',
-  },
-  username: {
-    fontSize: 12,
-    color: '#515151',
-  },
+  info: { flex: 1 },
+  name: { fontSize: 16, fontWeight: '600', color: '#252525' },
+  username: { fontSize: 12, color: '#515151' },
   removeButton: {
-    width: 42,
-    height: 32,
-    borderRadius: 8,
-    borderWidth: 0.3,
-    borderColor: '#E3E3E3',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 42, height: 32, borderRadius: 8, borderWidth: 0.3,
+    borderColor: '#E3E3E3', justifyContent: 'center', alignItems: 'center',
     backgroundColor: '#EB575715',
   },
-  addLink: {
-    alignItems: 'center',
-    marginTop: 12,
-  },
+  addLink: { alignItems: 'center', marginTop: 12 },
   searchButton: {
-    backgroundColor: '#29A86E',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+    backgroundColor: '#29A86E', paddingHorizontal: 20,
+    paddingVertical: 10, borderRadius: 20,
   },
   searchButtonText: {
-    color: '#fefefe',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  popup: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    width: '80%',
-    alignItems: 'center',
-  },
-  popupHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginBottom: 16,
-  },
-  popupTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#252525',
-  },
-  popupContent: {
-    alignItems: 'center',
-  },
-  popupIconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  popupDesc: {
-    fontSize: 14,
-    color: '#515151',
-    textAlign: 'center',
+    color: '#fefefe', fontSize: 14, fontWeight: '600',
   },
   emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 40,
-    marginBottom: 24,
+    alignItems: 'center', justifyContent: 'center',
+    marginTop: 40, marginBottom: 24,
   },
-  emptyImage: {
-    width: 200,
-    height: 200,
-    marginBottom: 24,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#252525',
-    marginBottom: 4,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#515151',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-
+  emptyImage: { width: 200, height: 200, marginBottom: 24 },
+  emptyTitle: { fontSize: 18, fontWeight: '600', color: '#252525', marginBottom: 4 },
+  emptyText: { fontSize: 14, color: '#515151', textAlign: 'center', marginBottom: 20 },
   modalOverlayFullScreen: {
-  flex: 1,
-  backgroundColor: 'rgba(0,0,0,0.8)',
-  justifyContent: 'center',
-  alignItems: 'center',
-},
-modalFullScreenContent: {
-  width: '100%',
-  height: '100%',
-  backgroundColor: '#fff',
-  justifyContent: 'center',
-  alignItems: 'center',
-  padding: 32,
-},
-fullImage: {
-  width: 180,
-  height: 180,
-  marginBottom: 24,
-},
-fullTitle: {
-  fontSize: 24,
-  fontWeight: 'bold',
-  color: '#252525',
-  marginBottom: 12,
-  textAlign: 'center',
-},
-fullText: {
-  fontSize: 16,
-  color: '#515151',
-  textAlign: 'center',
-  marginBottom: 32,
-  paddingHorizontal: 16,
-},
-streakHighlight: {
-  fontWeight: 'bold',
-  color: '#29A86E',
-},
-continueButton: {
-  backgroundColor: '#29A86E',
-  paddingVertical: 14,
-  paddingHorizontal: 40,
-  borderRadius: 20,
-  width: '80%',
-  alignItems: 'center',
-  marginBottom: 40,
-},
-continueButtonText: {
-  color: '#fff',
-  fontWeight: 'bold',
-  fontSize: 16,
-},
-
-
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'center', alignItems: 'center',
+  },
+  modalFullScreenContent: {
+    width: '100%', height: '100%', backgroundColor: '#fff',
+    justifyContent: 'center', alignItems: 'center', padding: 32,
+  },
+  fullImage: { width: 180, height: 180, marginBottom: 24 },
+  fullTitle: { fontSize: 24, fontWeight: 'bold', color: '#252525', marginBottom: 12, textAlign: 'center' },
+  fullText: { fontSize: 16, color: '#515151', textAlign: 'center', marginBottom: 32, paddingHorizontal: 16 },
+  streakHighlight: { fontWeight: 'bold', color: '#29A86E' },
+  continueButton: {
+    backgroundColor: '#29A86E', paddingVertical: 14, paddingHorizontal: 40,
+    borderRadius: 20, width: '80%', alignItems: 'center', marginBottom: 40,
+  },
+  continueButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
 });

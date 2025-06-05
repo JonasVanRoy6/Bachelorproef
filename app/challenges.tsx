@@ -234,7 +234,7 @@ const Challenges = () => {
                       style={styles.deleteButton}
                       onPress={() => verwijderUitdaging(item.challenge_id)}
                     >
-                      <FontAwesome name="trash" size={16} color="#fff" />
+                      <FontAwesome name="trash" size={16} color="#EB5757" />
                     </TouchableOpacity>
                   </View>
 
@@ -398,13 +398,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   deleteButton: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    backgroundColor: '#FF7373',
-    borderRadius: 12,
-    padding: 8,
+    width: 42,
+    height: 32,
+    borderRadius: 8,
+    borderWidth: 0.3,
+    borderColor: '#E3E3E3',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#EB575715',
   },
+
+
 });
 
 export default Challenges;

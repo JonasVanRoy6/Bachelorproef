@@ -37,7 +37,7 @@ export default function LoginScreen() {
         const data = await response.json();
         await AsyncStorage.setItem('userId', data.userId.toString());
         Alert.alert('Succes', `Welkom terug, ${data.firstName}!`);
-        router.push('/'); // ⬅️ navigeert naar index.tsx
+        router.push('/home'); // ⬅️ navigeert naar index.tsx
       } else {
         const errorData = await response.json();
         Alert.alert('Fout', errorData.error || 'Inloggen mislukt.');
