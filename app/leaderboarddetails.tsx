@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert,
   Dimensions,
+  Modal,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -23,6 +24,7 @@ export default function LeaderboardDetailsScreen() {
   const [userRank, setUserRank] = useState(null);
   const [userId, setUserId] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
 
   useEffect(() => {
     const fetchLeaderboardDetails = async () => {
@@ -54,6 +56,27 @@ export default function LeaderboardDetailsScreen() {
     fetchLeaderboardDetails();
   }, [leaderboardId]);
 
+  const handleDelete = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/leaderboard/delete?leaderboardId=${leaderboardId}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(data.message || 'Leaderboard verwijderd');
+        setShowDeletePopup(false);
+        router.push('/leaderboard');
+      } else {
+        alert(data.error || 'Verwijderen mislukt');
+      }
+    } catch (err) {
+      console.error('Fout bij verwijderen:', err);
+      alert('Er is een fout opgetreden bij het verwijderen.');
+    }
+  };
+
   const leaveLeaderboard = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/leaderboard/leave`, {
@@ -65,10 +88,10 @@ export default function LeaderboardDetailsScreen() {
       const data = await res.json();
 
       if (res.ok) {
-        alert(data.message || 'Je bent succesvol uit het leaderboard gestapt.');
-        router.push('/leaderboard'); // Navigeer terug naar de lijst met leaderboards
+        alert(data.message || 'Je hebt het leaderboard verlaten.');
+        router.push('/leaderboard');
       } else {
-        alert(data.error || 'Er is een fout opgetreden bij het verlaten van het leaderboard.');
+        alert(data.error || 'Fout bij het verlaten van het leaderboard.');
       }
     } catch (err) {
       console.error('Fout bij het verlaten van het leaderboard:', err);
@@ -127,66 +150,64 @@ export default function LeaderboardDetailsScreen() {
       {isOwner && (
         <TouchableOpacity
           style={styles.deleteButton}
-          onPress={() => {
-            Alert.alert(
-              'Bevestiging',
-              'Weet je zeker dat je dit leaderboard wilt verwijderen?',
-              [
-                { text: 'Annuleer', style: 'cancel' },
-                {
-                  text: 'Verwijder',
-                  style: 'destructive',
-                  onPress: async () => {
-                    try {
-                      const res = await fetch(`${API_BASE_URL}/leaderboard/delete?leaderboardId=${leaderboardId}`, {
-                        method: 'DELETE',
-                      });
-
-                      const data = await res.json();
-
-                      if (res.ok) {
-                        alert(data.message || 'Leaderboard verwijderd');
-                        router.push('/leaderboard');
-                      } else {
-                        alert(data.error || 'Verwijderen mislukt');
-                      }
-                    } catch (err) {
-                      console.error('Fout bij verwijderen:', err);
-                      alert('Er is een fout opgetreden bij het verwijderen.');
-                    }
-                  },
-                },
-              ]
-            );
-          }}
+          onPress={() => setShowDeletePopup(true)}
         >
           <Text style={styles.deleteText}>Verwijder leaderboard</Text>
         </TouchableOpacity>
       )}
+
+      <Modal
+        visible={showDeletePopup}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowDeletePopup(false)}
+      >
+        <View style={styles.modalOverlayFullScreen}>
+          <View style={styles.modalFullScreenContent}>
+            <Image
+              source={require('../assets/images/ImageDeleteAccount.png')}
+              style={styles.fullImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.fullTitle}>Leaderboard verwijderen?</Text>
+            <Text style={styles.fullText}>
+              Je staat op het punt om dit leaderboard definitief te verwijderen. Weet je het zeker?
+            </Text>
+            <TouchableOpacity
+              onPress={handleDelete}
+              style={styles.continueButton}
+            >
+              <Text style={styles.continueButtonText}>Ja, verwijder</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setShowDeletePopup(false)}
+              style={[styles.continueButton, {
+                backgroundColor: '#fff',
+                borderWidth: 1,
+                borderColor: '#E3E3E3',
+                width: '90%',
+                marginTop: 12,
+              }]}
+            >
+              <Text style={[styles.continueButtonText, { color: '#252525' }]}>Annuleer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  container: {
-    paddingTop: 64,
-    paddingHorizontal: 20,
-    paddingBottom: 0,
-  },
+  wrapper: { flex: 1, backgroundColor: '#fff' },
+  container: { paddingTop: 64, paddingHorizontal: 20 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 24,
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
+  title: { fontSize: 20, fontWeight: 'bold' },
   inviteButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -197,21 +218,9 @@ const styles = StyleSheet.create({
     height: 53,
     marginBottom: 16,
   },
-  inviteText: {
-    fontSize: 18,
-    color: '#29A86E',
-    fontWeight: '500',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E3E3E3',
-    marginBottom: 0,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 40,
-  },
+  inviteText: { fontSize: 18, color: '#29A86E', fontWeight: '500' },
+  divider: { height: 1, backgroundColor: '#E3E3E3' },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -224,59 +233,60 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     width: '100%',
   },
-  activeCard: {
-    backgroundColor: '#DFF5E5',
-  },
-  rank: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    width: 24,
-    textAlign: 'center',
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginHorizontal: 12,
-  },
-  userInfo: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  days: {
-    fontSize: 14,
-    color: '#515151',
-  },
-  errorText: {
-    fontSize: 16,
-    color: '#FF0000',
-    textAlign: 'center',
-    marginTop: 20,
-  },
-  yourRankText: {
-    fontSize: 16,
-    textAlign: 'center',
-    fontWeight: 'bold',
-    marginTop: 12,
-  },
+  activeCard: { backgroundColor: '#DFF5E5' },
+  rank: { fontSize: 18, fontWeight: 'bold', width: 24, textAlign: 'center' },
+  avatar: { width: 48, height: 48, borderRadius: 24, marginHorizontal: 12 },
+  userInfo: { flex: 1 },
+  name: { fontSize: 16, fontWeight: '500' },
+  days: { fontSize: 14, color: '#515151' },
+  errorText: { fontSize: 16, color: '#FF0000', textAlign: 'center', marginTop: 20 },
+  yourRankText: { fontSize: 16, textAlign: 'center', fontWeight: 'bold', marginTop: 12 },
   deleteButton: {
     marginTop: 20,
     marginBottom: 20,
     marginHorizontal: 20,
-    backgroundColor: '#FF4D4D',
+    backgroundColor: '#EB5757',
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  deleteText: {
-    color: '#fff',
-    fontSize: 16,
+  deleteText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  modalOverlayFullScreen: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalFullScreenContent: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  fullImage: { width: 180, height: 180, marginBottom: 24 },
+  fullTitle: {
+    fontSize: 24,
     fontWeight: 'bold',
+    color: '#252525',
+    marginBottom: 12,
+    textAlign: 'center',
   },
-  exitIcon: {
-    color: '#29A86E', // Rode kleur voor de exit-actie
+  fullText: {
+    fontSize: 16,
+    color: '#515151',
+    textAlign: 'center',
+    marginBottom: 32,
+    paddingHorizontal: 16,
   },
+  continueButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 20,
+    width: '90%',
+    alignItems: 'center',
+  },
+  continueButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
 });

@@ -140,55 +140,69 @@ const HomeScreen = () => {
 
   return (
     <SafeAreaView style={styles.wrapper}>
-      <Modal
+<Modal
   visible={showStreakResetPopup}
   transparent
-  animationType="slide"
+  animationType="fade"
   onRequestClose={() => setShowStreakResetPopup(false)}
 >
-  <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>Oh nee!</Text>
-      <Text style={styles.modalText}>
-        Je bent over je doel gegaan en je streak is gereset.
+  <View style={styles.modalOverlayFullScreen}>
+    <View style={styles.modalFullScreenContent}>
+      <Image
+        source={require("../../assets/images/streakResetPopup.png")} // 📸 Zorg dat dit pad klopt
+        style={styles.fullImage}
+        resizeMode="contain"
+      />
+      <Text style={styles.fullTitle}>Oeps, je streak is gereset</Text>
+      <Text style={styles.fullText}>
+        Je bent even van je pad geraakt. Geen zorgen, pak de draad weer op en bouw je streak opnieuw op!
       </Text>
       <TouchableOpacity
-        style={styles.closeButton}
         onPress={() => setShowStreakResetPopup(false)}
+        style={styles.continueButton}
       >
-        <Text style={styles.closeButtonText}>Sluiten</Text>
+        <Text style={styles.continueButtonText}>Doorgaan</Text>
       </TouchableOpacity>
     </View>
   </View>
 </Modal>
 
-      <Modal
+<Modal
   transparent
   visible={showStreakPopup}
-  animationType="slide"
+  animationType="fade"
+  onRequestClose={() => setShowStreakPopup(false)}
 >
-  <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "rgba(0,0,0,0.5)" }}>
-    <View style={{ backgroundColor: "white", padding: 24, borderRadius: 12, width: "80%", alignItems: "center" }}>
-      <Text style={{ fontSize: 18, fontWeight: "bold", marginBottom: 12 }}>🎉 Proficiat!</Text>
-      <Text style={{ fontSize: 16, textAlign: "center", marginBottom: 20 }}>
-        Je streak is verhoogd naar {streak} dagen!
+  <View style={styles.modalOverlayFullScreen}>
+    <View style={styles.modalFullScreenContent}>
+      <Image
+        source={require("../../assets/images/streakPopup.png")} // ✅ Zorg dat deze afbeelding bestaat
+        style={styles.fullImage}
+        resizeMode="contain"
+      />
+      <Text style={styles.fullTitle}>Gefeliciteerd!</Text>
+      <Text style={styles.fullText}>
+        Je bent goed bezig! Je streak is nu <Text style={styles.streakHighlight}>{streak} dagen</Text> lang. Blijf zo doorgaan!
       </Text>
       <TouchableOpacity
         onPress={() => setShowStreakPopup(false)}
-        style={{
-          backgroundColor: "#29A86E",
-          paddingVertical: 10,
-          paddingHorizontal: 20,
-          borderRadius: 8,
-        }}
+        style={styles.continueButton}
       >
-        <Text style={{ color: "#fff", fontWeight: "600" }}>Sluiten</Text>
+        <Text style={styles.continueButtonText}>Doorgaan</Text>
       </TouchableOpacity>
+
     </View>
   </View>
 </Modal>
 
+
+
+          {(showStreakPopup || showStreakResetPopup) ? (
+      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
+    ) : (
       <StatusBar backgroundColor="#29A86E" barStyle="light-content" />
+    )}
+
       <View style={styles.curvedBackground} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: 32 }} showsVerticalScrollIndicator={false}>
@@ -251,7 +265,7 @@ const HomeScreen = () => {
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Mijn Uitdagingen</Text>
               <TouchableOpacity onPress={() => router.push("/challenges")}>
-                <Text style={styles.viewAll}>Alles bekijken</Text>
+                <Text style={styles.viewAll}>Beheren</Text>
               </TouchableOpacity>
             </View>
 
@@ -478,6 +492,67 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+
+  modalOverlayFullScreen: {
+  flex: 1,
+  backgroundColor: 'rgba(0,0,0,0.8)', // donkere overlay
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+
+modalFullScreenContent: {
+  width: '100%',
+  height: '100%',
+  backgroundColor: '#fff',
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: 32,
+},
+
+fullImage: {
+  width: 180,
+  height: 180,
+  marginBottom: 24,
+},
+
+fullTitle: {
+  fontSize: 24,
+  fontWeight: 'bold',
+  color: '#252525',
+  marginBottom: 12,
+  textAlign: 'center',
+},
+
+fullText: {
+  fontSize: 16,
+  color: '#515151',
+  textAlign: 'center',
+  marginBottom: 32,
+  paddingHorizontal: 16,
+},
+
+streakHighlight: {
+  fontWeight: 'bold',
+  color: '#29A86E',
+},
+
+continueButton: {
+  backgroundColor: '#29A86E',
+  paddingVertical: 14,
+  paddingHorizontal: 40,
+  borderRadius: 20,
+  width: '90%',
+  alignItems: 'center',
+  marginBottom: 40,
+},
+
+continueButtonText: {
+  color: '#fff',
+  fontWeight: 'bold',
+  fontSize: 16,
+},
+
+
 });
 
 export default HomeScreen;

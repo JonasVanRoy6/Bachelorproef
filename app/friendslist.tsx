@@ -12,6 +12,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import API_BASE_URL from '../server/config';
+import { Modal } from "react-native";
 
 const getUserId = async (): Promise<number | null> => {
   try {
@@ -157,27 +158,34 @@ export default function FriendsListScreen() {
           <Text style={styles.searchButtonText}>Vrienden Zoeken</Text>
         </TouchableOpacity>
       </View>
+<Modal
+  visible={showBadgePopup}
+  transparent
+  animationType="fade"
+  onRequestClose={() => setShowBadgePopup(false)}
+>
+  <View style={styles.modalOverlayFullScreen}>
+    <View style={styles.modalFullScreenContent}>
+      <Image
+        source={require('../assets/images/ImageBadgeEarned.png')}
+        style={styles.fullImage}
+        resizeMode="contain"
+      />
+      <Text style={styles.fullTitle}>Proficiat!</Text>
+      <Text style={styles.fullText}>
+        Je hebt de badge <Text style={styles.streakHighlight}>"Vrienden Strijder"</Text> verdiend door 2 vrienden toe te voegen!
+      </Text>
+      <TouchableOpacity
+        onPress={() => setShowBadgePopup(false)}
+        style={styles.continueButton}
+      >
+        <Text style={styles.continueButtonText}>Doorgaan</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
 
-      {showBadgePopup && (
-        <View style={styles.overlay}>
-          <View style={styles.popup}>
-            <View style={styles.popupHeader}>
-              <Text style={styles.popupTitle}>Proficiat!</Text>
-              <TouchableOpacity onPress={() => setShowBadgePopup(false)}>
-                <FontAwesome name="close" size={24} color="#29A86E" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.popupContent}>
-              <View style={[styles.popupIconCircle, { backgroundColor: '#DFF5E5' }]}>
-                <FontAwesome name="user-plus" size={36} color="#29A86E" />
-              </View>
-              <Text style={styles.popupDesc}>
-                Je hebt de badge "Vrienden Strijder" verdiend door 2 vrienden toe te voegen!
-              </Text>
-            </View>
-          </View>
-        </View>
-      )}
+
     </ScrollView>
   );
 }
@@ -323,4 +331,58 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
+
+  modalOverlayFullScreen: {
+  flex: 1,
+  backgroundColor: 'rgba(0,0,0,0.8)',
+  justifyContent: 'center',
+  alignItems: 'center',
+},
+modalFullScreenContent: {
+  width: '100%',
+  height: '100%',
+  backgroundColor: '#fff',
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: 32,
+},
+fullImage: {
+  width: 180,
+  height: 180,
+  marginBottom: 24,
+},
+fullTitle: {
+  fontSize: 24,
+  fontWeight: 'bold',
+  color: '#252525',
+  marginBottom: 12,
+  textAlign: 'center',
+},
+fullText: {
+  fontSize: 16,
+  color: '#515151',
+  textAlign: 'center',
+  marginBottom: 32,
+  paddingHorizontal: 16,
+},
+streakHighlight: {
+  fontWeight: 'bold',
+  color: '#29A86E',
+},
+continueButton: {
+  backgroundColor: '#29A86E',
+  paddingVertical: 14,
+  paddingHorizontal: 40,
+  borderRadius: 20,
+  width: '80%',
+  alignItems: 'center',
+  marginBottom: 40,
+},
+continueButtonText: {
+  color: '#fff',
+  fontWeight: 'bold',
+  fontSize: 16,
+},
+
+
 });

@@ -13,6 +13,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../../server/config';
+import ImageDeleteAccount from '../../assets/images/ImageDeleteAccount.png'; // Zorg dat het pad klopt
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -47,16 +48,6 @@ const SettingsScreen = () => {
         <TouchableOpacity style={styles.item} onPress={() => router.push('/connect-armband')}>
           <FontAwesome name="bluetooth" size={18} color="#29A86E" />
           <Text style={styles.label}>Verbind Armband</Text>
-          <FontAwesome name="chevron-right" size={14} color="#ccc" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.item} onPress={() => router.push('/goals-start')}>
-          <FontAwesome name="bullseye" size={18} color="#29A86E" />
-          <Text style={styles.label}>Doelen Aanpassen</Text>
-          <FontAwesome name="chevron-right" size={14} color="#ccc" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.item} onPress={() => router.push('/plan-aanpassen')}>
-          <FontAwesome name="calendar" size={18} color="#29A86E" />
-          <Text style={styles.label}>Plan Aanpassen</Text>
           <FontAwesome name="chevron-right" size={14} color="#ccc" />
         </TouchableOpacity>
 
@@ -170,7 +161,7 @@ const SettingsScreen = () => {
                     // Verwijder de opgeslagen gebruikersgegevens
                     await AsyncStorage.removeItem('userId');
                     // Navigeer naar het register-scherm
-                    router.replace('/register');
+                    router.replace('/welcome');
                   } catch (error) {
                     console.error('Fout bij het uitloggen:', error);
                     alert('Er is iets misgegaan bij het uitloggen.');

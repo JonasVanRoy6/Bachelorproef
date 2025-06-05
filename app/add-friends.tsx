@@ -133,44 +133,53 @@ export default function AddFriendsScreen() {
           )}
         </View>
 
-        {allUsers.length > 0 && (
-          <>
-            <Text style={styles.resultCount}>
-              {allUsers.length} resultaat{allUsers.length !== 1 ? 'en' : ''}
-            </Text>
+        {search.length > 0 && allUsers.length === 0 ? (
+  <View style={styles.emptyState}>
+    <Image
+      source={require('../assets/images/ImageNoResults.png')}
+      style={styles.emptyImage}
+      resizeMode="contain"
+    />
+    <Text style={styles.emptyTitle}>Geen resultaten</Text>
+    <Text style={styles.emptyText}>We vonden geen gebruikers met die zoekterm.</Text>
+  </View>
+) : allUsers.length > 0 ? (
+  <>
+    <Text style={styles.resultCount}>
+      {allUsers.length} resultaat{allUsers.length !== 1 ? 'en' : ''}
+    </Text>
 
-            {allUsers.map((user) => (
-              <View key={user.id} style={styles.card}>
-                <Image
-                  source={{ uri: user.profilePicture || 'https://via.placeholder.com/48' }}
-                  style={styles.avatar}
-                />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.name}>
-                    {user.name} {user.last_name}
-                  </Text>
-                  <Text style={styles.username}>{user.email}</Text>
-                </View>
-                <TouchableOpacity
-                  style={[
-                    styles.actionButton,
-                    added.includes(user.id) && styles.checkedButton,
-                  ]}
-                  onPress={() => {
-                    toggleAdd(user.id);
-                    addFriendToDatabase(user.id);
-                  }}
-                >
-                  <FontAwesome
-                    name={added.includes(user.id) ? 'check' : 'user-plus'}
-                    size={16}
-                    color="#29A86E"
-                  />
-                </TouchableOpacity>
-              </View>
-            ))}
-          </>
-        )}
+    {allUsers.map((user) => (
+      <View key={user.id} style={styles.card}>
+        <Image
+          source={{ uri: user.profilePicture || 'https://via.placeholder.com/48' }}
+          style={styles.avatar}
+        />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.name}>{user.name} {user.last_name}</Text>
+          <Text style={styles.username}>{user.email}</Text>
+        </View>
+        <TouchableOpacity
+          style={[
+            styles.actionButton,
+            added.includes(user.id) && styles.checkedButton,
+          ]}
+          onPress={() => {
+            toggleAdd(user.id);
+            addFriendToDatabase(user.id);
+          }}
+        >
+          <FontAwesome
+            name={added.includes(user.id) ? 'check' : 'user-plus'}
+            size={16}
+            color="#29A86E"
+          />
+        </TouchableOpacity>
+      </View>
+    ))}
+  </>
+) : null}
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -250,4 +259,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#29A86E26',
     borderColor: '#29A86E',
   },
+
+  emptyState: {
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: 40,
+  marginBottom: 24,
+  paddingHorizontal: 20,
+},
+  emptyImage: {
+    width: 200,
+    height: 200,
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#252525',
+    marginBottom: 4,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#515151',
+    textAlign: 'center',
+  },
+
 });

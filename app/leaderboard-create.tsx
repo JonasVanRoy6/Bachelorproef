@@ -7,6 +7,8 @@ import {
   StyleSheet,
   ScrollView,
   Dimensions,
+  Modal,
+  Image,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -36,6 +38,7 @@ export default function CreateLeaderboardScreen() {
   const params = useLocalSearchParams();
   const [name, setName] = useState('');
   const [friends, setFriends] = useState<any[]>([]);
+  const [showPopup, setShowPopup] = useState(false);
   const leaderboardId = params.leaderboardId;
 
   useEffect(() => {
@@ -88,8 +91,7 @@ export default function CreateLeaderboardScreen() {
 
       const data = await response.json();
       if (response.ok) {
-        alert('Leaderboard bijgewerkt!');
-        router.push(`/leaderboard`);
+        setShowPopup(true);
       } else {
         alert(data.error || 'Fout bij bijwerken leaderboard.');
       }
@@ -100,52 +102,85 @@ export default function CreateLeaderboardScreen() {
   };
 
   return (
-    <ScrollView style={styles.wrapper} contentContainerStyle={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/leaderboard')}>
-          <FontAwesome name="arrow-left" size={24} color="#29A86E" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Leaderboard aanmaken</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      <Text style={styles.label}>Naam leaderboard</Text>
-      <View style={styles.inputWrapper}>
-        <FontAwesome name="search" size={16} color="#515151" style={{ marginRight: 8 }} />
-        <TextInput
-          style={styles.input}
-          placeholder="Geef een naam in"
-          placeholderTextColor="#999"
-          value={name}
-          onChangeText={setName}
-        />
-      </View>
-
-      <View style={styles.inviteBox}>
-        <View style={styles.inviteHeader}>
-          <Text style={styles.inviteTitle}>Vrienden Uitnodigen</Text>
-          <TouchableOpacity onPress={() => router.push('/invite')}>
-            <FontAwesome name="user-plus" size={18} color="#29A86E" />
+    <>
+      <ScrollView style={styles.wrapper} contentContainerStyle={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.push('/leaderboard')}>
+            <FontAwesome name="arrow-left" size={24} color="#29A86E" />
           </TouchableOpacity>
+          <Text style={styles.title}>Leaderboard aanmaken</Text>
+          <View style={{ width: 24 }} />
         </View>
 
-        {friends.length > 0 ? (
-          friends.map(friend => (
-            <UserCard
-              key={friend.id}
-              user={friend}
-              onRemove={() => removeFriend(friend.username)}
-            />
-          ))
-        ) : (
-          <Text style={styles.noFriendsText}>Geen vrienden beschikbaar.</Text>
-        )}
-      </View>
+        <Text style={styles.label}>Naam leaderboard</Text>
+        <View style={styles.inputWrapper}>
+          <FontAwesome name="search" size={16} color="#515151" style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.input}
+            placeholder="Geef een naam in"
+            placeholderTextColor="#999"
+            value={name}
+            onChangeText={setName}
+          />
+        </View>
 
-      <TouchableOpacity onPress={updateLeaderboardName} style={styles.saveButton}>
-        <Text style={styles.saveButtonText}>Leaderboard aanmaken</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <View style={styles.inviteBox}>
+          <View style={styles.inviteHeader}>
+            <Text style={styles.inviteTitle}>Vrienden Uitnodigen</Text>
+            <TouchableOpacity onPress={() => router.push('/invite')}>
+              <FontAwesome name="user-plus" size={18} color="#29A86E" />
+            </TouchableOpacity>
+          </View>
+
+          {friends.length > 0 ? (
+            friends.map(friend => (
+              <UserCard
+                key={friend.id}
+                user={friend}
+                onRemove={() => removeFriend(friend.username)}
+              />
+            ))
+          ) : (
+            <Text style={styles.noFriendsText}>Geen vrienden beschikbaar.</Text>
+          )}
+        </View>
+
+        <TouchableOpacity onPress={updateLeaderboardName} style={styles.saveButton}>
+          <Text style={styles.saveButtonText}>Leaderboard aanmaken</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* ✅ FULLSCREEN POPUP */}
+      <Modal
+        visible={showPopup}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPopup(false)}
+      >
+        <View style={styles.popupOverlay}>
+          <View style={styles.popupContainer}>
+            <Image
+              source={require('../assets/images/ImageLeaderboardCreated.png')}
+              style={styles.popupImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.popupTitle}>Leaderboard Aangemaakt</Text>
+            <Text style={styles.popupText}>
+              Je hebt met succes een nieuw leaderboard aangemaakt!
+            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                setShowPopup(false);
+                router.push('/leaderboard');
+              }}
+              style={styles.popupButton}
+            >
+              <Text style={styles.popupButtonText}>Doorgaan</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -257,5 +292,52 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+
+  // ✅ Popup Styles
+  popupOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  popupContainer: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  popupImage: {
+    width: 180,
+    height: 180,
+    marginBottom: 24,
+  },
+  popupTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#252525',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  popupText: {
+    fontSize: 16,
+    color: '#515151',
+    textAlign: 'center',
+    marginBottom: 32,
+    paddingHorizontal: 16,
+  },
+  popupButton: {
+    backgroundColor: '#29A86E',
+    paddingVertical: 14,
+    borderRadius: 20,
+    width: '90%',
+    alignItems: 'center',
+  },
+  popupButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });

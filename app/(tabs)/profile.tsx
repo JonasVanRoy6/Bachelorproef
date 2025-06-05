@@ -182,12 +182,36 @@ export default function ProfileScreen() {
       <View style={styles.contentContainer}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Mijn vrienden</Text>
-              <TouchableOpacity onPress={() => router.push('/friendslist')}>
-                <Text style={styles.viewAll}>Alles bekijken</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Mijn vrienden</Text>
+            <TouchableOpacity onPress={() => router.push('/friendslist')}>
+              <Text style={styles.viewAll}>Beheren</Text>
+            </TouchableOpacity>
+          </View>
+
+          {friendsList.length === 0 ? (
+            <View style={{ alignItems: 'center', marginTop: 16 }}>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#252525', marginBottom: 4 }}>
+                Nog geen vrienden toegevoegd
+              </Text>
+              <Text style={{ fontSize: 14, color: '#515151', textAlign: 'center', marginBottom: 12 }}>
+                Voeg vrienden toe en moedig elkaar aan.
+              </Text>
+              <TouchableOpacity
+                onPress={() => router.push('/invite')}
+                style={{
+                  backgroundColor: '#29A86E',
+                  paddingHorizontal: 20,
+                  paddingVertical: 10,
+                  borderRadius: 20,
+                }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>
+                  Vriend toevoegen
+                </Text>
               </TouchableOpacity>
             </View>
+          ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
               <View style={styles.horizontalList}>
                 {friendsList.map((friend) => (
@@ -198,7 +222,11 @@ export default function ProfileScreen() {
                 ))}
               </View>
             </ScrollView>
-          </View>
+          )}
+        </View>
+
+
+
 
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -207,19 +235,27 @@ export default function ProfileScreen() {
                 <Text style={styles.viewAll}>Alles bekijken</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.horizontalList}>
-                {completedBadges.map((badge, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={[styles.badge, { backgroundColor: badge.background || '#DFF5E5' }]} // Groene achtergrond
-                    onPress={() => setSelectedBadge(badge)}
-                  >
-                    <FontAwesome name={badge.icon} size={20} color={badge.color || '#29A86E'} /> {/* Groen icoon */}
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </ScrollView>
+            {completedBadges.length === 0 ? (
+                <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 12 }}>
+                  <Text style={{ fontSize: 14, color: '#515151', textAlign: 'center' }}>
+                    Nog geen badges behaald.
+                  </Text>
+                </View>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View style={styles.horizontalList}>
+                    {completedBadges.map((badge, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={[styles.badge, { backgroundColor: badge.background || '#DFF5E5' }]}
+                        onPress={() => setSelectedBadge(badge)}
+                      >
+                        <FontAwesome name={badge.icon} size={20} color={badge.color || '#29A86E'} />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </ScrollView>
+              )}
           </View>
 
           <View style={styles.section}>
@@ -241,39 +277,6 @@ export default function ProfileScreen() {
           </View>
         </ScrollView>
       </View>
-
-      {selectedBadge && (
-        <Modal transparent visible={!!selectedBadge} animationType="fade">
-          <View style={styles.overlay}>
-            <View style={styles.popup}>
-              <View style={styles.popupHeader}>
-                <Text style={styles.popupTitle}>{selectedBadge.name}</Text>
-                <TouchableOpacity onPress={() => setSelectedBadge(null)}>
-                  <FontAwesome name="close" size={24} color="#29A86E" />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.popupContent}>
-                <View style={[styles.popupIconCircle, { backgroundColor: selectedBadge.background }]}>
-                  <FontAwesome name={selectedBadge.icon} size={36} color={selectedBadge.color} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.popupDate}>Verdiend op {selectedBadge.date}</Text>
-                  <Text style={styles.popupDesc}>{selectedBadge.description}</Text>
-                </View>
-              </View>
-              <View style={styles.detailsBox}>
-                <Text style={styles.detailsTitle}>Badge Details</Text>
-                {selectedBadge.checklist.map((item, index) => (
-                  <View key={index} style={styles.checkItem}>
-                    <FontAwesome name="check" size={14} color="#29A86E" style={{ marginRight: 8 }} />
-                    <Text style={styles.checkText}>{item}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
     </SafeAreaView>
   );
 }

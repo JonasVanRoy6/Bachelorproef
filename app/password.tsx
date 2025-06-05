@@ -57,7 +57,7 @@ export default function PasswordScreen() {
 
       if (response.ok) {
         Alert.alert('Succes', 'Wachtwoord succesvol opgeslagen!');
-        router.push('/goalsScreen');
+        router.push('/usageScreen');
       } else {
         Alert.alert('Fout', 'Er is een probleem opgetreden bij het opslaan van het wachtwoord.');
       }

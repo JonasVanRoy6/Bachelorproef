@@ -141,15 +141,30 @@ export default function InviteScreen() {
           />
         </View>
 
-        <ScrollView contentContainerStyle={styles.list}>
-          {friends.map((friend) => (
-            <UserCard
-              key={friend.id} // Zorg voor een unieke key
-              user={friend}
-              onToggle={() => handleInvite(friend.id)}
+        {search.length > 0 && filtered.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Image
+              source={require('../assets/images/ImageNoResults.png')} // let op juiste pad
+              style={styles.emptyImage}
+              resizeMode="contain"
             />
-          ))}
-        </ScrollView>
+            <Text style={styles.emptyTitle}>Geen resultaten</Text>
+            <Text style={styles.emptyText}>
+              We konden geen gebruikers vinden met deze naam.
+            </Text>
+          </View>
+        ) : (
+          <ScrollView contentContainerStyle={styles.list}>
+            {filtered.map((friend) => (
+              <UserCard
+                key={friend.id}
+                user={friend}
+                onToggle={() => handleInvite(friend.id)}
+              />
+            ))}
+          </ScrollView>
+        )}
+
 
         <TouchableOpacity onPress={createLeaderboardWithFriends} style={styles.doneButton}>
           <Text style={styles.doneText}>Klaar</Text>
@@ -288,4 +303,29 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
+
+  emptyState: {
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: 40,
+  marginBottom: 24,
+  paddingHorizontal: 20,
+},
+  emptyImage: {
+    width: 200,
+    height: 200,
+    marginBottom: 24,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#252525',
+    marginBottom: 4,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#515151',
+    textAlign: 'center',
+  },
+
 });

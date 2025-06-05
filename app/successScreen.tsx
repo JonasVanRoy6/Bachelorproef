@@ -5,9 +5,9 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { FontAwesome } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -17,23 +17,25 @@ export default function SuccessScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.contentWrapper}>
-        {/* Cirkel + Check */}
-        <View style={styles.iconCircle}>
-          <FontAwesome name="check" size={68} color="#29A86E" />
-        </View>
+        {/* ✅ Afbeelding in plaats van check-circle */}
+        <Image
+          source={require('../assets/images/ImageAccountMade.png')}
+          style={styles.image}
+          resizeMode="contain"
+        />
 
         {/* Titel */}
         <Text style={styles.title}>Proficiat!</Text>
 
         {/* Subtekst */}
         <Text style={styles.subtitle}>
-          Je account is aangemaakt. Je hebt de eerste stap gezet naar een vape-vrije toekomst. We zijn trots op je!
+          Je account is aangemaakt. Een mooie stap vooruit, we zijn trots op je!
         </Text>
 
         {/* Knop */}
         <TouchableOpacity
           style={styles.button}
-          onPress={() => router.push('/connectBraceletScreen')}
+          onPress={() => router.push('/startJourneyScreen')}
         >
           <Text style={styles.buttonText}>Volgende</Text>
         </TouchableOpacity>
@@ -55,13 +57,9 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     alignItems: 'center',
   },
-  iconCircle: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: 'rgba(41, 168, 110, 0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  image: {
+    width: 200,
+    height: 200,
     marginBottom: 24,
   },
   title: {

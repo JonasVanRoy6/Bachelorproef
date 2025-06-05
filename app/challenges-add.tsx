@@ -10,12 +10,13 @@ import {
   KeyboardAvoidingView,
   ScrollView,
   Platform,
+  Modal,
+  Image,
 } from 'react-native';
 import { FontAwesome5, FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import API_BASE_URL from '../server/config';
-
 
 const ICON_OPTIONS = [
   { key: 'reizen', icon: <FontAwesome5 name="suitcase-rolling" size={24} />, color: '#29A86E' },
@@ -33,7 +34,8 @@ const ChallengesAdd = () => {
   const [titel, setTitel] = useState('');
   const [bedrag, setBedrag] = useState('');
   const [containerWidth, setContainerWidth] = useState(0);
-  const [isActive, setIsActive] = useState(false); // State om de checkbox bij te houden
+  const [isActive, setIsActive] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const handleCreate = async () => {
     try {
@@ -55,14 +57,13 @@ const ChallengesAdd = () => {
           icon: selectedIcon,
           title: titel,
           budget: parseFloat(bedrag),
-          isActive, // Stuur de waarde van de checkbox mee
+          isActive,
         }),
       });
 
       const data = await response.json();
       if (response.ok) {
-        alert(data.message);
-        router.back();
+        setShowSuccessPopup(true);
       } else {
         alert(data.error || 'Er is iets misgegaan bij het aanmaken van de uitdaging.');
       }
@@ -82,14 +83,8 @@ const ChallengesAdd = () => {
     : 50;
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'} // Zorgt voor correcte werking op iOS en Android
-    >
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled" // Zorgt ervoor dat je buiten het toetsenbord kunt tikken om het te sluiten
-      >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View style={{ flex: 1, backgroundColor: '#fff' }}>
           <StatusBar barStyle="dark-content" />
           <View style={styles.header}>
@@ -103,7 +98,7 @@ const ChallengesAdd = () => {
           <View style={styles.section}>
             <View
               style={styles.iconBoxContainer}
-              onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width - 32)} // remove internal padding
+              onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width - 32)}
             >
               <Text style={styles.label}>Selecteer Een Icoon</Text>
               <View style={styles.iconRow}>
@@ -149,13 +144,12 @@ const ChallengesAdd = () => {
               <Text style={styles.label}>Budgetdoel</Text>
               <TextInput
                 style={styles.input}
-                placeholder="€ 100" // Placeholder die verdwijnt zodra de gebruiker begint te typen
-                placeholderTextColor="#515151" // Grijze kleur voor de placeholder
-                value={`€ ${bedrag}`} // Voeg het euroteken toe aan de waarde
+                placeholder="€ 100"
+                placeholderTextColor="#515151"
+                value={`€ ${bedrag}`}
                 onChangeText={(text) => {
-                  // Verwijder alles behalve cijfers en een optioneel decimaal punt
                   const numericText = text.replace(/[^0-9.]/g, '');
-                  setBedrag(numericText); // Sla alleen het numerieke deel op
+                  setBedrag(numericText);
                 }}
                 keyboardType="decimal-pad"
               />
@@ -179,7 +173,7 @@ const ChallengesAdd = () => {
                 {isActive && <FontAwesome name="check" size={16} color="#fff" />}
               </TouchableOpacity>
               <Text style={{ fontSize: 16, color: '#252525' }}>
-               Als actief instellen?
+                Als actief instellen?
               </Text>
             </View>
 
@@ -192,6 +186,37 @@ const ChallengesAdd = () => {
           </View>
         </View>
       </ScrollView>
+
+      {/* ✅ POPUP FULLSCREEN */}
+      <Modal
+        visible={showSuccessPopup}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSuccessPopup(false)}
+      >
+        <View style={styles.popupOverlay}>
+          <View style={styles.popupContainer}>
+            <Image
+              source={require('../assets/images/ImageChallengeCreated.png')}
+              style={styles.popupImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.popupTitle}>Uitdaging Aangemaakt</Text>
+            <Text style={styles.popupText}>
+              Je hebt met succes een nieuwe uitdaging toegevoegd. Veel succes!
+            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                setShowSuccessPopup(false);
+                router.back();
+              }}
+              style={styles.popupButton}
+            >
+              <Text style={styles.popupButtonText}>Doorgaan</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 };
@@ -270,6 +295,55 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#F5F5F5',
+  },
+
+  // ✅ Popup styles
+  popupOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  popupContainer: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  popupImage: {
+    width: 180,
+    height: 180,
+    marginBottom: 24,
+  },
+  popupTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#252525',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  popupText: {
+    fontSize: 16,
+    color: '#515151',
+    textAlign: 'center',
+    marginBottom: 32,
+    paddingHorizontal: 16,
+  },
+  popupButton: {
+    backgroundColor: '#29A86E',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 20,
+    width: '90%',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  popupButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 
