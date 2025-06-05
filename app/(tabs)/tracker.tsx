@@ -292,4 +292,3 @@ const styles = StyleSheet.create({
   },
 
 });
-

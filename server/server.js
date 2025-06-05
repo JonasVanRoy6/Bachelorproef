@@ -33,11 +33,11 @@ db.connect((err) => {
 const API_BASE_URL = 'http://192.168.0.106:5000'; // Vervang dit door je eigen IP-adres of domein
 // Kies een willekeurige profielfoto
 const profilePictures = [
-  `${API_BASE_URL}/images/profile1.png`,
-  `${API_BASE_URL}/images/profile2.png`,
-  `${API_BASE_URL}/images/profile3.png`,
-  `${API_BASE_URL}/images/profile4.png`,
-  `${API_BASE_URL}/images/profile5.png`,
+  `${API_BASE_URL}/images/profile-1.png`,
+  `${API_BASE_URL}/images/profile-2.png`,
+  `${API_BASE_URL}/images/profile-3.png`,
+  `${API_BASE_URL}/images/profile-4.png`,
+  `${API_BASE_URL}/images/profile-5.png`,
 ];
 
 app.post('/puffs', (req, res) => {
@@ -121,7 +121,7 @@ app.post("/register", (req, res) => {
   }
 
   // Kies een willekeurige profielfoto (alleen de bestandsnaam)
-  const profilePictures = ['profile1.png', 'profile2.png', 'profile3.png', 'profile4.png', 'profile5.png'];
+  const profilePictures = ['profile-1.png', 'profile-2.png', 'profile-3.png', 'profile-4.png', 'profile-5.png'];
   const randomProfilePicture = profilePictures[Math.floor(Math.random() * profilePictures.length)];
 
   const dummyPassword = 'temp'; // Tijdelijk wachtwoord
@@ -1178,7 +1178,7 @@ app.get('/user-data', (req, res) => {
       email: results[0].email,
       birthDate: results[0].birthDate,
       password: results[0].password, // Voeg het wachtwoord toe aan de response
-      profilePicture: results[0].profilePicture || '../assets/images/profile1.png',
+      profilePicture: results[0].profilePicture || '../assets/images/profile-1.png',
     });
   });
 });
