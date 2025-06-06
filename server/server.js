@@ -23,7 +23,7 @@ const db = mysql.createPool({
 });
 
 // Check databaseverbinding
-db.getConnection((err,connection) => {
+db.getConnection((err, connection) => {
   if (err) {
     console.error('Error connecting to DB:', err);
     return;
