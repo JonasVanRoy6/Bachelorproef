@@ -8,6 +8,11 @@ import {
   Alert,
   StatusBar,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -41,70 +46,81 @@ export default function UsageScreen() {
 
       const response = await fetch(`${API_BASE_URL}/saveGoal`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) throw new Error();
-
-      router.push('/successScreen'); // Navigeer naar de succespagina
+      router.push('/successScreen');
     } catch (error) {
       Alert.alert('Fout', 'Er is een fout opgetreden bij het opslaan van de gegevens.');
     }
   };
 
   return (
-    <View style={styles.wrapper}>
-      <StatusBar backgroundColor="#fff" barStyle="dark-content" />
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => router.push('/password')}
-      >
-        <FontAwesome name="arrow-left" size={24} color="#fff" />
-      </TouchableOpacity>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 50} // pas dit aan indien nodig
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.wrapper}
+          keyboardShouldPersistTaps="handled"
+        >
+          <StatusBar backgroundColor="#fff" barStyle="dark-content" />
 
-      <Text style={styles.title}>Stel je huidige gebruik en je doel in.</Text>
-      <Text style={styles.subtitle}>Geen zorgen, je kan dit later altijd aanpassen.</Text>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.push('/password')}
+          >
+            <FontAwesome name="arrow-left" size={24} color="#fff" />
+          </TouchableOpacity>
 
-      <View style={{ marginTop: 24 }}>
-        <Text style={styles.label}>Hoeveel puffs neem je gemiddeld per dag?</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="80"
-          placeholderTextColor="#515151"
-          keyboardType="numeric"
-          value={currentUsage}
-          onChangeText={setCurrentUsage}
-        />
-      </View>
+          <Text style={styles.title}>Stel je huidige gebruik en je doel in.</Text>
+          <Text style={styles.subtitle}>Geen zorgen, je kan dit later altijd aanpassen.</Text>
 
-      <View style={{ marginTop: 24 }}>
-        <Text style={styles.label}>Wat is je doel? Hoeveel puffs wil je per dag nemen?</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="30"
-          placeholderTextColor="#515151"
-          keyboardType="numeric"
-          value={goalUsage}
-          onChangeText={setGoalUsage}
-        />
-      </View>
+          <View style={{ marginTop: 24 }}>
+            <Text style={styles.label}>Hoeveel puffs neem je gemiddeld per dag?</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="80"
+              placeholderTextColor="#515151"
+              keyboardType="numeric"
+              value={currentUsage}
+              onChangeText={setCurrentUsage}
+            />
+          </View>
 
-      <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
-        <Text style={styles.nextText}>Volgende</Text>
-      </TouchableOpacity>
-    </View>
+          <View style={{ marginTop: 24 }}>
+            <Text style={styles.label}>Wat is je doel? Hoeveel puffs wil je per dag nemen?</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="30"
+              placeholderTextColor="#515151"
+              keyboardType="numeric"
+              value={goalUsage}
+              onChangeText={setGoalUsage}
+            />
+          </View>
+
+          <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+            <Text style={styles.nextText}>Volgende</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   wrapper: {
-    flex: 1,
+    flexGrow: 1, // belangrijk voor scroll gedrag
     backgroundColor: '#fff',
     paddingHorizontal: 36,
     paddingTop: 48,
+    paddingBottom: 80, // extra ruimte onderaan
   },
   backButton: {
     width: 48,
