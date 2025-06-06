@@ -25,12 +25,13 @@ const db = mysql.createPool({
 // Check databaseverbinding
 db.getConnection((err, connection) => {
   if (err) {
-    console.error('Error connecting to DB:', err);
-    return;
+    console.error('Error connecting to the database pool:', err);
+  } else {
+    console.log('Connected to the database pool');
+    connection.release(); // belangrijk!
   }
-  console.log('Connected to database');
-  connection.release(); // Release the connection back to the pool
 });
+
 const API_BASE_URL = 'https://bachelorproef-breezd.onrender.com'; // Vervang dit door je eigen IP-adres of domein
 // Kies een willekeurige profielfoto
 const profilePictures = [
