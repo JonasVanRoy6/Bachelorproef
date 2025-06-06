@@ -166,7 +166,7 @@ export default function CreateLeaderboardScreen() {
               style={styles.popupImage}
               resizeMode="contain"
             />
-            <Text style={styles.popupTitle}>Leaderboard Aangemaakt</Text>
+            <Text style={styles.popupTitle}>Leaderboard Aangemaakt!</Text>
             <Text style={styles.popupText}>
               Je hebt met succes een nieuw leaderboard aangemaakt!
             </Text>

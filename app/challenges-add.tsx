@@ -171,7 +171,7 @@ const ChallengesAdd = () => {
               style={styles.popupImage}
               resizeMode="contain"
             />
-            <Text style={styles.popupTitle}>Uitdaging Aangemaakt</Text>
+            <Text style={styles.popupTitle}>Uitdaging Aangemaakt!</Text>
             <Text style={styles.popupText}>
               Je hebt met succes een nieuwe uitdaging toegevoegd. Veel succes!
             </Text>

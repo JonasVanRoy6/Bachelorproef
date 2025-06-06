@@ -90,7 +90,7 @@ const initialBadges: Badge[] = [
     icon: 'user-plus',
     achieved: false,
     description: 'Je hebt vrienden toegevoegd',
-    criteria: ['Minstens 2 vrienden uitgenodigd'],
+    criteria: ['Minstens 2 vrienden toegevoegd'],
   },
 ];
 

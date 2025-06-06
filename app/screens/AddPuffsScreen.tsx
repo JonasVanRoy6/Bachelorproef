@@ -6,6 +6,8 @@ import {
   Alert,
   TouchableOpacity,
   Dimensions,
+  Modal,
+  Image,
 } from "react-native";
 import Slider from "@react-native-community/slider";
 import { router } from "expo-router";
@@ -22,6 +24,7 @@ const AddPuffsScreen = () => {
   const [intensity, setIntensity] = useState("Gemiddeld");
   const [timeOfDay, setTimeOfDay] = useState("");
   const [estimatedPuffs, setEstimatedPuffs] = useState(0);
+  const [showPopup, setShowPopup] = useState(false);
 
   useEffect(() => {
     calculatePuffs();
@@ -53,8 +56,7 @@ const AddPuffsScreen = () => {
 
         if (!response.ok) throw new Error("Fout bij het verzenden");
 
-        Alert.alert("Succes", "Puffs en tijd van de dag opgeslagen!");
-        router.push("/(tabs)/tracker");
+        setShowPopup(true); // ✅ Show popup
       } catch (error) {
         console.error("Fout bij opslaan puffs:", error);
         Alert.alert("Fout", "Er is iets misgegaan bij het opslaan.");
@@ -80,11 +82,12 @@ const AddPuffsScreen = () => {
         <Text style={styles.headerTitle}>Puffs Toevoegen</Text>
         <View style={{ width: 24 }} />
       </View>
+
       <View style={{ flex: 1 }}>
         <View style={{ height: 12 }} />
 
         <View style={styles.card}>
-          <Text style={[styles.cardTitle, { marginBottom: 2 }]}>Hoe lang heb je gevaped?</Text>
+          <Text style={styles.cardTitle}>Hoe lang heb je gevaped?</Text>
           <Slider
             style={styles.slider}
             minimumValue={1}
@@ -96,7 +99,7 @@ const AddPuffsScreen = () => {
             maximumTrackTintColor="rgba(41, 168, 110, 0.30)"
             thumbTintColor="#29A86E"
           />
-          <View style={[styles.sliderLabels, { marginTop: 2 }]}>
+          <View style={styles.sliderLabels}>
             <Text style={styles.sliderLabel}>1 min</Text>
             <Text style={styles.sliderLabel}>120 min</Text>
             <Text style={styles.sliderLabel}>240 min</Text>
@@ -144,7 +147,7 @@ const AddPuffsScreen = () => {
         </View>
 
         <View style={styles.cardSmall}>
-          <Text style={[styles.cardTitle, { marginBottom: 0 }]}>Geschatte aantal puffs:</Text>
+          <Text style={styles.cardTitle}>Geschatte aantal puffs:</Text>
           <Text style={styles.estimatedValue}>{estimatedPuffs}</Text>
         </View>
 
@@ -152,15 +155,41 @@ const AddPuffsScreen = () => {
           <Text style={styles.saveButtonText}>Opslaan</Text>
         </TouchableOpacity>
       </View>
+
+      {/* ✅ POPUP */}
+      <Modal
+        visible={showPopup}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPopup(false)}
+      >
+        <View style={styles.popupOverlay}>
+          <View style={styles.popupContainer}>
+            <Image
+              source={require('../../assets/images/ImagePuffsAdded.png')}
+              style={styles.popupImage}
+              resizeMode="contain"
+            />
+            <Text style={styles.popupTitle}>Puffs Toegevoegd!</Text>
+            <Text style={styles.popupText}>Je puffs zijn succesvol geregistreerd!</Text>
+            <TouchableOpacity
+              onPress={() => {
+                setShowPopup(false);
+                router.push('/(tabs)/tracker');
+              }}
+              style={styles.popupButton}
+            >
+              <Text style={styles.popupButtonText}>Doorgaan</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-  },
+  container: { flex: 1, backgroundColor: "#FFFFFF" },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -283,6 +312,53 @@ const styles = StyleSheet.create({
     color: "#F5F5F5",
     fontSize: 18,
     fontWeight: "600",
+  },
+  popupOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  popupContainer: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  popupImage: {
+    width: 180,
+    height: 180,
+    marginBottom: 24,
+  },
+  popupTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#252525',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  popupText: {
+    fontSize: 16,
+    color: '#515151',
+    textAlign: 'center',
+    marginBottom: 32,
+    paddingHorizontal: 16,
+  },
+  popupButton: {
+    backgroundColor: '#29A86E',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 20,
+    width: '90%',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  popupButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
 
