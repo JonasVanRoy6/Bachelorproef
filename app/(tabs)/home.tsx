@@ -290,7 +290,8 @@ const HomeScreen = () => {
                 </TouchableOpacity>
               </View>
             ) : (
-              challenges.map((item, index) => (
+              challenges.slice(0, 2).map((item, index) => (
+
               <View
                 key={item.challenge_id}
                 style={[

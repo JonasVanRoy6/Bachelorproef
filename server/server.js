@@ -167,11 +167,22 @@ app.post("/register", (req, res) => {
 });
 
 const saltRounds = 10;
+
 app.post('/register-password', (req, res) => {
   const { userId, password } = req.body;
 
   if (!userId || !password) {
     return res.status(400).json({ message: 'Gebruiker-ID en wachtwoord zijn verplicht.' });
+  }
+
+  // Controleer wachtwoordlengte en of er minstens één cijfer in zit
+  const hasMinimumLength = password.length >= 5;
+  const hasNumber = /\d/.test(password); // RegEx om te checken of er minstens één cijfer is
+
+  if (!hasMinimumLength || !hasNumber) {
+    return res.status(400).json({
+      message: 'Je wachtwoord moet minstens 5 karakters bevatten waarvan minstens 1 getal.',
+    });
   }
 
   // Wachtwoord hashen
@@ -193,6 +204,7 @@ app.post('/register-password', (req, res) => {
     });
   });
 });
+
 
 
 

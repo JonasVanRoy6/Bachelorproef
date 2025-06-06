@@ -43,30 +43,40 @@ export default function PasswordScreen() {
       Alert.alert('Fout', 'Gebruiker niet gevonden. Probeer opnieuw in te loggen.');
       return;
     }
-
+  
     if (password !== confirmPassword) {
       Alert.alert('Fout', 'Wachtwoorden komen niet overeen.');
       return;
     }
-
+  
+    if (password.length < 5 || !/\d/.test(password)) {
+      Alert.alert(
+        'Ongeldig wachtwoord',
+        'Je wachtwoord moet minstens 5 karakters bevatten waarvan minstens 1 getal.'
+      );
+      return;
+    }
+  
     try {
       const response = await fetch(`${API_BASE_URL}/register-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password, userId }),
       });
-
+  
       if (response.ok) {
         Alert.alert('Succes', 'Wachtwoord succesvol opgeslagen!');
         router.push('/usageScreen');
       } else {
-        Alert.alert('Fout', 'Er is een probleem opgetreden bij het opslaan van het wachtwoord.');
+        const data = await response.json();
+        Alert.alert('Fout', data.message || 'Er is een probleem opgetreden bij het opslaan van het wachtwoord.');
       }
     } catch (error) {
       console.error('Fout bij het opslaan van het wachtwoord:', error);
       Alert.alert('Fout', 'Kan geen verbinding maken met de server.');
     }
   };
+  
 
   return (
     <View style={styles.wrapper}>
