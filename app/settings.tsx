@@ -150,7 +150,9 @@ const SettingsScreen = () => {
                     if (response.ok) {
                       alert('Account succesvol verwijderd.');
                       await AsyncStorage.removeItem('userId');
-                      router.replace('/register');
+                      await AsyncStorage.removeItem('isLoggedIn'); // ⬅️ deze regel toevoegen
+router.replace('/welcomestart');
+                      router.replace('/welcomestart');
                     } else {
                       alert(data.error || 'Er is iets misgegaan bij het verwijderen van het account.');
                     }
@@ -161,7 +163,8 @@ const SettingsScreen = () => {
                 } else if (showLogoutModal) {
                   try {
                     await AsyncStorage.removeItem('userId');
-                    router.replace('/welcomestart');
+await AsyncStorage.removeItem('isLoggedIn'); // ⬅️ deze regel toevoegen
+router.replace('/welcomestart');
                   } catch (error) {
                     console.error('Fout bij het uitloggen:', error);
                     alert('Er is iets misgegaan bij het uitloggen.');

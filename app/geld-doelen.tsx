@@ -66,7 +66,8 @@ const GeldDoelen = () => {
 
         // Bereken voortgang voor elk doel
         const updatedDoelen = doelenConfig.map((doel) => {
-          const progress = Math.min((totalSaved / doel.threshold) * 100, 100); // Maximaal 100%
+          const progress = Math.max(0, Math.min((totalSaved / doel.threshold) * 100, 100));
+ // Maximaal 100%
           return {
             ...doel,
             progress,

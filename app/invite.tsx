@@ -184,7 +184,7 @@ function UserCard({ user, onToggle }: { user: any; onToggle: () => void }) {
           source={{ uri: user.profilePicture || 'https://via.placeholder.com/48' }}
           style={styles.avatar}
         />
-        <View style={{ flexShrink: 1, maxWidth: screenWidth * 0.45 }}>
+        <View style={{ flexShrink: 1, maxWidth: screenWidth * 0.37 }}>
           <Text
             style={styles.name}
             numberOfLines={1}

@@ -67,7 +67,7 @@ export default function RegisterScreen() {
         await AsyncStorage.setItem('userId', responseData.userId.toString());
         await AsyncStorage.setItem('userName', `${data.firstName} ${data.lastName}`);
         await AsyncStorage.setItem('userEmail', data.email);
-
+        await AsyncStorage.setItem('isLoggedIn', 'true');
         // Toon een succesmelding
         Alert.alert('Succes', 'Gebruiker succesvol geregistreerd!');
 

@@ -1,16 +1,18 @@
+// app/index.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Image, StyleSheet, Dimensions, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Font from 'expo-font';
+import { isLoggedIn } from '../auth/auth'; // 👈 importeer de login-check
 
 const { width } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    // Fonts laden
     const loadFonts = async () => {
       await Font.loadAsync({
         'Poppins-Regular': require('../assets/fonts/Poppins-Regular.ttf'),
@@ -24,24 +26,37 @@ export default function WelcomeScreen() {
   }, []);
 
   useEffect(() => {
+    const checkLoginAndRedirect = async () => {
+      const loggedIn = await isLoggedIn();
+      setTimeout(() => {
+        if (loggedIn) {
+          router.replace('/home');
+        } else {
+          router.replace('/welcomestart');
+        }
+        setAuthChecked(true);
+      }, 2000); // iets snellere loader
+    };
+
     if (fontsLoaded) {
-      const timer = setTimeout(() => {
-        router.replace('/welcomestart');
-      }, 5000);
-      return () => clearTimeout(timer);
+      checkLoginAndRedirect();
     }
   }, [fontsLoaded]);
 
-  return (
-    <View style={styles.container}>
-      <StatusBar backgroundColor="#29A86E" barStyle="light-content" />
-      <Image
-        source={require('../assets/images/logoLarge.png')} // 📌 Zorg dat dit pad klopt
-        style={styles.logo}
-        resizeMode="contain"
-      />
-    </View>
-  );
+  if (!fontsLoaded || !authChecked) {
+    return (
+      <View style={styles.container}>
+        <StatusBar backgroundColor="#29A86E" barStyle="light-content" />
+        <Image
+          source={require('../assets/images/logoLarge.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
+    );
+  }
+
+  return null; // 👈 dit scherm toont verder niks zodra redirect is gedaan
 }
 
 const styles = StyleSheet.create({

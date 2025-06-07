@@ -1,9 +1,27 @@
-import { Tabs } from "expo-router";
+import { Tabs, useRouter } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
 import { PuffProvider } from "../puffcontext";
 import { ConnectionProvider } from "../../components/ConnectionProvider";
+import { useEffect, useState } from "react";
+import { isLoggedIn } from "../../auth/auth"; // ⬅️ Auth helper importeren
 
 export default function Layout() {
+  const router = useRouter();
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const loggedIn = await isLoggedIn();
+      if (!loggedIn) {
+        router.replace("/welcomestart"); // ⬅️ Stuur naar login als niet ingelogd
+      }
+      setAuthChecked(true); // ✅ Klaar met controleren
+    };
+    checkAuth();
+  }, []);
+
+  if (!authChecked) return null; // ⏳ Wacht op auth-check voor je iets toont
+
   return (
     <ConnectionProvider>
       <PuffProvider>

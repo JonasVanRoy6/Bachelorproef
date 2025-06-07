@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   cardSmall: {
     backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    paddingVertical: 12,
+    paddingVertical: 8,
     paddingHorizontal: 16,
     marginHorizontal: 16,
     marginBottom: 8,
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#252525",
-    marginBottom: 12,
+    marginBottom: 8,
   },
   slider: {
     width: CARD_WIDTH - 32,
@@ -298,6 +298,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#29A86E",
     textAlign: "center",
+   
   },
   saveButton: {
     backgroundColor: "#29A86E",
@@ -306,7 +307,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginHorizontal: 16,
-    marginTop: 8,
+    marginTop: 4,
   },
   saveButtonText: {
     color: "#F5F5F5",

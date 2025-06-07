@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,12 @@ import {
   StatusBar,
   Dimensions,
 } from 'react-native';
-import { Link, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
 import API_BASE_URL from '../server/config';
+import { isLoggedIn, login } from '../auth/auth';
+ // ✅ check login status
 
 const { width } = Dimensions.get('window');
 
@@ -21,24 +23,43 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const router = useRouter();
 
+  // ✅ Automatische redirect als al ingelogd
+  useEffect(() => {
+    const checkIfLoggedIn = async () => {
+      const loggedIn = await isLoggedIn();
+      if (loggedIn) {
+        router.replace('/(tabs)/home'); // ↪️ direct door naar home als al ingelogd
+      }
+    };
+    checkIfLoggedIn();
+  }, []);
+
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Fout', 'Vul alle velden in.');
       return;
     }
-
+  
     try {
       const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-
+  
       if (response.ok) {
         const data = await response.json();
+  
+        // ⬇️ Belangrijke fix hier:
         await AsyncStorage.setItem('userId', data.userId.toString());
+        await login(); // ✅ Set 'isLoggedIn' = true
+  
         Alert.alert('Succes', `Welkom terug, ${data.firstName}!`);
-        router.push('/home'); // ⬅️ navigeert naar index.tsx
+  
+        // Wacht heel even om race condition te voorkomen
+        setTimeout(() => {
+          router.replace('/(tabs)/home');
+        }, 100);
       } else {
         const errorData = await response.json();
         Alert.alert('Fout', errorData.error || 'Inloggen mislukt.');
@@ -48,22 +69,20 @@ export default function LoginScreen() {
       Alert.alert('Fout', 'Kan geen verbinding maken met de server.');
     }
   };
+  
 
   return (
     <View style={styles.container}>
-      {/* Back button */}
       <StatusBar backgroundColor="#fff" barStyle="dark-content" />
       <TouchableOpacity
         style={styles.backButton}
-        onPress={() => router.push('/register')} // ⬅️ navigeer naar register
+        onPress={() => router.push('/register')}
       >
         <FontAwesome name="arrow-left" size={24} color="#fff" />
       </TouchableOpacity>
 
-      {/* Titel */}
       <Text style={styles.title}>Welkom terug!</Text>
 
-      {/* Inputvelden */}
       <View style={styles.inputGroupFull}>
         <Text style={styles.label}>E-mailadres</Text>
         <TextInput
@@ -88,14 +107,12 @@ export default function LoginScreen() {
         />
       </View>
 
-      {/* Inlogknop */}
       <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
         <Text style={styles.loginButtonText}>Inloggen</Text>
       </TouchableOpacity>
 
       <Text style={styles.orText}>Of, inloggen met...</Text>
 
-      {/* Social login */}
       <View style={styles.socialButtons}>
         <TouchableOpacity style={styles.socialButton}>
           <FontAwesome name="facebook" size={24} color="#1877F2" />
@@ -105,12 +122,11 @@ export default function LoginScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Registratielink */}
       <Text style={styles.registerText}>
         Nieuw bij Breezd?{' '}
         <Text
           style={styles.registerLink}
-          onPress={() => router.push('/register')} // ⬅️ navigeer naar register
+          onPress={() => router.push('/register')}
         >
           Registreer
         </Text>

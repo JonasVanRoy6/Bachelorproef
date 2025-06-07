@@ -111,7 +111,7 @@ const DuurzaamheidDoelen = () => {
       {/* Progress bar bovenaan */}
       <View style={styles.progressCard}>
         <View style={styles.progressHeader}>
-          <Text style={styles.progressLabel}>Totale voortgang</Text>
+          <Text style={styles.progressLabel}>Jouw Progressie</Text>
           <View style={styles.progressPercentage}>
             <Text style={styles.progressPercentageText}>{averageProgress}%</Text>
           </View>
