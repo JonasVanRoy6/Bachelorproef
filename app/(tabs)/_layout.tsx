@@ -1,5 +1,5 @@
 import { Tabs, useRouter } from "expo-router";
-import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome, Feather } from "@expo/vector-icons";
 import { PuffProvider } from "../puffcontext";
 import { ConnectionProvider } from "../../components/ConnectionProvider";
 import { useEffect, useState } from "react";
@@ -67,7 +67,7 @@ export default function Layout() {
             options={{
               title: "Tracker",
               tabBarIcon: ({ color, size }) => (
-                <FontAwesome name="cog" size={size} color={color} />
+                <Feather name="wind" size={size} color={color} />
               ),
             }}
           />
